@@ -6,6 +6,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var todos = require('./routes/todos');
 var AV = require('leanengine');
+var async = require('async');
 
 var app = express();
 
@@ -26,27 +27,61 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-/*
+
 app.get('/', function(req, res) {
   res.render('index', { currentTime: new Date() });
-});*/
-app.get('/ad', function(req, res) {
-  var query = new AV.Query('Ad');
-  query.get('582d5a58570c35006cee7d82').then(function (ad) {
-      res.json({
-        status:200,
-        message:"",
-        data:{"title":ad.get('title'),"imgUrl":ad.get('imgUrl'),"startTime":ad.get('startTime'),"expireTime":ad.get('expireTime'),
-              "howLong":ad.get('howLong'),"type":ad.get('type')},
-        server_time: new Date()
-      });
-    }, function (error) {
-      // 异常处理
+});
+app.get('/api/getData', function(req, res) {
+    var data=[];
+    //var admincard={};
+
+    function promise1(){
+      var query = new AV.Query('AdminCard');
+      query.equalTo('isDel',false);
+      query.find().then(function (results) {
+          console.log('ac:'+results.length);
+          data.push(results);
+          //callback(null,results
+          return results;
+        }, function (error) {
+          // 异常处理
+        });
+    }
+    function promise2(){
+      var query = new AV.Query('Product');
+      query.equalTo('isDel',false);
+      query.find().then(function (results) {
+          console.log('p:'+results.length);
+          data.push(results);
+          //callback(null,results);
+          return results;
+        }, function (error) {
+          // 异常处理
+          deferred.reject(error);
+        });
+    }
+    async.parallel([
+        function (callback){
+            promise1(callback);
+            //callback(null,promise1);
+        },
+        function (callback){
+            promise2(callback);
+            //callback(null,promise2);
+        }],function(err,results){
+        var result={
+            status:200,
+            message:"",
+            data:data,
+            server_time:new Date()
+        }
+        res.jsonp(result);
+        console.log(result);
+        console.log(results);
     });
-  
 });
 // 可以将一类的路由单独保存在一个文件中
-//app.use('/todos', todos);
+app.use('/todos', todos);
 
 app.use(function(req, res, next) {
   // 如果任何一个路由都没有返回响应，则抛出一个 404 异常给后续的异常处理器
