@@ -32,19 +32,16 @@ app.get('/', function(req, res) {
   res.render('index', { currentTime: new Date() });
 });
 app.get('/api/getData', function(req, res) {
-    
-    //var admincard={};
-
+  
     function promise1(){
       var query = new AV.Query('AdminCard');
       query.equalTo('isDel',false);
       query.find().then(function (results) {
           console.log('ac:'+results.length);
-          data.push(results);
-          //callback(null,results
-          return results;
+          return callback(null,results);
         }, function (error) {
           // 异常处理
+          return callback(error)
         });
     }
     function promise2(){
@@ -52,22 +49,18 @@ app.get('/api/getData', function(req, res) {
       query.equalTo('isDel',false);
       query.find().then(function (results) {
           console.log('p:'+results.length);
-          data.push(results);
-          //callback(null,results);
-          return results;
+          return callback(null,results);
         }, function (error) {
           // 异常处理
-          deferred.reject(error);
+          return callback(error)
         });
     }
     async.parallel([
         function (callback){
-            //promise1(callback);
-            callback(null,promise1());
+            promise1(callback);
         },
         function (callback){
-            //promise2(callback);
-            callback(null,promise2());
+            promise2(callback)
         }],function(err,results){
         var data=[];
         data.push(results);
