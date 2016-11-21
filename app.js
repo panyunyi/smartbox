@@ -33,7 +33,7 @@ app.get('/', function(req, res) {
 });
 app.get('/api/getData', function(req, res) {
   
-    function promise1(){
+    function promise1(callback){
       var query = new AV.Query('AdminCard');
       query.equalTo('isDel',false);
       query.find().then(function (results) {
@@ -44,7 +44,7 @@ app.get('/api/getData', function(req, res) {
           return callback(error)
         });
     }
-    function promise2(){
+    function promise2(callback){
       var query = new AV.Query('Product');
       query.equalTo('isDel',false);
       query.find().then(function (results) {
@@ -60,7 +60,7 @@ app.get('/api/getData', function(req, res) {
             promise1(callback);
         },
         function (callback){
-            promise2(callback)
+            promise2(callback);
         }],function(err,results){
         var data=[];
         data.push(results);
@@ -71,8 +71,6 @@ app.get('/api/getData', function(req, res) {
             server_time:new Date()
         }
         res.jsonp(result);
-        console.log(result);
-        console.log(results);
     });
 });
 // 可以将一类的路由单独保存在一个文件中
