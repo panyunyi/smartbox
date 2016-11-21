@@ -62,12 +62,12 @@ app.get('/api/getData', function(req, res) {
     }
     async.parallel([
         function (callback){
-            promise1(callback);
-            //callback(null,promise1);
+            //promise1(callback);
+            callback(null,promise1());
         },
         function (callback){
-            promise2(callback);
-            //callback(null,promise2);
+            //promise2(callback);
+            callback(null,promise2());
         }],function(err,results){
         var result={
             status:200,
