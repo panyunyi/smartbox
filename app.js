@@ -32,7 +32,7 @@ app.get('/', function(req, res) {
   res.render('index', { currentTime: new Date() });
 });
 app.get('/api/getData', function(req, res) {
-    var data=[];
+    
     //var admincard={};
 
     function promise1(){
@@ -69,6 +69,8 @@ app.get('/api/getData', function(req, res) {
             //promise2(callback);
             callback(null,promise2());
         }],function(err,results){
+        var data=[];
+        data.push(results);
         var result={
             status:200,
             message:"",
