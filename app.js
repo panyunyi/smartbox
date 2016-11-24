@@ -5,8 +5,9 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var todos = require('./routes/todos');
+var getData=require('./routes/getData');
+var tool=require('./routes/tool');
 var AV = require('leanengine');
-var async = require('async');
 
 var app = express();
 
@@ -31,51 +32,11 @@ app.use(cookieParser());
 app.get('/', function(req, res) {
   res.render('index', { currentTime: new Date() });
 });
-app.get('/api/getData', function(req, res) {
-  
-    function promise1(callback){
-      var query = new AV.Query('AdminCard');
-      query.equalTo('isDel',false);
-      query.find().then(function (results) {
-          console.log('ac:'+results.length);
-          return callback(null,results);
-        }, function (error) {
-          // 异常处理
-          return callback(error)
-        });
-    }
-    function promise2(callback){
-      var query = new AV.Query('Product');
-      query.equalTo('isDel',false);
-      query.find().then(function (results) {
-          console.log('p:'+results.length);
-          return callback(null,results);
-        }, function (error) {
-          // 异常处理
-          return callback(error)
-        });
-    }
-    async.parallel([
-        function (callback){
-            promise1(callback);
-        },
-        function (callback){
-            promise2(callback);
-        }],function(err,results){
-        var data=[];
-        data.push(results);
-        var result={
-            status:200,
-            message:"",
-            data:data,
-            server_time:new Date()
-        }
-        res.jsonp(result);
-    });
-});
+
+app.use('/api/getData',getData);
 // 可以将一类的路由单独保存在一个文件中
 app.use('/todos', todos);
-
+app.use('/tool',tool);
 app.use(function(req, res, next) {
   // 如果任何一个路由都没有返回响应，则抛出一个 404 异常给后续的异常处理器
   if (!res.headersSent) {
