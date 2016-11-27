@@ -5,13 +5,13 @@ var async = require('async');
 
 router.get('/', function(req, res) {
     var AdminCard=AV.Object.createWithoutData('AdminCard','5830509ca22b9d006b83b7c8');
-    /*var box=AV.Object.createWithoutData('BoxInfo','58304572a22b9d006b833962');
-    var boxarray=[box];
-    AdminCard.addUnique('box',boxarray);
-    AdminCard.save();*/
-    AdminCard.fetch({include:['box']},null).then(function (results){
-        res.json({data:results});
+    AdminCard.addUnique('box','58304572a22b9d006b833962');
+    AdminCard.save().then(function (ac){
+        res.json(ac);
     });
+    /*AdminCard.fetch({include:['box']},null).then(function (results){
+        res.json({data:results});
+    });*/
 
 });
 module.exports = router;
