@@ -13,9 +13,12 @@ router.post('/login', function(req, res, next) {
   var password = req.body.password;
   AV.User.logIn(username, password).then(function(user) {
     res.saveCurrentUser(user);
-    res.redirect('/todos');
+    res.render('index',{title:"SmartBox云平台",title2:"SmartBox云平台 欢迎："+username});
   }, function(err) {
-    res.redirect('/users/login?errMsg=' + JSON.stringify(err));
+    res.render('users/login',{
+        title:"登录失败",
+        errMsg:"帐号密码有误"
+    });
   }).catch(next);
 });
 
