@@ -4,58 +4,58 @@ $(function() {
         element: 'morris-area-chart',
         data: [{
             period: '2010 Q1',
-            iphone: 2666,
-            ipad: null,
-            itouch: 2647
+            慕贝尔: 2666,
+            法克赛: null,
+            佩尔哲: 2647
         }, {
             period: '2010 Q2',
-            iphone: 2778,
-            ipad: 2294,
-            itouch: 2441
+            慕贝尔: 2778,
+            法克赛: 2294,
+            佩尔哲: 2441
         }, {
             period: '2010 Q3',
-            iphone: 4912,
-            ipad: 1969,
-            itouch: 2501
+            慕贝尔: 4912,
+            法克赛: 1969,
+            佩尔哲: 2501
         }, {
             period: '2010 Q4',
-            iphone: 3767,
-            ipad: 3597,
-            itouch: 5689
+            慕贝尔: 3767,
+            法克赛: 3597,
+            佩尔哲: 5689
         }, {
             period: '2011 Q1',
-            iphone: 6810,
-            ipad: 1914,
-            itouch: 2293
+            慕贝尔: 6810,
+            法克赛: 1914,
+            佩尔哲: 2293
         }, {
             period: '2011 Q2',
-            iphone: 5670,
-            ipad: 4293,
-            itouch: 1881
+            慕贝尔: 5670,
+            法克赛: 4293,
+            佩尔哲: 1881
         }, {
             period: '2011 Q3',
-            iphone: 4820,
-            ipad: 3795,
-            itouch: 1588
+            慕贝尔: 4820,
+            法克赛: 3795,
+            佩尔哲: 1588
         }, {
             period: '2011 Q4',
-            iphone: 15073,
-            ipad: 5967,
-            itouch: 5175
+            慕贝尔: 15073,
+            法克赛: 5967,
+            佩尔哲: 5175
         }, {
             period: '2012 Q1',
-            iphone: 10687,
-            ipad: 4460,
-            itouch: 2028
+            慕贝尔: 10687,
+            法克赛: 4460,
+            佩尔哲: 2028
         }, {
             period: '2012 Q2',
-            iphone: 8432,
-            ipad: 5713,
-            itouch: 1791
+            慕贝尔: 8432,
+            法克赛: 5713,
+            佩尔哲: 1791
         }],
         xkey: 'period',
-        ykeys: ['iphone', 'ipad', 'itouch'],
-        labels: ['iPhone', 'iPad', 'iPod Touch'],
+        ykeys: ['慕贝尔', '法克赛', '佩尔哲'],
+        labels: ['慕贝尔', '法克赛', '佩尔哲'],
         pointSize: 2,
         hideHover: 'auto',
         resize: true

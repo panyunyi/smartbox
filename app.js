@@ -10,6 +10,7 @@ var tool=require('./routes/tool');
 var AV = require('leanengine');
 var users = require('./routes/users');
 var app = express();
+var admin=require('./routes/admin');
 
 // 设置模板引擎
 app.set('views', path.join(__dirname, 'views'));
@@ -32,14 +33,21 @@ app.use(cookieParser());
 
 
 app.get('/', function(req, res) {
-  res.render('users/login',{title:'用户登录'});
+  res.render('login',{title:'用户登录'});
+});
+app.get('/logout',function(req,res){
+    req.currentUser.logOut();
+    res.clearCurrentUser();
+    return res.redirect('login');
 });
 
 app.use('/api/getData',getData);
 // 可以将一类的路由单独保存在一个文件中
 app.use('/todos', todos);
 app.use('/tool',tool);
-app.use('/users', users);
+app.use('/login', users);
+app.use('/admin',admin);
+
 app.use(function(req, res, next) {
   // 如果任何一个路由都没有返回响应，则抛出一个 404 异常给后续的异常处理器
   if (!res.headersSent) {
