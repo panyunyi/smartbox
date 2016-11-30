@@ -6,6 +6,7 @@ var async = require('async');
 router.get('/:id', function(req, res) {
     var deviceid=req.params.id;
     var boxQuery=new AV.Query('BoxInfo');
+    var data={};
     //var customer=AV.
     boxQuery.equalTo('')
     function promise1(callback){
@@ -13,7 +14,8 @@ router.get('/:id', function(req, res) {
       query.equalTo('isDel',false);
       query.select(['card']);
       query.find().then(function (results) {
-          results={AdminCard:results};
+          //results={AdminCard:results};
+          data["AdminCard"]=results;
           return callback(null,results);
         }, function (error) {
           // 异常处理
@@ -29,7 +31,8 @@ router.get('/:id', function(req, res) {
           results.forEach(function(result){
               result.set('cusProduct', result.get('cusProduct') ?  result.get('cusProduct').toJSON() : null);
           });
-          results={Product:results};
+          //results={Product:results};
+          data["Product"]=results;
           return callback(null,results);
         }, function (error) {
           // 异常处理
@@ -43,7 +46,8 @@ router.get('/:id', function(req, res) {
         query.include('power');
         query.select(['empNo','card','power']);
         query.find().then(function (results) {
-            results={Employee:results};
+            //results={Employee:results};
+            data["Employee"]=results;
             return callback(null,results);
           }, function (error) {
             // 异常处理
@@ -55,7 +59,8 @@ router.get('/:id', function(req, res) {
         query.equalTo('isDel',false);
         query.select(['unit','product','begin','count','period']);
         query.find().then(function (results) {
-            results={EmpPower:results};
+            //results={EmpPower:results};
+            data["EmpPower"]=results;
             return callback(null,results);
           }, function (error) {
             // 异常处理
@@ -69,7 +74,8 @@ router.get('/:id', function(req, res) {
         query.include('product.productId');
         query.select(['capacity','seqNo','whorlSize','product','isSend','borrowState','stock']);
         query.find().then(function (results) {
-            results={Passage:results};
+            //results={Passage:results};
+            data["Passage"]=results;
             return callback(null,results);
           }, function (error) {
             // 异常处理
@@ -95,7 +101,7 @@ router.get('/:id', function(req, res) {
         var result={
             status:200,
             message:"",
-            data:results,
+            data:data,
             server_time:new Date()
         }
         res.jsonp(result);
