@@ -95,7 +95,7 @@ router.get('/:id', function(req, res) {
         var result={
             status:200,
             message:"",
-            data:results,
+            data:JSON.stringify(results),
             server_time:new Date()
         }
         res.jsonp(result);
