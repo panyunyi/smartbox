@@ -8,7 +8,7 @@ router.get('/:id', function(req, res) {
     var boxQuery=new AV.Query('BoxInfo');
     var data={};
     //var customer=AV.
-    boxQuery.equalTo('')
+    //boxQuery.equalTo('')
     function promise1(callback){
       var query = new AV.Query('AdminCard');
       query.equalTo('isDel',false);
