@@ -1,0 +1,99 @@
+<%include header%>
+<div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">管理卡</h1>
+                    </div>
+                    <!-- /.col-lg-12 -->
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="panel panel-default">
+
+                            <!-- /.panel-heading -->
+                            <div class="panel-body">
+                                <div class="table-responsive">
+                                    <table id="table" class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>序号</th>
+                                                <th>卡号</th>
+                                                <th>可管理货柜</th>
+                                                <th>所属客户</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <%for(var i=1;i<=data.length;i++){%>
+                                                <tr>
+                                                    <td><%=i%></td>
+                                                    console.log(data[i]);
+
+                                                </tr>
+                                            <%}%>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- /.table-responsive -->
+                            </div>
+                            <!-- /.panel-body -->
+                        </div>
+                        <!-- /.panel -->
+                    </div>
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- jQuery -->
+    <script src="../vendor/jquery/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="../vendor/metisMenu/metisMenu.min.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="../dist/js/sb-admin-2.js"></script>
+    <script>
+        $(document).ready(function() {
+            editor = new $.fn.dataTable.Editor( {
+            ajax: "../edit/admincard",
+            table: "#table",
+            fields: [ {
+                    label: "卡号:",
+                    name: "card"
+                }, {
+                    label: "货柜:",
+                    name: "box"
+                }, {
+                    label: "所属客户:",
+                    name: "customer"
+                }
+                ]
+            } );
+            $('#table').DataTable({
+                dom: "Bfrtip",
+                columns: [
+                    { data: "card" },
+                    { data: "box" },
+                    { data: "customer" }
+                ],
+                select: true,
+                buttons: [
+                    { extend: "新增", editor: editor },
+                    { extend: "编辑",   editor: editor },
+                    { extend: "删除", editor: editor }
+                ]
+            });
+        });
+    </script>
+</body>
+
+</html>

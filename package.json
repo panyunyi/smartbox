@@ -1,7 +1,7 @@
 {
-  "name": "smartbox",
+  "name": "CPSuperMarket",
   "version": "1.0.0",
-  "description": "Smartbox using Express 4",
+  "description": "CPSuperMarket using Express 4",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
