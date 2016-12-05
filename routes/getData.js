@@ -3,7 +3,8 @@ var router = require('express').Router();
 var AV = require('leanengine');
 var async = require('async');
 
-function doWork(cus,res){
+function doWork(cus,box,res){
+    var data={};
     function promise1(callback){
       var query = new AV.Query('AdminCard');
       query.equalTo('customer',cus);
@@ -18,15 +19,17 @@ function doWork(cus,res){
         });
     }
     function promise2(callback){
-      var query = new AV.Query('Product');
-      query.include('cusProduct');
+      var query = new AV.Query('CustomerProduct');
+      query.include('product');
+      query.equalTo('cusId',cus);
       query.equalTo('isDel',false);
-      query.select(['name','cusProduct.cusProductName']);
       query.find().then(function (results) {
+          var arr=[];
           results.forEach(function(result){
-              result.set('cusProduct', result.get('cusProduct') ?  result.get('cusProduct').toJSON() : null);
+              var one={"cusProductName":result.get('cusProductName'),"productName":result.get('product').get('name'),"objectId":result.get('product').get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+              arr.push(one);
           });
-          data["Product"]=results;
+          data["Product"]=arr;
           return callback(null,results);
         }, function (error) {
           // 异常处理
@@ -36,11 +39,14 @@ function doWork(cus,res){
     function promise3(callback){
         var query = new AV.Query('Employee');
         query.equalTo('isDel',false);
-        query.include('card');
-        query.include('power');
-        query.select(['empNo','card','power']);
+        query.equalTo('cusId',cus);
         query.find().then(function (results) {
-            data["Employee"]=results;
+            var arr=[];
+            results.forEach(function(result){
+                var one={"empNo":result.get('empNo'),"card":result.get('card'),"power":result.get('power'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+                arr.push(one);
+            });
+            data["Employee"]=arr;
             return callback(null,results);
           }, function (error) {
             // 异常处理
@@ -50,9 +56,14 @@ function doWork(cus,res){
     function promise4(callback){
         var query=new AV.Query('EmployeePower');
         query.equalTo('isDel',false);
-        query.select(['unit','product','begin','count','period']);
+        query.equalTo('boxId',box);
         query.find().then(function (results) {
-            data["EmpPower"]=results;
+            var arr=[];
+            results.forEach(function(result){
+                var one={"unit":result.get('unit'),"product":result.get('product').get('id'),"count":result.get('count'),"period":result.get('period'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+                arr.push(one);
+            });
+            data["EmpPower"]=arr;
             return callback(null,results);
           }, function (error) {
             // 异常处理
@@ -62,11 +73,15 @@ function doWork(cus,res){
     function promise5(callback){
         var query=new AV.Query('Passage');
         query.equalTo('isDel',false);
-        query.include('product');
-        query.include('product.productId');
+        query.equalTo('boxId',box);
         query.select(['capacity','seqNo','whorlSize','product','isSend','borrowState','stock']);
         query.find().then(function (results) {
-            data["Passage"]=results;
+            var arr=[];
+            results.forEach(function(result){
+                var one={"capacity":result.get('capacity'),"seqNo":result.get('seqNo'),"whorlSize":result.get('whorlSize'),"product":result.get('product').get('id'),"borrowState":result.get('borrowState'),"stock":result.get('stock'),"isSend":result.get('isSend'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+                arr.push(one);
+            });
+            data["Passage"]=arr;
             return callback(null,results);
           }, function (error) {
             // 异常处理
@@ -101,17 +116,11 @@ function doWork(cus,res){
 router.get('/:id', function(req, res) {
     var deviceid=req.params.id;
     var boxQuery=new AV.Query('BoxInfo');
-    var data={};
     boxQuery.equalTo('deviceId',deviceid);
     boxQuery.include('cusId');
     boxQuery.first().then(function (data){
-        var cusQuery=new AV.Query('Customer');
-        res.jsonp(data);
-        cusQuery.get(data.id).then(function (cus){
-            //doWork(cus,res);
-        },function (error){
-            console.log(error);
-        });
+        var cus=data.get('cusId');
+        doWork(cus,data,res);
     },function (error){
         console.log(error);
     });
