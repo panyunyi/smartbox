@@ -43,8 +43,8 @@ app.get('/logout',function(req,res){
 
 app.use('/api/getData',getData);
 // 可以将一类的路由单独保存在一个文件中
-app.use('/todos', todos);
-app.use('/tool',tool);
+//app.use('/todos', todos);
+//app.use('/tool',tool);
 app.use('/login', users);
 app.use('/admin',admin);
 

@@ -2,6 +2,7 @@
 var router = require('express').Router();
 var AV = require('leanengine');
 var async = require('async');
+var ApiLog=require('./log.js');
 
 function doWork(cus,box,res,ts){
     var data={};
@@ -124,6 +125,8 @@ router.get('/:id', function(req, res) {
     boxQuery.equalTo('deviceId',deviceid);
     boxQuery.include('cusId');
     boxQuery.first().then(function (data){
+        var todo={"ip":req.headers['x-real-ip'],"api":"获取基础数据","deviceId":req.params.id,"msg":""};
+        ApiLog.WorkOn(todo);
         if (typeof(data) == "undefined") { 
           var result={
             status:200,
@@ -131,8 +134,8 @@ router.get('/:id', function(req, res) {
             data:{},
             server_time:new Date()
           }
-          res.jsonp(result);   
-          return;   
+          res.jsonp(result);
+          return;
         }
         var cus=data.get('cusId');
         doWork(cus,data,res,new Date(0));
@@ -147,6 +150,8 @@ router.get('/:id/:stamp', function(req, res) {
     boxQuery.equalTo('deviceId',deviceid);
     boxQuery.include('cusId');
     boxQuery.first().then(function (data){
+        var todo={"ip":req.headers['x-real-ip'],"api":"同步基础数据","deviceId":req.params.id,"msg":""};
+        ApiLog.WorkOn(todo);
         if (typeof(data) == "undefined") { 
           var result={
             status:200,
