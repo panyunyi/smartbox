@@ -11,6 +11,13 @@ var AV = require('leanengine');
 var users = require('./routes/users');
 var app = express();
 var admin=require('./routes/admin');
+var error=require('./routes/error');
+var takeout=require('./routes/takeout');
+var borrow=require('./routes/borrow');
+var back=require('./routes/return');
+var takeout_record=require('./routes/takeout_record');
+var supply_record=require('./routes/supply_record');
+var borrow_record=require('./routes/borrow_record');
 
 // 设置模板引擎
 app.set('views', path.join(__dirname, 'views'));
@@ -42,6 +49,13 @@ app.get('/logout',function(req,res){
 });
 
 app.use('/api/getData',getData);
+app.use('/api/takeout',takeout);
+app.use('/api/borrow',borrow);
+app.use('/api/return',back);
+app.use('/api/takeout_record',takeout_record);
+app.use('/api/supply_record',supply_record);
+app.use('/api/borrow_record',borrow_record);
+app.use('/api/error',error);
 // 可以将一类的路由单独保存在一个文件中
 //app.use('/todos', todos);
 //app.use('/tool',tool);
