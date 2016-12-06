@@ -119,6 +119,16 @@ router.get('/:id', function(req, res) {
     boxQuery.equalTo('deviceId',deviceid);
     boxQuery.include('cusId');
     boxQuery.first().then(function (data){
+        if (typeof(data) == "undefined") { 
+          var result={
+            status:200,
+            message:"",
+            data:{},
+            server_time:new Date()
+          }
+          res.jsonp(result);   
+          return;   
+        }
         var cus=data.get('cusId');
         doWork(cus,data,res);
     },function (error){
@@ -127,7 +137,7 @@ router.get('/:id', function(req, res) {
 
 });
 
-router.get('/:id/:ver', function(req, res) {
+router.get('/:id/:stamp', function(req, res) {
     console.log(req.params.id+" "+req.params.ver);
 });
 module.exports = router;
