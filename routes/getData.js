@@ -3,10 +3,11 @@ var router = require('express').Router();
 var AV = require('leanengine');
 var async = require('async');
 
-function doWork(cus,box,res){
+function doWork(cus,box,res,ts){
     var data={};
     function promise1(callback){
       var query = new AV.Query('AdminCard');
+      query.greaterThanOrEqualTo('updatedAt',ts);
       query.equalTo('customer',cus);
       query.equalTo('isDel',false);
       query.select(['card']);
@@ -20,6 +21,7 @@ function doWork(cus,box,res){
     }
     function promise2(callback){
       var query = new AV.Query('CustomerProduct');
+      query.greaterThanOrEqualTo('updatedAt',ts);
       query.include('product');
       query.equalTo('cusId',cus);
       query.equalTo('isDel',false);
@@ -38,6 +40,7 @@ function doWork(cus,box,res){
     }
     function promise3(callback){
         var query = new AV.Query('Employee');
+        query.greaterThanOrEqualTo('updatedAt',ts);
         query.equalTo('isDel',false);
         query.equalTo('cusId',cus);
         query.find().then(function (results) {
@@ -55,6 +58,7 @@ function doWork(cus,box,res){
     }
     function promise4(callback){
         var query=new AV.Query('EmployeePower');
+        query.greaterThanOrEqualTo('updatedAt',ts);
         query.equalTo('isDel',false);
         query.equalTo('boxId',box);
         query.find().then(function (results) {
@@ -72,6 +76,7 @@ function doWork(cus,box,res){
     }
     function promise5(callback){
         var query=new AV.Query('Passage');
+        query.greaterThanOrEqualTo('updatedAt',ts);
         query.equalTo('isDel',false);
         query.equalTo('boxId',box);
         query.select(['capacity','seqNo','whorlSize','product','isSend','borrowState','stock']);
@@ -130,14 +135,32 @@ router.get('/:id', function(req, res) {
           return;   
         }
         var cus=data.get('cusId');
-        doWork(cus,data,res);
+        doWork(cus,data,res,new Date(0));
     },function (error){
         console.log(error);
     });
-
 });
 
 router.get('/:id/:stamp', function(req, res) {
-    console.log(req.params.id+" "+req.params.ver);
+    var deviceid=req.params.id;
+    var boxQuery=new AV.Query('BoxInfo');
+    boxQuery.equalTo('deviceId',deviceid);
+    boxQuery.include('cusId');
+    boxQuery.first().then(function (data){
+        if (typeof(data) == "undefined") { 
+          var result={
+            status:200,
+            message:"",
+            data:{},
+            server_time:new Date()
+          }
+          res.jsonp(result);   
+          return;   
+        }
+        var cus=data.get('cusId');
+        doWork(cus,data,res,new Date(req.params.stamp*1000));
+    },function (error){
+        console.log(error);
+    });
 });
 module.exports = router;
