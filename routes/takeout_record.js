@@ -6,7 +6,7 @@ var TakeOut = AV.Object.extend('TakeOut');
 
 router.post('/', function(req, res, next) {
   var deviceId = req.body.deviceId;
-  var todo={"ip":req.headers['x-real-ip'],"api":"取货数据接口","deviceId":deviceId,"msg":""};
+  var todo={"ip":req.headers['x-real-ip'],"api":"取货数据接口","deviceId":deviceId,"msg":JSON.stringify(req.body)};
   ApiLog.WorkOn(todo);
   var records=req.body.record;
   var objects=[];
@@ -30,7 +30,7 @@ router.post('/', function(req, res, next) {
       console.log(error);
       var result={
         status:200,
-        message:"",
+        message:"提交失败",
         data:false,
         server_time:new Date()
       }

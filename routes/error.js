@@ -6,7 +6,7 @@ var ErrorLog = AV.Object.extend('ErrorLog');
 
 router.post('/', function(req, res, next) {
   var deviceId = req.body.deviceId;
-  var todo={"ip":req.headers['x-real-ip'],"api":"异常数据提记录口","deviceId":deviceId,"msg":""};
+  var todo={"ip":req.headers['x-real-ip'],"api":"异常数据提记录口","deviceId":deviceId,"msg":JSON.stringify(req.body)};
   ApiLog.WorkOn(todo);
   var errors=req.body.error;
   var objects=[];
@@ -32,7 +32,7 @@ router.post('/', function(req, res, next) {
       console.log(error);
       var result={
         status:200,
-        message:"",
+        message:"提交失败",
         data:false,
         server_time:new Date()
       }

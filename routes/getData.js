@@ -140,7 +140,7 @@ router.get('/:id', function(req, res) {
         if (typeof(data) == "undefined") {
           var result={
             status:200,
-            message:"",
+            message:"无此设备号的数据",
             data:{},
             server_time:new Date()
           }
@@ -151,6 +151,13 @@ router.get('/:id', function(req, res) {
         doWork(cus,data,res,new Date(0));
     },function (error){
         console.log(error);
+        var result={
+          status:200,
+          message:"查询失败",
+          data:{},
+          server_time:new Date()
+        }
+        res.jsonp(result);
     });
 });
 
@@ -165,7 +172,7 @@ router.get('/:id/:stamp', function(req, res) {
         if (typeof(data) == "undefined") {
           var result={
             status:200,
-            message:"",
+            message:"无此设备号的数据",
             data:{},
             server_time:new Date()
           }
@@ -176,6 +183,13 @@ router.get('/:id/:stamp', function(req, res) {
         doWork(cus,data,res,new Date(req.params.stamp*1000));
     },function (error){
         console.log(error);
+        var result={
+          status:200,
+          message:"查询失败",
+          data:{},
+          server_time:new Date()
+        }
+        res.jsonp(result);
     });
 });
 module.exports = router;
