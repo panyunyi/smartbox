@@ -1,7 +1,7 @@
 'use strict';
 var router = require('express').Router();
 var AV = require('leanengine');
-
+var ApiLog=require('./log');
 var ErrorLog = AV.Object.extend('ErrorLog');
 
 router.post('/', function(req, res, next) {
