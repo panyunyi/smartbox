@@ -163,7 +163,7 @@ router.get('/:id', function(req, res) {
 
 router.get('/:id/:stamp', function(req, res) {
     var deviceId=req.params.id;
-    var todo={"ip":req.headers['x-real-ip'],"api":"同步基础数据接口","deviceId":deviceId,"msg":""};
+    var todo={"ip":req.headers['x-real-ip'],"api":"同步基础数据接口","deviceId":deviceId,"msg":req.params.stamp};
     ApiLog.WorkOn(todo);
     var boxQuery=new AV.Query('BoxInfo');
     boxQuery.equalTo('deviceId',deviceId);

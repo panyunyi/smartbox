@@ -16,6 +16,7 @@ router.post('/', function(req, res, next) {
       obj.set('passage',error.passage);
       obj.set('card',error.card);
       obj.set('time',new Date(error.time));
+      obj.set('isDel',false);
       objects.push(obj);
   });
   AV.Object.saveAll(objects).then(function (objects) {

@@ -21,7 +21,8 @@
     "ejs": "2.3.1",
     "express": "4.12.3",
     "leanengine": "^1.0.0-beta",
-    "async":"2.1.2"
+    "async":"2.1.2",
+    "moment":"2.17.1"
   },
   "devDependencies": {
     "nodemon": "^1.11.0"
