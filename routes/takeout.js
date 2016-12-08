@@ -9,7 +9,7 @@ var TakeOut = AV.Object.extend('TakeOut');
 function doWork(cus,box,deviceId,card,passage,res){
     var flag=false;
     var resdata={};
-    resdata["result"]=flag;
+    //resdata["result"]=flag;
     function promise1(callback){
         console.log(1);
         var cardQuery=new AV.Query('EmployeeCard');
@@ -108,15 +108,14 @@ function doWork(cus,box,deviceId,card,passage,res){
                     onetake.set('result',false);
                     onetake.set('passage',passage);
                     onetake.save().then(function(one){
-                        //resdata["result"]=flag;
-                        //resdata["objectId"]=one.id;
+                        resdata["result"]=flag;
+                        resdata["objectId"]=one.id;
                         console.log(one.id);
                         return callback(null,true);
                     });
                 }
             });
         }
-        return callback(null,false);
     }
     async.waterfall([
         function (callback){
@@ -134,7 +133,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         var result={
             status:200,
             message:"",
-            data:results,
+            data:resdata,
             server_time:new Date()
         }
         res.jsonp(result);
@@ -176,7 +175,15 @@ router.get('/:id/:card/:passage', function(req, res) {
 });
 
 router.get('/success/:id', function(req, res) {
-    var begin=moment().subtract(0,'months').startOf('month').format("YYYY-MM-DD HH:mm:ss");
-    res.jsonp(begin);
+    var takeout=AV.Object.createWithoutData('TakeOut',req.params.id);
+    takeout.set('result',true);
+    takeout.save();
+    var result={
+      status:200,
+      message:"",
+      data:true,
+      server_time:new Date()
+    }
+    res.jsonp(result);
 });
 module.exports = router;
