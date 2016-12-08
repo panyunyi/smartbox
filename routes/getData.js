@@ -73,7 +73,7 @@ function doWork(cus,box,res,ts){
         query.find().then(function (results) {
             var arr=[];
             results.forEach(function(result){
-                var one={"unit":result.get('unit'),"isDel":result.get('isDel'),"product":result.get('product').get('id'),"count":result.get('count'),"period":result.get('period'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+                var one={"unit":result.get('unit'),"begin":result.get('begin'),"isDel":result.get('isDel'),"product":result.get('product').get('id'),"count":result.get('count'),"period":result.get('period'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
                 arr.push(one);
             });
             data["EmpPower"]=arr;
