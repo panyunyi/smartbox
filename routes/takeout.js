@@ -92,8 +92,6 @@ function doWork(cus,box,deviceId,card,passage,res){
             takeoutQuery.greaterThanOrEqualTo('time',begin.toDate());
             takeoutQuery.lessThanOrEqualTo('time',new Date());
             takeoutQuery.count().then(function(takecount){
-                console.log(count);
-                console.log(takecount);
                 if (count>takecount) {
                     flag=true;
                     var onetake=new TakeOut();
@@ -107,7 +105,6 @@ function doWork(cus,box,deviceId,card,passage,res){
                     onetake.save().then(function(one){
                         resdata["result"]=flag;
                         resdata["objectId"]=one.id;
-                        console.log(one.id);
                         return callback(null,true);
                     });
                 }else{
