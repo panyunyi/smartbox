@@ -9,9 +9,8 @@ var TakeOut = AV.Object.extend('TakeOut');
 function doWork(cus,box,deviceId,card,passage,res){
     var flag=false;
     var resdata={};
-    //resdata["result"]=flag;
+    resdata["result"]=flag;
     function promise1(callback){
-        console.log(1);
         var cardQuery=new AV.Query('EmployeeCard');
         cardQuery.equalTo('card',card);
         cardQuery.equalTo('isDel',false);
@@ -34,7 +33,6 @@ function doWork(cus,box,deviceId,card,passage,res){
         });
     }
     function promise2(arg1,arg2,callback){
-        console.log(2);
         if(arg1==0){
             return callback(null,false,null);
         }
@@ -49,7 +47,6 @@ function doWork(cus,box,deviceId,card,passage,res){
         });
     }
     function promise3(arg1,arg2,callback){
-        console.log(3);
         if (typeof(arg1) == "undefined"||arg1==false||arg2==null) {
             return callback(null,false);
         }
@@ -67,7 +64,6 @@ function doWork(cus,box,deviceId,card,passage,res){
         }
     }
     function verifyPower(product,power,callback){
-        console.log(4);
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
             var unit=power.get('unit');
             var period=power.get('period');
@@ -87,16 +83,16 @@ function doWork(cus,box,deviceId,card,passage,res){
                     units="months";
             }
             var begin=moment().subtract(period-1,'months').startOf('month');
-            console.log(begin);
-            console.log(count);
             var takeoutQuery=new AV.Query('TakeOut');
             takeoutQuery.equalTo('isDel',false);
             takeoutQuery.equalTo('result',true);
             takeoutQuery.equalTo('deviceId',deviceId);
             takeoutQuery.equalTo('card',card);
-            takeoutQuery.greaterThanOrEqualTo('time',begin);
+            takeoutQuery.equalTo('product',product);
+            takeoutQuery.greaterThanOrEqualTo('time',begin.toDate());
             takeoutQuery.lessThanOrEqualTo('time',new Date());
             takeoutQuery.count().then(function(takecount){
+                console.log(count);
                 console.log(takecount);
                 if (count>takecount) {
                     flag=true;
@@ -107,27 +103,28 @@ function doWork(cus,box,deviceId,card,passage,res){
                     onetake.set('card',card);
                     onetake.set('result',false);
                     onetake.set('passage',passage);
+                    onetake.set('product',product);
                     onetake.save().then(function(one){
                         resdata["result"]=flag;
                         resdata["objectId"]=one.id;
                         console.log(one.id);
                         return callback(null,true);
                     });
+                }else{
+                    resdata["result"]=flag;
+                    return callback(null,false);
                 }
             });
         }
     }
     async.waterfall([
         function (callback){
-            console.log("func1");
             promise1(callback);
         },
         function (arg1,arg2,callback){
-            console.log("func2");
             promise2(arg1,arg2,callback);
         },
         function (arg1,arg2,callback){
-            console.log("func3");
             promise3(arg1,arg2,callback);
         }],function(err,results){
         var result={
@@ -175,15 +172,42 @@ router.get('/:id/:card/:passage', function(req, res) {
 });
 
 router.get('/success/:id', function(req, res) {
-    var takeout=AV.Object.createWithoutData('TakeOut',req.params.id);
-    takeout.set('result',true);
-    takeout.save();
     var result={
       status:200,
       message:"",
-      data:true,
+      data:false,
       server_time:new Date()
     }
-    res.jsonp(result);
+    var todo={"ip":req.headers['x-real-ip'],"api":"取货成功回调接口","deviceId":"","msg":"objectId:"+req.params.id};
+    ApiLog.WorkOn(todo);
+    var takeout=AV.Object.createWithoutData('TakeOut',req.params.id);
+    takeout.set('result',true);
+    takeout.save().then(function(data){
+        var result={
+          status:200,
+          message:"",
+          data:true,
+          server_time:new Date()
+        }
+        res.jsonp(result);
+        var deviceId=takeout.get('deviceId');
+        var seqNo=takeout.get('passage');
+        var boxQuery=new AV.Query('BoxInfo');
+        boxQuery.equalTo('deviceId',deviceId);
+        boxQuery.first().then(function(box){
+            if(typeof(box)=="undefined"){
+                return res.jsonp(result);
+            }
+            var passageQuery=new AV.Query('Passage');
+            passageQuery.equalTo('boxId',box);
+            passageQuery.equalTo('seqNo',seqNo);
+            passageQuery.first().then(function(passage){
+                passage.set('stock',passage.get('stock')-1);
+                passage.save();
+            });
+        });
+    },function(error){
+        res.jsonp(result);
+    });
 });
 module.exports = router;
