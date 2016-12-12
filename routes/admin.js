@@ -36,15 +36,7 @@ router.get('/assortment', function(req, res) {
 
 router.get('/admincard', function(req, res) {
     if(req.currentUser){
-        var query=new AV.Query('AdminCard');
-        query.find().then(function (results){
-            var data=[];
-            results.forEach(function(result){
-                var one={"card":result.get('card'),"box":result.get('box'),"customer":result.get('customer')};
-                data.push(one);
-            });
-            res.render('admincard',{data:data});
-        });
+        res.render('admincard');
     }else{
     	res.redirect('login');
     }

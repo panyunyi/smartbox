@@ -18,6 +18,7 @@ var back=require('./routes/return');
 var takeout_record=require('./routes/takeout_record');
 var supply_record=require('./routes/supply_record');
 var borrow_record=require('./routes/borrow_record');
+var datatable=require('./routes/datatable');
 
 // 设置模板引擎
 app.set('views', path.join(__dirname, 'views'));
@@ -48,6 +49,7 @@ app.get('/logout',function(req,res){
     return res.redirect('login');
 });
 
+app.use('/api/json',datatable);
 app.use('/api/getData',getData);
 app.use('/api/takeout',takeout);
 app.use('/api/borrow',borrow);
