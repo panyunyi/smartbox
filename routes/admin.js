@@ -90,14 +90,6 @@ router.get('/cusproduct', function(req, res) {
     }
 });
 
-router.get('/empcard', function(req, res) {
-    if(req.currentUser){
-    	res.render('empcard');
-    }else{
-    	res.redirect('../login');
-    }
-});
-
 router.get('/emppower', function(req, res) {
     if(req.currentUser){
     	res.render('emppower');
