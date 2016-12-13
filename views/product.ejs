@@ -1,33 +1,99 @@
-<%include header%>
-<div id="page-wrapper">
+<% include header %>
+        <div id="page-wrapper">
             <div class="container-fluid">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <h1 class="page-header">产品</h1>
-                    </div>
-                    <!-- /.col-lg-12 -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="page-header">产品</h1>
                 </div>
-                <!-- /.row -->
+                <!-- /.col-lg-12 -->
             </div>
-            <!-- /.container-fluid -->
+            <!-- /.row -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            产品数据表
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <table id="table" class="ui celled table" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>序号</th>
+                                        <th>产品名称</th>
+                                        <th>产品分类</th>
+                                        <th>单位</th>
+                                        <th>单价</th>
+                                        <th>规格</th>
+                                        <th>补货提示点</th>
+                                        <th>库存预警值</th>
+                                        <th>备货天数</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                    <!-- /.panel -->
+                </div>
+            </div>
+            <!-- /.row -->
         </div>
-        <!-- /#page-wrapper -->
-
+        <!-- /.container-fluid -->
     </div>
-    <!-- /#wrapper -->
+    <!-- /#page-wrapper -->
 
-    <!-- jQuery -->
-    <script src="../vendor/jquery/jquery.min.js"></script>
+</div>
+<!-- /#wrapper -->
 
-    <!-- Bootstrap Core JavaScript -->
-    <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+<!-- jQuery -->
+<script src="../vendor/jquery/jquery.min.js"></script>
 
-    <!-- Metis Menu Plugin JavaScript -->
-    <script src="../vendor/metisMenu/metisMenu.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 
-    <!-- Custom Theme JavaScript -->
-    <script src="../dist/js/sb-admin-2.js"></script>
+<!-- Metis Menu Plugin JavaScript -->
+<script src="../vendor/metisMenu/metisMenu.min.js"></script>
 
+<!-- Custom Theme JavaScript -->
+<script src="../dist/js/sb-admin-2.js"></script>
+<script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.13/js/dataTables.semanticui.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.6/semantic.min.js"></script>
+<script>
+    var t= $('#table').DataTable( {
+        stateSave: true,
+       "ajax": '../api/json/product',
+       "columns": [
+            {"data":null},
+            { "data": "name" },
+            { "data": "type" },
+            { "data": "unit" },
+            { "data": "price" },
+            { "data": "spec" },
+            { "data": "cue" },
+            { "data": "warning" },
+            { "data": "stockDays" },
+        ],
+        "columnDefs": [{
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+        }],
+        "order": [[1, 'asc']],
+        "language": {
+            "url": "../vendor/zh_CN.txt"
+        }
+    });
+    t.on('order.dt search.dt',function() {
+                t.column(0, {
+                    search: 'applied',
+                    order: 'applied'
+                }).nodes().each(function(cell, i) {
+                    cell.innerHTML = i + 1;
+                });
+            }).draw();
+</script>
 </body>
 
 </html>
