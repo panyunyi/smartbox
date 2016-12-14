@@ -135,11 +135,35 @@ router.get('/empPower',function(req,res){
 
 //售货机管理
 router.get('/box',function(req,res){
-
+    var query=new AV.Query('BoxInfo');
+    query.equalTo('isDel',false);
+    query.include('cusId');
+    query.find().then(function(results){
+        results.forEach(function(result){
+            result.set('cusId',result.get('cusId').get('name'));
+            result.set('isLive',result.get('isLive')?"联机":"未联机");
+        });
+        res.jsonp({"data":results});
+    });
 });
-router.get('/passage',function(req,res){
 
+router.get('/passtock',function(req,res){
+    var query=new AV.Query('Passage');
+    query.equalTo('isDel',false);
+    query.include('boxId');
+    query.include('boxId.cusId');
+    query.include('product');
+    query.find().then(function(results){
+        results.forEach(function(result){
+            console.log(result.get('boxId').get('cusId').get('name'));
+            result.set('boxId',result.get('boxId').get('deviceId'));
+            //result.set('cus',result.get('boxId').get('cusId').get('name'));
+            result.set('product',result.get('product').get('name'));
+        });
+        res.jsonp({"data":results});
+    });
 });
+
 router.get('/takeout',function(req,res){
 
 });
