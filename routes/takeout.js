@@ -82,7 +82,7 @@ function doWork(cus,box,deviceId,card,passage,res){
                 default:
                     units="months";
             }
-            var begin=moment().subtract(period-1,'months').startOf('month');
+            var begin=moment().subtract(period-1,units).startOf(unit);
             var takeoutQuery=new AV.Query('TakeOut');
             takeoutQuery.equalTo('isDel',false);
             takeoutQuery.equalTo('result',true);
@@ -112,6 +112,8 @@ function doWork(cus,box,deviceId,card,passage,res){
                     return callback(null,false);
                 }
             });
+        }else{
+            return callback(null,false);
         }
     }
     async.waterfall([
