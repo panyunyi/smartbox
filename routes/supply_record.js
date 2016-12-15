@@ -19,6 +19,20 @@ router.post('/', function(req, res, next) {
       obj.set('time',new Date(error.time));
       obj.set('isDel',false);
       objects.push(obj);
+      var boxQuery=new AV.Query('BoxInfo');
+      boxQuery.equalTo('isDel',false);
+      boxQuery.equalTo('deviceId',deviceId);
+      boxQuery.first().then(function(box){
+        var query=new AV.Query('Passage');
+        query.equalTo('isDel',false);
+        query.equalTo('boxId',box);
+        query.first().then(function(passage){
+          passage.set('stock',passage.get('stock')+1);
+          passage.save();
+        });
+      });
+      
+
   });
   AV.Object.saveAll(objects).then(function (objects) {
       var result={
