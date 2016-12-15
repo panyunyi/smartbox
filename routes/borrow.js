@@ -66,7 +66,6 @@ function doWork(cus,box,deviceId,card,passage,res){
         console.log(power.get('boxId').get('id')+" "+box.get('id'));
         console.log(power.get('product').get('id')+" "+product.get('id'));
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
-            console.log(1);
             flag=true;
             var oneborrow=new Borrow();
             oneborrow.set('isDel',false);
@@ -78,7 +77,6 @@ function doWork(cus,box,deviceId,card,passage,res){
             oneborrow.set('product',product);
             oneborrow.set('borrow',false);
             oneborrow.save().then(function(one){
-                console.log(2);
                 resdata["result"]=flag;
                 resdata["objectId"]=one.id;
                 return callback(null,resdata);
