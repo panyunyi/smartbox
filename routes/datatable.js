@@ -112,10 +112,12 @@ router.get('/employee',function(req,res){
 router.get('/empPower',function(req,res){
     var query=new AV.Query('EmployeePower');
     query.include('boxId');
+    query.include('boxId.cusId');
     query.include('product');
     query.equalTo('isDel',false);
     query.find().then(function(results){
         results.forEach(function(result){
+            result.set('cus',result.get('boxId').get('cusId').get('name'));
             result.set('boxId',result.get('boxId').get('deviceId'));
             result.set('product',result.get('product').get('name'));
             var unit="";
@@ -155,9 +157,8 @@ router.get('/passtock',function(req,res){
     query.include('product');
     query.find().then(function(results){
         results.forEach(function(result){
-            console.log(result.get('boxId').get('cusId').get('name'));
+            result.set('cus',result.get('boxId').get('cusId').get('name'));
             result.set('boxId',result.get('boxId').get('deviceId'));
-            //result.set('cus',result.get('boxId').get('cusId').get('name'));
             result.set('product',result.get('product').get('name'));
         });
         res.jsonp({"data":results});
