@@ -37,7 +37,10 @@ function doWork(cus,box,deviceId,card,passage,res){
         }
         var passageQuery=new AV.Query('Passage');
         passageQuery.equalTo('isDel',false);
-        passageQuery.equalTo('seqNo',passage);
+        passageQuery.equalTo('flag',passage.substr(0,1));
+        passageQuery.equalTo('isSend',false);
+        passageQuery.equalTo('borrowState',false);
+        passageQuery.equalTo('seqNo',passage.substr(1,2));
         passageQuery.equalTo('boxId',box);
         passageQuery.first().then(function(passageObj){
             return callback(null,passageObj,arg2);
@@ -59,12 +62,12 @@ function doWork(cus,box,deviceId,card,passage,res){
                 if (typeof(power)!="undefined") {
                     verifyPower(product,power,callback);
                 }
-            },function(error){});
+            },function(error){
+                return callback(error);
+            });
         }
     }
     function verifyPower(product,power,callback){
-        console.log(power.get('boxId').get('id')+" "+box.get('id'));
-        console.log(power.get('product').get('id')+" "+product.get('id'));
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
             flag=true;
             var oneborrow=new Borrow();
@@ -96,7 +99,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         var result={
             status:200,
             message:"",
-            data:results,
+            data:resdata,
             server_time:new Date()
         }
         res.jsonp(result);
@@ -157,20 +160,33 @@ router.get('/success/:id', function(req, res) {
           server_time:new Date()
         }
         res.jsonp(result);
-        var deviceId=takeout.get('deviceId');
-        var seqNo=takeout.get('passage');
-        var boxQuery=new AV.Query('BoxInfo');
-        boxQuery.equalTo('deviceId',deviceId);
-        boxQuery.first().then(function(box){
-            if(typeof(box)=="undefined"){
-                return res.jsonp(result);
-            }
-            var passageQuery=new AV.Query('Passage');
-            passageQuery.equalTo('boxId',box);
-            passageQuery.equalTo('seqNo',seqNo);
-            passageQuery.first().then(function(passage){
-                passage.set('borrowState',data.borrow);
-                passage.save();
+        var deviceId=borrow.get('deviceId');
+        var borrowQuery=new AV.Query('Borrow');
+        borrowQuery.get(data.id).then(function(borrowPassage){
+            var seqNo=borrowPassage.get('passage').substr(1,2);
+            var flag=borrowPassage.get('passage').substr(0,1);
+            var boxQuery=new AV.Query('BoxInfo');
+            boxQuery.equalTo('deviceId',deviceId);
+            boxQuery.first().then(function(box){
+                console.log(box);
+                if(typeof(box)=="undefined"){
+                    return res.jsonp(result);
+                }
+                var passageQuery=new AV.Query('Passage');
+                passageQuery.equalTo('boxId',box);
+                passageQuery.equalTo('seqNo',seqNo);
+                passageQuery.equalTo('flag',flag);
+                passageQuery.first().then(function(passage){
+                    var cardQuery=new AV.Query('EmployeeCard');
+                    cardQuery.equalTo('isDel',false);
+                    cardQuery.equalTo('card',data.card);
+                    cardQuery.first().then(function(card){
+                        passage.set('borrowState',data.borrow);
+                        passage.set('stock',passage.get('stock')-1);
+                        passage.set('used',card)
+                        passage.save();
+                    });
+                });
             });
         });
     },function(error){

@@ -19,6 +19,7 @@ function doWork(deviceId,records,res){
                 passageQuery.equalTo('seqNo',seqNo);
                 passageQuery.first().then(function(passage){
                     passage.set('borrowState',record.borrow);
+                    passage.set('stock',passage.get('stock')-1);
                     passage.save();
                     obj.set('deviceId', deviceId);
                     obj.set('passage',record.passage);
