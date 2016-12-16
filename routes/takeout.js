@@ -150,7 +150,7 @@ router.get('/:id/:card/:passage', function(req, res) {
           var result={
             status:200,
             message:"无此设备号的数据",
-            data:false,
+            data:{"result":false},
             server_time:new Date()
           }
           res.jsonp(result);
@@ -163,7 +163,7 @@ router.get('/:id/:card/:passage', function(req, res) {
         var result={
           status:200,
           message:"查询出错",
-          data:false,
+          data:{"result":false},
           server_time:new Date()
         }
         res.jsonp(result);
