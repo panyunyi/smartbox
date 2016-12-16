@@ -90,11 +90,11 @@ function doWork(cus,box,res,ts){
             query.equalTo('isDel',false);
         }
         query.equalTo('boxId',box);
-        query.select(['capacity','isDel','seqNo','whorlSize','product','isSend','borrowState','stock']);
+        query.select(['flag','capacity','isDel','seqNo','whorlSize','product','isSend','borrowState','stock']);
         query.find().then(function (results) {
             var arr=[];
             results.forEach(function(result){
-                var one={"capacity":result.get('capacity'),"isDel":result.get('isDel'),"seqNo":result.get('seqNo'),"whorlSize":result.get('whorlSize'),"product":result.get('product').get('id'),"borrowState":result.get('borrowState'),"stock":result.get('stock'),"isSend":result.get('isSend'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+                var one={"flag":result.get('flag'),"capacity":result.get('capacity'),"isDel":result.get('isDel'),"seqNo":result.get('seqNo'),"whorlSize":result.get('whorlSize'),"product":result.get('product').get('id'),"borrowState":result.get('borrowState'),"stock":result.get('stock'),"isSend":result.get('isSend'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
                 arr.push(one);
             });
             data["Passage"]=arr;
