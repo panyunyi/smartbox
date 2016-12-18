@@ -3,7 +3,7 @@
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-lg-12">
-                        <h1 class="page-header">售货机货道库存</h1>
+                        <h1 class="page-header">售货机交易记录</h1>
                     </div>
                     <!-- /.col-lg-12 -->
                 </div>
@@ -11,7 +11,7 @@
                     <div class="col-lg-12">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                售货机货道库存数据表
+                                售货机交易记录数据表
                             </div>
                             <!-- /.panel-heading -->
                             <div class="panel-body">
@@ -19,14 +19,19 @@
                                     <thead>
                                         <tr>
                                             <th>序号</th>
+                                            <th>时间</th>
+                                            <th>单据类型</th>
+                                            <th>单据号</th>
                                             <th>客户名称</th>
                                             <th>售货机设备号</th>
-                                            <th>类型</th>
-                                            <th>SKU编码</th>
+                                            <th>货道编号</th>
+                                            <th>SKU编号</th>
                                             <th>产品名称</th>
-                                            <th>货道号</th>
-                                            <th>库存</th>
-                                            <th>容量</th>
+                                            <th>数量</th>
+                                            <th>包装</th>
+                                            <th>领用人</th>
+                                            <th>员工工号</th>
+                                            <th>卡号</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -66,14 +71,19 @@
            "ajax": '../api/json/passtock',
            "columns": [
                 {"data":null},
-                { "data": "cus" },
-                { "data": "boxId" },
+                { "data": "time" },
                 { "data": "type" },
+                { "data": "objectId" },
+                { "data": "cus" },
+                { "data": "deviceId" },
+                { "data": "passage" },
                 { "data": "sku" },
                 { "data": "product" },
-                { "data": "seqNo" },
-                { "data": "stock" },
-                { "data": "capacity" }
+                { "data": "count" },
+                { "data": "assortment" },
+                { "data": "employee" },
+                { "data": "empNo" },
+                { "data": "empCard" }
             ],
             "columnDefs": [{
                 "searchable": false,

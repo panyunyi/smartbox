@@ -159,9 +159,82 @@ router.get('/passtock',function(req,res){
         results.forEach(function(result){
             result.set('cus',result.get('boxId').get('cusId').get('name'));
             result.set('boxId',result.get('boxId').get('deviceId'));
+            result.set('type',result.get('flag')?"格子柜":"售货机");
+            result.set('sku',result.get('product').get('sku'));
             result.set('product',result.get('product').get('name'));
+            result.set('seqNo',result.get('flag')?result.get('flag')+result.get('seqNo'):result.get('seqNo'));
         });
         res.jsonp({"data":results});
+    });
+});
+
+//售货机交易记录
+router.get('/pasrecord',function(req,res){
+    var takeoutQuery=new AV.Query('TakeOut');
+    var borrowQuery=new AV.Query('Borrow');
+    var jsondata=[];
+    function promise1(callback){
+        takeoutQuery.equalTo('isDel',false);
+        takeoutQuery.equalTo('result',true);
+        takeoutQuery.include('product');
+        takeoutQuery.include('product.type');
+        takeoutQuery.find().then(function(takeouts){
+            takeouts.forEach(function(takeout){
+                var deviceId=takeout.get('deviceId');
+                var card=takeout.get('card');
+                var empQuery=new AV.Query('Employee');
+                empQuery.equalTo('isDel',false);
+                empQuery.include('cusId');
+                empQuery.equalTo('card',card);
+                empQuery.first().then(function(emp){
+                    console.log(emp);
+                    var onetake={"time":takeout.get('time'),"type":"领料","objectId":
+                takeout.get('id'),"cus":emp.get('cusId').get('name'),"deviceId":
+                deviceId,"passage":takeout.get('passage'),"sku":takeout.get('product').get('sku'),
+                "product":takeout.get('product').get('name'),"count":-1,"assortment":
+                takeout.get('product').get('type').get('name'),"employee":emp.get('name'),
+                "empNo":emp.get('empNo'),"empCard":card};
+                    jsondata.push(onetake);
+                    console.log(onetake);
+                    return callback(null,onetake);
+                });
+            });
+        });
+    }
+    function promise2(callback){
+        borrowQuery.equalTo('isDel',false);
+        borrowQuery.equalTo('result',true);
+        borrowQuery.include('product');
+        borrowQuery.include('product.type');
+        borrowQuery.find().then(function(borrows){
+            borrows.forEach(function(borrow){
+                var deviceId=takeout.get('deviceId');
+                var card=takeout.get('card');
+                var empQuery=new AV.Query('Employee');
+                empQuery.equalTo('isDel',false);
+                empQuery.include('cusId');
+                empQuery.contains('card',card);
+                empQuery.first().then(function(emp){
+                    var onetake={"time":takeout.get('time'),"type":"借还","objectId":
+                takeout.get('id'),"cus":emp.get('cusId').get('name'),"deviceId":
+                deviceId,"passage":takeout.get('passage'),"sku":takeout.get('product').get('sku'),
+                "product":takeout.get('product').get('name'),"count":-1,"assortment":
+                takeout.get('product').get('type').get('name'),"employee":emp.get('name'),
+                "empNo":emp.get('empNo'),"empCard":card};
+                    jsondata.push(onetake);
+                    return callback(null,onetake);
+                });
+            });
+        });
+    }
+    async.parallel([
+        function (callback){
+            promise1(callback);
+        },
+        function (callback){
+            promise2(callback);
+        }],function(err,results){
+        res.jsonp({"data":jsondata});
     });
 });
 

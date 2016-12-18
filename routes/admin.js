@@ -106,7 +106,7 @@ router.get('/passtock', function(req, res) {
     }
 });
 
-router.get('/pastrade', function(req, res) {
+router.get('/pasrecord', function(req, res) {
     if(req.currentUser){
     	res.render('pastrade');
     }else{
