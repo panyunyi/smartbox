@@ -8,18 +8,23 @@ var Borrow = AV.Object.extend('Borrow');
 function doWork(deviceId,records,res){
     var objects=[];
     async.map(records,function(record,callback){
-        records.forEach(function(record){
-            var obj = new Borrow();
-            var seqNo=record.passage;
-            var boxQuery=new AV.Query('BoxInfo');
-            boxQuery.equalTo('deviceId',deviceId);
-            boxQuery.first().then(function(box){
-                var passageQuery=new AV.Query('Passage');
-                passageQuery.equalTo('boxId',box);
-                passageQuery.equalTo('seqNo',seqNo);
-                passageQuery.first().then(function(passage){
+        var obj = new Borrow();
+        var seqNo=record.passage;
+        var boxQuery=new AV.Query('BoxInfo');
+        boxQuery.equalTo('deviceId',deviceId);
+        boxQuery.first().then(function(box){
+            var passageQuery=new AV.Query('Passage');
+            passageQuery.equalTo('boxId',box);
+            passageQuery.equalTo('flag',seqNo.substr(0,1));
+            passageQuery.equalTo('seqNo',seqNo.substr(1,2));
+            passageQuery.first().then(function(passage){
+                var cardQuery=new AV.Query('EmployeeCard');
+                cardQuery.equalTo('isDel',false);
+                cardQuery.equalTo('card',record.card);
+                cardQuery.first().then(function(card){
                     passage.set('borrowState',record.borrow);
                     passage.set('stock',passage.get('stock')-1);
+                    passage.set('used',card);
                     passage.save();
                     obj.set('deviceId', deviceId);
                     obj.set('passage',record.passage);
