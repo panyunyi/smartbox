@@ -179,25 +179,27 @@ router.get('/pasrecord',function(req,res){
         takeoutQuery.include('product');
         takeoutQuery.include('product.type');
         takeoutQuery.find().then(function(takeouts){
-            takeouts.forEach(function(takeout){
+            async.map(takeouts,function(takeout,callback1){
                 var deviceId=takeout.get('deviceId');
                 var card=takeout.get('card');
                 var empQuery=new AV.Query('Employee');
                 empQuery.equalTo('isDel',false);
                 empQuery.include('cusId');
-                empQuery.equalTo('card',card);
+                //empQuery.equalTo('card',card);
                 empQuery.first().then(function(emp){
-                    console.log(emp);
                     var onetake={"time":takeout.get('time'),"type":"领料","objectId":
                 takeout.get('id'),"cus":emp.get('cusId').get('name'),"deviceId":
-                deviceId,"passage":takeout.get('passage'),"sku":takeout.get('product').get('sku'),
-                "product":takeout.get('product').get('name'),"count":-1,"assortment":
-                takeout.get('product').get('type').get('name'),"employee":emp.get('name'),
-                "empNo":emp.get('empNo'),"empCard":card};
+                deviceId,"passage":takeout.get('passage'),"count":-1,
+                "product":takeout.get('product').get('name'),"sku":
+                takeout.get('product').get('sku'),"assortment":
+                takeout.get('product').get('type').get('name'),"employee":
+                emp.get('name'),"empNo":emp.get('empNo'),"empCard":card};
                     jsondata.push(onetake);
-                    console.log(onetake);
-                    return callback(null,onetake);
+                    callback1(null,takeout);
                 });
+            },function(error,results){
+                console.log(1);
+                return callback(null,results);
             });
         });
     }
@@ -207,23 +209,28 @@ router.get('/pasrecord',function(req,res){
         borrowQuery.include('product');
         borrowQuery.include('product.type');
         borrowQuery.find().then(function(borrows){
-            borrows.forEach(function(borrow){
-                var deviceId=takeout.get('deviceId');
-                var card=takeout.get('card');
+            async.map(borrows,function(borrow,callback1){
+                var deviceId=borrow.get('deviceId');
+                var card=borrow.get('card');
                 var empQuery=new AV.Query('Employee');
                 empQuery.equalTo('isDel',false);
                 empQuery.include('cusId');
-                empQuery.contains('card',card);
+                //empQuery.equalTo('card',card);
                 empQuery.first().then(function(emp){
-                    var onetake={"time":takeout.get('time'),"type":"借还","objectId":
-                takeout.get('id'),"cus":emp.get('cusId').get('name'),"deviceId":
-                deviceId,"passage":takeout.get('passage'),"sku":takeout.get('product').get('sku'),
-                "product":takeout.get('product').get('name'),"count":-1,"assortment":
-                takeout.get('product').get('type').get('name'),"employee":emp.get('name'),
+                    var oneborrow={"time":borrow.get('time'),"type":
+                borrow.get('borrow')?"借":"还","objectId":borrow.get('id'),
+                "cus":emp.get('cusId').get('name'),"deviceId":deviceId,
+                "passage":borrow.get('passage'),"sku":borrow.get('product').get('sku'),
+                "product":borrow.get('product').get('name'),"count":
+                borrow.get('borrow')?-1:+1,"assortment":
+                borrow.get('product').get('type').get('name'),"employee":emp.get('name'),
                 "empNo":emp.get('empNo'),"empCard":card};
-                    jsondata.push(onetake);
-                    return callback(null,onetake);
+                    jsondata.push(oneborrow);
+                    callback1(null,borrow);
                 });
+            },function(error,results){
+                console.log(2);
+                return callback(null,results);
             });
         });
     }
