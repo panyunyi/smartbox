@@ -36,6 +36,16 @@ router.get('/:id/:card/:passage', function(req, res) {
 	        passageQuery.equalTo('flag',passage.substr(0,1));
 	        passageQuery.equalTo('seqNo',passage.substr(1,2));
 	        passageQuery.first().then(function(data){
+	        	if (typeof(data) == "undefined") {
+		          var result={
+		            status:200,
+		            message:"请确认借货卡",
+		            data:{"result":false},
+		            server_time:new Date()
+		          }
+		          res.jsonp(result);
+		          return;
+		        }
 	            oneborrow.set('isDel',false);
 	            oneborrow.set('deviceId',deviceId);
 	            oneborrow.set('time',new Date());
