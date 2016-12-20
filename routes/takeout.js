@@ -9,6 +9,7 @@ var TakeOut = AV.Object.extend('TakeOut');
 function doWork(cus,box,deviceId,card,passage,res){
     var flag=false;
     var resdata={};
+    var message="无权限";
     resdata["result"]=flag;
     function promise1(callback){
         var cardQuery=new AV.Query('EmployeeCard');
@@ -64,6 +65,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         }
     }
     function verifyPower(product,power,callback){
+        console.log(power.get('boxId').get('id')+"=="+box.get('id')+"&&"+power.get('product').get('id')+"=="+product.get('id'))
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
             var unit=power.get('unit');
             var period=power.get('period');
@@ -103,17 +105,17 @@ function doWork(cus,box,deviceId,card,passage,res){
                     onetake.set('passage',passage);
                     onetake.set('product',product);
                     onetake.save().then(function(one){
+                        message="成功";
                         resdata["result"]=flag;
                         resdata["objectId"]=one.id;
                         return callback(null,true);
                     });
                 }else{
+                    message="超过领取次数";
                     resdata["result"]=flag;
                     return callback(null,false);
                 }
             });
-        }else{
-            return callback(null,false);
         }
     }
     async.waterfall([
@@ -128,7 +130,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         }],function(err,results){
         var result={
             status:200,
-            message:"",
+            message:message,
             data:resdata,
             server_time:new Date()
         }
