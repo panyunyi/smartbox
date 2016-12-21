@@ -42,14 +42,6 @@ router.get('/admincard', function(req, res) {
     }
 });
 
-router.get('/borrow', function(req, res) {
-    if(req.currentUser){
-    	res.render('borrow');
-    }else{
-    	res.redirect('../login');
-    }
-});
-
 router.get('/box', function(req, res) {
     if(req.currentUser){
     	res.render('box');
