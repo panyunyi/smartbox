@@ -10,13 +10,13 @@ router.post('/', function(req, res, next) {
   ApiLog.WorkOn(todo);
   var records=req.body.record;
   var objects=[];
-  records.forEach(function(error){
+  records.forEach(function(record){
       var obj = new Supply();
       obj.set('deviceId', deviceId);
-      obj.set('passage',error.passage);
-      obj.set('card',error.card);
-      obj.set('count',error.count);
-      obj.set('time',new Date(error.time));
+      obj.set('passage',record.passage);
+      obj.set('card',record.card);
+      obj.set('count',record.count);
+      obj.set('time',new Date(record.time));
       obj.set('isDel',false);
       objects.push(obj);
       var boxQuery=new AV.Query('BoxInfo');
@@ -24,14 +24,20 @@ router.post('/', function(req, res, next) {
       boxQuery.equalTo('deviceId',deviceId);
       boxQuery.first().then(function(box){
         var query=new AV.Query('Passage');
+        if(record.passage.length>2){
+            query.equalTo('flag',record.passage.substr(0,1));
+            query.equalTo('seqNo',record.passage.substr(1,2));
+        }else{
+            query.equalTo('seqNo',record.passage);
+        }
         query.equalTo('isDel',false);
         query.equalTo('boxId',box);
         query.first().then(function(passage){
-          passage.set('stock',passage.get('stock')+1);
+          passage.set('stock',passage.get('stock')+record.count);
           passage.save();
         });
       });
-      
+
 
   });
   AV.Object.saveAll(objects).then(function (objects) {

@@ -34,6 +34,7 @@ function doWork(deviceId,records,res){
                         passage.set('stock',passage.get('stock')+1);
                       }
                       passage.save();
+                      console.log("save");
                     }
                     obj.set('deviceId', deviceId);
                     obj.set('passage',record.passage);
