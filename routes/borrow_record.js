@@ -25,9 +25,11 @@ function doWork(deviceId,records,res){
                     if(record.result){
                       passage.set('borrowState',record.borrow);
                       if(record.borrow){
+                        console.log("-1");
                         passage.set('used',card);
                         passage.set('stock',passage.get('stock')-1);
                       }else{
+                        console.log("+1");
                         passage.set('used',null);
                         passage.set('stock',passage.get('stock')+1);
                       }
@@ -39,9 +41,8 @@ function doWork(deviceId,records,res){
                     obj.set('borrow',record.borrow);
                     obj.set('product',passage.get('product'));
                     obj.set('time',new Date(record.time));
-                    obj.set('result',true);
+                    obj.set('result',record.result);
                     obj.set('isDel',false);
-                    obj.set('result'.record.result);
                     objects.push(obj);
                     callback(null,record);
                 });
