@@ -22,6 +22,16 @@ function doWork(deviceId,records,res){
                 cardQuery.equalTo('isDel',false);
                 cardQuery.equalTo('card',record.card);
                 cardQuery.first().then(function(card){
+                    obj.set('deviceId', deviceId);
+                    obj.set('passage',record.passage);
+                    obj.set('card',record.card);
+                    obj.set('borrow',record.borrow);
+                    obj.set('product',passage.get('product'));
+                    obj.set('time',new Date(record.time));
+                    obj.set('result',record.result);
+                    obj.set('isDel',false);
+                    objects.push(obj);
+                    callback(null,record);
                     if(record.result){
                       passage.set('borrowState',record.borrow);
                       if(record.borrow){
@@ -33,19 +43,10 @@ function doWork(deviceId,records,res){
                         passage.set('used',null);
                         passage.set('stock',passage.get('stock')+1);
                       }
-                      passage.save();
-                      console.log("save");
+                      passage.save().then(function(){
+                          console.log(1);
+                      });
                     }
-                    obj.set('deviceId', deviceId);
-                    obj.set('passage',record.passage);
-                    obj.set('card',record.card);
-                    obj.set('borrow',record.borrow);
-                    obj.set('product',passage.get('product'));
-                    obj.set('time',new Date(record.time));
-                    obj.set('result',record.result);
-                    obj.set('isDel',false);
-                    objects.push(obj);
-                    callback(null,record);
                 });
             });
         });
