@@ -91,33 +91,20 @@ function doWork(cus,box,deviceId,card,passage,res){
                 borrowQuery.get(one.id).then(function(borrowPassage){
                     var seqNo=borrowPassage.get('passage').substr(1,2);
                     var flag=borrowPassage.get('passage').substr(0,1);
-                    var boxQuery=new AV.Query('BoxInfo');
-                    boxQuery.equalTo('deviceId',deviceId);
-                    boxQuery.first().then(function(boxdata){
-                        if(typeof(boxdata)=="undefined"){
-                            var result={
-                              status:200,
-                              message:"设备号或货道号有误",
-                              data:false,
-                              server_time:new Date()
-                            }
-                            return res.jsonp(result);
-                        }
-                        var passageQuery=new AV.Query('Passage');
-                        passageQuery.equalTo('boxId',boxdata);
-                        passageQuery.equalTo('seqNo',seqNo);
-                        passageQuery.equalTo('flag',flag);
-                        passageQuery.first().then(function(passage){
-                            var cardQuery=new AV.Query('EmployeeCard');
-                            cardQuery.equalTo('isDel',false);
-                            cardQuery.equalTo('card',one.card);
-                            cardQuery.first().then(function(card){
-                                passage.set('borrowState',true);
-                                passage.set('stock',passage.get('stock')-1);
-                                passage.set('used',card)
-                                passage.save().then(function(){
-                                    return callback(null,resdata);
-                                });
+                    var passageQuery=new AV.Query('Passage');
+                    passageQuery.equalTo('boxId',box);
+                    passageQuery.equalTo('seqNo',seqNo);
+                    passageQuery.equalTo('flag',flag);
+                    passageQuery.first().then(function(passage){
+                        var cardQuery=new AV.Query('EmployeeCard');
+                        cardQuery.equalTo('isDel',false);
+                        cardQuery.equalTo('card',one.card);
+                        cardQuery.first().then(function(card){
+                            passage.set('borrowState',true);
+                            passage.set('stock',passage.get('stock')-1);
+                            passage.set('used',card)
+                            passage.save().then(function(){
+                                return callback(null,resdata);
                             });
                         });
                     });

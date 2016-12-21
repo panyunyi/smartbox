@@ -89,7 +89,7 @@ router.get('/fail/:id/', function(req, res) {
       data:false,
       server_time:new Date()
     }
-    var todo={"ip":req.headers['x-real-ip'],"api":"还货成功回调接口","deviceId":"","msg":"objectId:"+req.params.id};
+    var todo={"ip":req.headers['x-real-ip'],"api":"还货失败回调接口","deviceId":"","msg":"objectId:"+req.params.id};
     ApiLog.WorkOn(todo);
     var borrow=AV.Object.createWithoutData('Borrow',req.params.id);
     borrow.set('result',false);

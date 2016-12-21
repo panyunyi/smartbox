@@ -107,26 +107,13 @@ function doWork(cus,box,deviceId,card,passage,res){
                         message="成功";
                         resdata["result"]=flag;
                         resdata["objectId"]=one.id;
-                        var boxQuery=new AV.Query('BoxInfo');
-                        boxQuery.equalTo('deviceId',deviceId);
-                        boxQuery.first().then(function(boxdata){
-                            if(typeof(boxdata)=="undefined"){
-                                var result={
-                                  status:200,
-                                  message:"设备号或货道号有误",
-                                  data:false,
-                                  server_time:new Date()
-                                }
-                                return res.jsonp(result);
-                            }
-                            var passageQuery=new AV.Query('Passage');
-                            passageQuery.equalTo('boxId',boxdata);
-                            passageQuery.equalTo('seqNo',passage);
-                            passageQuery.first().then(function(passagedata){
-                                passagedata.set('stock',passagedata.get('stock')-1);
-                                passagedata.save().then(function(){
-                                    return callback(null,true);
-                                });
+                        var passageQuery=new AV.Query('Passage');
+                        passageQuery.equalTo('boxId',box);
+                        passageQuery.equalTo('seqNo',passage);
+                        passageQuery.first().then(function(passagedata){
+                            passagedata.set('stock',passagedata.get('stock')-1);
+                            passagedata.save().then(function(){
+                                return callback(null,true);
                             });
                         });
                     });
