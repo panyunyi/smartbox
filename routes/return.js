@@ -50,7 +50,7 @@ router.get('/:id/:card/:passage', function(req, res) {
 	            oneborrow.set('deviceId',deviceId);
 	            oneborrow.set('time',new Date());
 	            oneborrow.set('card',card);
-	            oneborrow.set('result',false);
+	            oneborrow.set('result',true);
 	            oneborrow.set('passage',passage);
 	            oneborrow.set('product',data.get('product'));
 	            oneborrow.set('borrow',false);
@@ -62,7 +62,12 @@ router.get('/:id/:card/:passage', function(req, res) {
 	                    server_time:new Date()
 	                }
 	                res.jsonp(result);
+
 	            });
+	            data.set('borrowState',false);
+                data.set('stock',data.get('stock')+1);
+                data.set('used',null)
+                data.save();
 	    	});
 	    },function (error){
 	        console.log(error);
@@ -77,7 +82,7 @@ router.get('/:id/:card/:passage', function(req, res) {
     });
 });
 
-router.get('/success/:id/', function(req, res) {
+router.get('/fail/:id/', function(req, res) {
     var result={
       status:200,
       message:"",
@@ -87,7 +92,7 @@ router.get('/success/:id/', function(req, res) {
     var todo={"ip":req.headers['x-real-ip'],"api":"还货成功回调接口","deviceId":"","msg":"objectId:"+req.params.id};
     ApiLog.WorkOn(todo);
     var borrow=AV.Object.createWithoutData('Borrow',req.params.id);
-    borrow.set('result',true);
+    borrow.set('result',false);
     borrow.set('borrow',false);
     borrow.save().then(function(data){
         var result={
@@ -105,7 +110,6 @@ router.get('/success/:id/', function(req, res) {
             var boxQuery=new AV.Query('BoxInfo');
             boxQuery.equalTo('deviceId',deviceId);
             boxQuery.first().then(function(box){
-                console.log(box);
                 if(typeof(box)=="undefined"){
                     return res.jsonp(result);
                 }
@@ -119,8 +123,8 @@ router.get('/success/:id/', function(req, res) {
                     cardQuery.equalTo('card',data.card);
                     cardQuery.first().then(function(card){
                         passage.set('borrowState',false);
-                        passage.set('stock',passage.get('stock')+1);
-                        passage.set('used',null)
+                        passage.set('stock',passage.get('stock')-1);
+                        passage.set('used',card)
                         passage.save();
                     });
                 });

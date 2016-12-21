@@ -8,6 +8,7 @@ var Borrow = AV.Object.extend('Borrow');
 function doWork(cus,box,deviceId,card,passage,res){
     var flag=false;
     var resdata={};
+    var message="无权限";
     resdata["result"]=flag;
     function promise1(callback){
         var cardQuery=new AV.Query('EmployeeCard');
@@ -24,6 +25,7 @@ function doWork(cus,box,deviceId,card,passage,res){
                 if(typeof(data)=="undefined"){
                     return callback(null,0,null);
                 }
+                message="卡号";
                 return callback(null,1,data);
             },function(error){
             });
@@ -42,7 +44,9 @@ function doWork(cus,box,deviceId,card,passage,res){
         passageQuery.equalTo('borrowState',false);
         passageQuery.equalTo('seqNo',passage.substr(1,2));
         passageQuery.equalTo('boxId',box);
+        passageQuery.equalTo('used',null);
         passageQuery.first().then(function(passageObj){
+            message="货道";
             return callback(null,passageObj,arg2);
         },function(error){
             return callback(error);
@@ -75,14 +79,49 @@ function doWork(cus,box,deviceId,card,passage,res){
             oneborrow.set('deviceId',deviceId);
             oneborrow.set('time',new Date());
             oneborrow.set('card',card);
-            oneborrow.set('result',false);
+            oneborrow.set('result',true);
             oneborrow.set('passage',passage);
             oneborrow.set('product',product);
-            oneborrow.set('borrow',false);
+            oneborrow.set('borrow',true);
             oneborrow.save().then(function(one){
+                message="";
                 resdata["result"]=flag;
                 resdata["objectId"]=one.id;
-                return callback(null,resdata);
+                var borrowQuery=new AV.Query('Borrow');
+                borrowQuery.get(one.id).then(function(borrowPassage){
+                    var seqNo=borrowPassage.get('passage').substr(1,2);
+                    var flag=borrowPassage.get('passage').substr(0,1);
+                    var boxQuery=new AV.Query('BoxInfo');
+                    boxQuery.equalTo('deviceId',deviceId);
+                    boxQuery.first().then(function(boxdata){
+                        if(typeof(boxdata)=="undefined"){
+                            var result={
+                              status:200,
+                              message:"设备号或货道号有误",
+                              data:false,
+                              server_time:new Date()
+                            }
+                            return res.jsonp(result);
+                        }
+                        var passageQuery=new AV.Query('Passage');
+                        passageQuery.equalTo('boxId',boxdata);
+                        passageQuery.equalTo('seqNo',seqNo);
+                        passageQuery.equalTo('flag',flag);
+                        passageQuery.first().then(function(passage){
+                            var cardQuery=new AV.Query('EmployeeCard');
+                            cardQuery.equalTo('isDel',false);
+                            cardQuery.equalTo('card',one.card);
+                            cardQuery.first().then(function(card){
+                                passage.set('borrowState',true);
+                                passage.set('stock',passage.get('stock')-1);
+                                passage.set('used',card)
+                                passage.save().then(function(){
+                                    return callback(null,resdata);
+                                });
+                            });
+                        });
+                    });
+                });
             });
         }
     }
@@ -98,7 +137,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         }],function(err,results){
         var result={
             status:200,
-            message:"",
+            message:message,
             data:resdata,
             server_time:new Date()
         }
@@ -140,19 +179,20 @@ router.get('/:id/:card/:passage', function(req, res) {
     });
 });
 
-router.get('/success/:id', function(req, res) {
+router.get('/fail/:id', function(req, res) {
     var result={
       status:200,
-      message:"",
+      message:"设备号或objectId有误",
       data:false,
       server_time:new Date()
     }
-    var todo={"ip":req.headers['x-real-ip'],"api":"借货成功回调接口","deviceId":"","msg":"objectId:"+req.params.id};
+    var todo={"ip":req.headers['x-real-ip'],"api":"借货失败回调接口","deviceId":"","msg":"objectId:"+req.params.id};
     ApiLog.WorkOn(todo);
     var borrow=AV.Object.createWithoutData('Borrow',req.params.id);
-    borrow.set('result',true);
+    borrow.set('result',false);
     borrow.set('borrow',true);
-    borrow.save().then(function(data){
+    borrow.save();
+    borrow.fetch().then(function(){
         var result={
           status:200,
           message:"",
@@ -162,13 +202,12 @@ router.get('/success/:id', function(req, res) {
         res.jsonp(result);
         var deviceId=borrow.get('deviceId');
         var borrowQuery=new AV.Query('Borrow');
-        borrowQuery.get(data.id).then(function(borrowPassage){
+        borrowQuery.get(borrow.id).then(function(borrowPassage){
             var seqNo=borrowPassage.get('passage').substr(1,2);
             var flag=borrowPassage.get('passage').substr(0,1);
             var boxQuery=new AV.Query('BoxInfo');
             boxQuery.equalTo('deviceId',deviceId);
             boxQuery.first().then(function(box){
-                console.log(box);
                 if(typeof(box)=="undefined"){
                     return res.jsonp(result);
                 }
@@ -179,11 +218,11 @@ router.get('/success/:id', function(req, res) {
                 passageQuery.first().then(function(passage){
                     var cardQuery=new AV.Query('EmployeeCard');
                     cardQuery.equalTo('isDel',false);
-                    cardQuery.equalTo('card',data.card);
+                    cardQuery.equalTo('card',borrow.card);
                     cardQuery.first().then(function(card){
-                        passage.set('borrowState',data.borrow);
-                        passage.set('stock',passage.get('stock')-1);
-                        passage.set('used',card)
+                        passage.set('borrowState',false);
+                        passage.set('stock',passage.get('stock')+1);
+                        passage.set('used',null)
                         passage.save();
                     });
                 });

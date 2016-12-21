@@ -22,10 +22,17 @@ function doWork(deviceId,records,res){
                 cardQuery.equalTo('isDel',false);
                 cardQuery.equalTo('card',record.card);
                 cardQuery.first().then(function(card){
-                    passage.set('borrowState',record.borrow);
-                    passage.set('stock',passage.get('stock')-1);
-                    passage.set('used',card);
-                    passage.save();
+                    if(record.result){
+                      passage.set('borrowState',record.borrow);
+                      if(record.borrow){
+                        passage.set('used',card);
+                        passage.set('stock',passage.get('stock')-1);
+                      }else{
+                        passage.set('used',null);
+                        passage.set('stock',passage.get('stock')+1);
+                      }
+                      passage.save();
+                    }
                     obj.set('deviceId', deviceId);
                     obj.set('passage',record.passage);
                     obj.set('card',record.card);
@@ -34,6 +41,7 @@ function doWork(deviceId,records,res){
                     obj.set('time',new Date(record.time));
                     obj.set('result',true);
                     obj.set('isDel',false);
+                    obj.set('result'.record.result);
                     objects.push(obj);
                     callback(null,record);
                 });

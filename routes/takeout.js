@@ -65,7 +65,6 @@ function doWork(cus,box,deviceId,card,passage,res){
         }
     }
     function verifyPower(product,power,callback){
-        console.log(power.get('boxId').get('id')+"=="+box.get('id')+"&&"+power.get('product').get('id')+"=="+product.get('id'))
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
             var unit=power.get('unit');
             var period=power.get('period');
@@ -101,14 +100,35 @@ function doWork(cus,box,deviceId,card,passage,res){
                     onetake.set('deviceId',deviceId);
                     onetake.set('time',new Date());
                     onetake.set('card',card);
-                    onetake.set('result',false);
+                    onetake.set('result',true);
                     onetake.set('passage',passage);
                     onetake.set('product',product);
                     onetake.save().then(function(one){
                         message="成功";
                         resdata["result"]=flag;
                         resdata["objectId"]=one.id;
-                        return callback(null,true);
+                        var boxQuery=new AV.Query('BoxInfo');
+                        boxQuery.equalTo('deviceId',deviceId);
+                        boxQuery.first().then(function(boxdata){
+                            if(typeof(boxdata)=="undefined"){
+                                var result={
+                                  status:200,
+                                  message:"设备号或货道号有误",
+                                  data:false,
+                                  server_time:new Date()
+                                }
+                                return res.jsonp(result);
+                            }
+                            var passageQuery=new AV.Query('Passage');
+                            passageQuery.equalTo('boxId',boxdata);
+                            passageQuery.equalTo('seqNo',passage);
+                            passageQuery.first().then(function(passagedata){
+                                passagedata.set('stock',passagedata.get('stock')-1);
+                                passagedata.save().then(function(){
+                                    return callback(null,true);
+                                });
+                            });
+                        });
                     });
                 }else{
                     message="超过领取次数";
@@ -172,18 +192,19 @@ router.get('/:id/:card/:passage', function(req, res) {
     });
 });
 
-router.get('/success/:id', function(req, res) {
+router.get('/fail/:id', function(req, res) {
     var result={
       status:200,
-      message:"",
+      message:"objectId有误",
       data:false,
       server_time:new Date()
     }
-    var todo={"ip":req.headers['x-real-ip'],"api":"取货成功回调接口","deviceId":"","msg":"objectId:"+req.params.id};
+    var todo={"ip":req.headers['x-real-ip'],"api":"取货失败回调接口","deviceId":"","msg":"objectId:"+req.params.id};
     ApiLog.WorkOn(todo);
     var takeout=AV.Object.createWithoutData('TakeOut',req.params.id);
-    takeout.set('result',true);
-    takeout.save().then(function(data){
+    takeout.set('result',false);
+    takeout.save();
+    takeout.fetch().then(function(){
         var result={
           status:200,
           message:"",
@@ -203,7 +224,8 @@ router.get('/success/:id', function(req, res) {
             passageQuery.equalTo('boxId',box);
             passageQuery.equalTo('seqNo',seqNo);
             passageQuery.first().then(function(passage){
-                passage.set('stock',passage.get('stock')-1);
+                console.log(seqNo);
+                passage.set('stock',passage.get('stock')+1);
                 passage.save();
             });
         });
