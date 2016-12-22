@@ -7,7 +7,7 @@ var TakeOut = AV.Object.extend('TakeOut');
 
 function doWork(deviceId,records,res){
     var objects=[];
-    async.map(records,function(record,callback){
+    async.mapSeries(records,function(record,callback){
         var obj = new TakeOut();
         var seqNo=record.passage;
         var boxQuery=new AV.Query('BoxInfo');
@@ -17,14 +17,16 @@ function doWork(deviceId,records,res){
             passageQuery.equalTo('boxId',box);
             passageQuery.equalTo('seqNo',seqNo);
             passageQuery.first().then(function(passage){
-                passage.set('stock',passage.get('stock')-1);
-                passage.save();
+                if(record.result){
+                    passage.increment('stock',-1);
+                    passage.save();
+                }
                 obj.set('deviceId', deviceId);
                 obj.set('passage',record.passage);
                 obj.set('card',record.card);
                 obj.set('product',passage.get('product'));
                 obj.set('time',new Date(record.time));
-                obj.set('result',true);
+                obj.set('result',record.result);
                 obj.set('isDel',false);
                 objects.push(obj);
                 callback(null,record);
