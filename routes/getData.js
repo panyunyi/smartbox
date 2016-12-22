@@ -53,6 +53,7 @@ function doWork(cus,box,res,ts){
         query.find().then(function (results) {
             var arr=[];
             results.forEach(function(result){
+                var cardQuery=new AV.Query('EmoployeeCard');
                 var one={"empNo":result.get('empNo'),"isDel":result.get('isDel'),"card":result.get('card'),"power":result.get('power'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
                 arr.push(one);
             });
@@ -104,6 +105,26 @@ function doWork(cus,box,res,ts){
             return callback(error)
           });
     }
+    function promise6(callback){
+        var query=new AV.Query('EmployeeCard');
+        query.greaterThanOrEqualTo('updatedAt',ts);
+        if(new Date(0)==ts){
+            query.equalTo('isDel',false);
+        }
+        query.equalTo('cusId',cus);
+        query.find().then(function (results) {
+            var arr=[];
+            results.forEach(function(result){
+                var one={"card":result.get('card'),"isDel":result.get('isDel'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+                arr.push(one);
+            });
+            data["EmpCard"]=arr;
+            return callback(null,results);
+          }, function (error) {
+            // 异常处理
+            return callback(error)
+          });
+    }
     async.parallel([
         function (callback){
             promise1(callback);
@@ -119,6 +140,9 @@ function doWork(cus,box,res,ts){
         },
         function (callback){
             promise5(callback);
+        },
+        function(callback){
+            promise6(callback);
         }],function(err,results){
         var result={
             status:200,
