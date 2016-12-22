@@ -70,6 +70,7 @@ router.get('/customerProduct',function(req,res){
     query.include('cusId');
     query.find().then(function(results){
         async.map(results,function(result,callback){
+            result.set('prosku',result.get('product').get('sku'));
             result.set('product',result.get('product').get('name'));
             result.set('cusId',result.get('cusId').get('name'));
             result.set('cusProductPrice',"¥"+result.get('cusProductPrice'));
@@ -245,17 +246,8 @@ router.get('/pasrecord',function(req,res){
     });
 });
 
-router.get('/takeout',function(req,res){
-
-});
-
 //补货业务
 router.get('/supply',function(req,res){
-
-});
-
-//借还业务
-router.get('/borrow',function(req,res){
 
 });
 
