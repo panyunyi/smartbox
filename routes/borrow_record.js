@@ -7,7 +7,7 @@ var Borrow = AV.Object.extend('Borrow');
 
 function doWork(deviceId,records,res){
     var objects=[];
-    async.map(records,function(record,callback){
+    async.mapSeries(records,function(record,callback){
         var obj = new Borrow();
         var seqNo=record.passage;
         var boxQuery=new AV.Query('BoxInfo');
@@ -35,18 +35,14 @@ function doWork(deviceId,records,res){
                     if(record.result){
                       passage.set('borrowState',record.borrow);
                       if(record.borrow){
-                        console.log("-1");
                         passage.set('used',card);
-                        passage.set('stock',passage.get('stock')-1);
+                        passage.increment('stock',-1);
                       }else{
-                        console.log("+1");
                         passage.set('used',null);
-                        passage.set('stock',passage.get('stock')+1);
+                        passage.increment('stock',1);
                       }
-                      passage.save().then(function(){
-                          console.log(1);
-                      });
                     }
+                    passage.save();
                 });
             });
         });
