@@ -106,9 +106,9 @@ router.get('/pasrecord', function(req, res) {
     }
 });
 
-router.get('/replenishment', function(req, res) {
+router.get('/supply', function(req, res) {
     if(req.currentUser){
-    	res.render('replenishment');
+    	res.render('supply');
     }else{
     	res.redirect('../login');
     }

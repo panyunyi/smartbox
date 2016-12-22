@@ -248,7 +248,41 @@ router.get('/pasrecord',function(req,res){
 
 //补货业务
 router.get('/supply',function(req,res){
-
+    var query=new AV.Query('Supply');
+    query.equalTo('isDel',false);
+    query.find().then(function(results){
+        async.map(results,function(result,callback){
+            var boxQuery=new AV.Query('BoxInfo');
+            boxQuery.equalTo('isDel',false);
+            boxQuery.equalTo('deviceId',result.get('deviceId'));
+            boxQuery.include('cusId');
+            boxQuery.first().then(function(box){
+                var cus=box.get('cusId').get('name');
+                var passageQuery=new AV.Query('Passage');
+                passageQuery.equalTo('isDel',false);
+                passageQuery.equalTo('boxId',box);
+                if(result.get('passage').length==3){
+                    passageQuery.equalTo('flag',result.get('passage').substr(0,1));
+                    passageQuery.equalTo('seqNo',result.get('passage').substr(1,2));
+                }else{
+                    passageQuery.equalTo('seqNo',result.get('passage'));
+                }
+                passageQuery.include('product');
+                passageQuery.first().then(function(passage){
+                    console.log(passage.get('product').get('name'));
+                    result.set('product','1');
+                    result.set('time',new moment(result.get('time')).format('L'));
+                    //result.set('sku',passage.get('product').get('sku'));
+                    result.set('cus',cus);
+                    callback(null,result);
+                },function(error){
+                    callback(error);
+                });
+            });
+        },function(error,results){
+            res.jsonp({"data":results});
+        });
+    });
 });
 
 //盘点业务

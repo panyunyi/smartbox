@@ -63,18 +63,17 @@
 <script>
     var t= $('#table').DataTable( {
         stateSave: true,
-       "ajax": '../api/json/product',
+       "ajax": '../api/json/supply',
        "columns": [
             {"data":null},
-            { "data": "name" },
-            { "data": "type" },
+            { "data": "cus" },
+            { "data": "deviceId" },
+            { "data": "card" },
+            { "data": "product" },
             { "data": "sku" },
-            { "data": "unit" },
-            { "data": "price" },
-            { "data": "spec" },
-            { "data": "cue" },
-            { "data": "warning" },
-            { "data": "stockDays" },
+            { "data": "count" },
+            { "data": "passage" },
+            { "data": "time" }
         ],
         "columnDefs": [{
             "searchable": false,
