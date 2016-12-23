@@ -11,6 +11,7 @@ function doWork(cus,box,deviceId,card,passage,res){
     var resdata={};
     var message="无权限";
     resdata["result"]=flag;
+
     function promise1(callback){
         var cardQuery=new AV.Query('EmployeeCard');
         cardQuery.equalTo('card',card);
@@ -24,12 +25,14 @@ function doWork(cus,box,deviceId,card,passage,res){
             empQuery.equalTo('isDel',false);
             empQuery.first().then(function(data){
                 if(typeof(data)=="undefined"){
+                    message="卡号异常";
                     return callback(null,0,null);
                 }
                 return callback(null,1,data);
             },function(error){
             });
         },function(error){
+            message="卡号异常";
             return callback(error);
         });
     }
@@ -44,6 +47,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         passageQuery.first().then(function(passageObj){
             return callback(null,passageObj,arg2);
         },function(error){
+            message="货道异常";
             return callback(error);
         });
     }
@@ -53,21 +57,37 @@ function doWork(cus,box,deviceId,card,passage,res){
         }
         var product=arg1.get('product');
         var empPower=arg2.get('power');
-        for(var i=0;i<empPower.length;i++){
+        var onetake=new TakeOut();
+        onetake.set('isDel',false);
+        onetake.set('deviceId',deviceId);
+        onetake.set('time',new Date());
+        onetake.set('card',card);
+        onetake.set('result',false);
+        onetake.set('passage',passage);
+        onetake.set('product',product);
+        onetake.save();
+        async.map(empPower,function(emppower,callback1){
             var powerQuery=new AV.Query('EmployeePower');
-            powerQuery.equalTo('objectId',empPower[i]);
+            powerQuery.equalTo('objectId',emppower);
             powerQuery.equalTo('isDel',false);
             powerQuery.first().then(function(power){
                 if (typeof(power)!="undefined") {
-                    verifyPower(product,power,callback);
+                    verifyPower(onetake,product,power,callback1);
+                    if(flag){
+                        return callback(null,true);
+                    }
                 }
-            },function(error){});
-        }
+            },function(error){
+                message="权限验证异常";
+                return callback(error);
+            });
+        },function(error,results){
+            return callback(null,flag);
+        });
+          
     }
-    function verifyPower(product,power,callback){
-        console.log(1);
+    function verifyPower(onetake,product,power,callback){
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
-            console.log(2);
             var unit=power.get('unit');
             var period=power.get('period');
             var count=power.get('count');
@@ -97,14 +117,7 @@ function doWork(cus,box,deviceId,card,passage,res){
             takeoutQuery.count().then(function(takecount){
                 if (count>takecount) {
                     flag=true;
-                    var onetake=new TakeOut();
-                    onetake.set('isDel',false);
-                    onetake.set('deviceId',deviceId);
-                    onetake.set('time',new Date());
-                    onetake.set('card',card);
                     onetake.set('result',true);
-                    onetake.set('passage',passage);
-                    onetake.set('product',product);
                     onetake.save().then(function(one){
                         message="成功";
                         resdata["result"]=flag;
@@ -115,21 +128,19 @@ function doWork(cus,box,deviceId,card,passage,res){
                         passageQuery.first().then(function(passagedata){
                             passagedata.set('stock',passagedata.get('stock')-1);
                             passagedata.save().then(function(){
-                                return callback(null,true);
+                                callback(null,true);
                             });
                         });
                     });
                 }else{
                     message="超过领取次数";
                     resdata["result"]=flag;
-                    return callback(null,false);
+                    callback(null,false);
                 }
             });
-        }
-        else{
+        }else{
             message="无权限";
-            resdata["result"]=flag;
-            return callback(null,false);
+            callback(null,false);
         }
     }
     async.waterfall([
