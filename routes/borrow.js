@@ -102,10 +102,11 @@ function doWork(cus,box,deviceId,card,passage,res){
                         var cardQuery=new AV.Query('EmployeeCard');
                         cardQuery.equalTo('isDel',false);
                         cardQuery.equalTo('card',one.card);
-                        cardQuery.first().then(function(card){
+                        cardQuery.first().then(function(cardobj){
                             passage.set('borrowState',true);
                             passage.set('stock',passage.get('stock')-1);
-                            passage.set('used',card)
+                            console.log(cardobj.get('emp').get('id'));
+                            passage.set('used',cardobj.get('emp'));
                             passage.save().then(function(){
                                 callback(null,true);
                                 return callback1(null,true);

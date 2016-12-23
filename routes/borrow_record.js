@@ -35,7 +35,7 @@ function doWork(deviceId,records,res){
                     if(record.result){
                       passage.set('borrowState',record.borrow);
                       if(record.borrow){
-                        passage.set('used',card);
+                        passage.set('used',card.get('emp'));
                         passage.increment('stock',-1);
                       }else{
                         passage.set('used',null);

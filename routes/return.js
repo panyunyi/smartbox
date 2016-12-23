@@ -30,7 +30,7 @@ router.get('/:id/:card/:passage', function(req, res) {
 	        }
 	        var oneborrow=new Borrow();
 	        var passageQuery=new AV.Query('Passage');
-	        passageQuery.equalTo('used',cardObj);
+	        passageQuery.equalTo('used',cardObj.get('emp'));
 	        passageQuery.equalTo('isDel',false);
 	        passageQuery.equalTo('boxId',box);
 	        passageQuery.equalTo('flag',passage.substr(0,1));
@@ -124,7 +124,7 @@ router.get('/fail/:id/', function(req, res) {
                     cardQuery.first().then(function(card){
                         passage.set('borrowState',false);
                         passage.set('stock',passage.get('stock')-1);
-                        passage.set('used',card)
+                        passage.set('used',card.get('emp'))
                         passage.save();
                     });
                 });
