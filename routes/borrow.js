@@ -105,7 +105,6 @@ function doWork(cus,box,deviceId,card,passage,res){
                         cardQuery.first().then(function(cardobj){
                             passage.set('borrowState',true);
                             passage.set('stock',passage.get('stock')-1);
-                            console.log(cardobj.get('emp').get('id'));
                             passage.set('used',cardobj.get('emp'));
                             passage.save().then(function(){
                                 callback(null,true);
