@@ -65,7 +65,9 @@ function doWork(cus,box,deviceId,card,passage,res){
         }
     }
     function verifyPower(product,power,callback){
+        console.log(1);
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
+            console.log(2);
             var unit=power.get('unit');
             var period=power.get('period');
             var count=power.get('count');
@@ -123,6 +125,11 @@ function doWork(cus,box,deviceId,card,passage,res){
                     return callback(null,false);
                 }
             });
+        }
+        else{
+            message="无权限";
+            resdata["result"]=flag;
+            return callback(null,false);
         }
     }
     async.waterfall([
