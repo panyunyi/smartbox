@@ -72,10 +72,7 @@ function doWork(cus,box,deviceId,card,passage,res){
             powerQuery.equalTo('isDel',false);
             powerQuery.first().then(function(power){
                 if (typeof(power)!="undefined") {
-                    verifyPower(onetake,product,power,callback1);
-                    if(flag){
-                        return callback(null,true);
-                    }
+                    verifyPower(onetake,product,power,callback1,callback);
                 }
             },function(error){
                 message="权限验证异常";
@@ -86,7 +83,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         });
           
     }
-    function verifyPower(onetake,product,power,callback){
+    function verifyPower(onetake,product,power,callback,callback1){
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
             var unit=power.get('unit');
             var period=power.get('period');
@@ -129,6 +126,7 @@ function doWork(cus,box,deviceId,card,passage,res){
                             passagedata.set('stock',passagedata.get('stock')-1);
                             passagedata.save().then(function(){
                                 callback(null,true);
+                                return callback1(null,true);
                             });
                         });
                     });

@@ -58,31 +58,34 @@ function doWork(cus,box,deviceId,card,passage,res){
         }
         var product=arg1.get('product');
         var empPower=arg2.get('power');
-        for(var i=0;i<empPower.length;i++){
+        var oneborrow=new Borrow();
+        oneborrow.set('isDel',false);
+        oneborrow.set('deviceId',deviceId);
+        oneborrow.set('time',new Date());
+        oneborrow.set('card',card);
+        oneborrow.set('result',false);
+        oneborrow.set('passage',passage);
+        oneborrow.set('product',product);
+        oneborrow.set('borrow',true);
+        async.mapSeries(empPower,function(emppower,callback1){
             var powerQuery=new AV.Query('EmployeePower');
-            powerQuery.equalTo('objectId',empPower[i]);
+            powerQuery.equalTo('objectId',emppower);
             powerQuery.equalTo('isDel',false);
             powerQuery.first().then(function(power){
                 if (typeof(power)!="undefined") {
-                    verifyPower(product,power,callback);
+                    verifyPower(oneborrow,product,power,callback1,callback);
                 }
             },function(error){
                 return callback(error);
             });
-        }
+        },function(error,results){
+            return callback(null,flag);
+        });
     }
-    function verifyPower(product,power,callback){
+    function verifyPower(oneborrow,product,power,callback,callback1){
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
             flag=true;
-            var oneborrow=new Borrow();
-            oneborrow.set('isDel',false);
-            oneborrow.set('deviceId',deviceId);
-            oneborrow.set('time',new Date());
-            oneborrow.set('card',card);
             oneborrow.set('result',true);
-            oneborrow.set('passage',passage);
-            oneborrow.set('product',product);
-            oneborrow.set('borrow',true);
             oneborrow.save().then(function(one){
                 message="";
                 resdata["result"]=flag;
@@ -104,12 +107,16 @@ function doWork(cus,box,deviceId,card,passage,res){
                             passage.set('stock',passage.get('stock')-1);
                             passage.set('used',card)
                             passage.save().then(function(){
-                                return callback(null,resdata);
+                                callback(null,true);
+                                return callback1(null,true);
                             });
                         });
                     });
                 });
             });
+        }else{
+            message="无权限";
+            callback(null,false);
         }
     }
     async.waterfall([
