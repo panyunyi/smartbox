@@ -4,7 +4,12 @@ var AV = require('leanengine');
 var ApiLog=require('./log');
 var async = require('async');
 var Borrow = AV.Object.extend('Borrow');
-
+var result={
+  status:200,
+  message:"",
+  data:false,
+  server_time:new Date()
+};
 function doWork(deviceId,records,res){
     var objects=[];
     async.mapSeries(records,function(record,callback){
@@ -13,15 +18,27 @@ function doWork(deviceId,records,res){
         var boxQuery=new AV.Query('BoxInfo');
         boxQuery.equalTo('deviceId',deviceId);
         boxQuery.first().then(function(box){
+            if(typeof(box)=="undefined"){
+                result['message']="无此设备号"；
+                return res.jsonp(result);
+            }
             var passageQuery=new AV.Query('Passage');
             passageQuery.equalTo('boxId',box);
             passageQuery.equalTo('flag',seqNo.substr(0,1));
             passageQuery.equalTo('seqNo',seqNo.substr(1,2));
             passageQuery.first().then(function(passage){
+                if(typeof(passage)=="undefined"){
+                    result['message']="提交的货道号异常";
+                    callback(null,record);
+                }
                 var cardQuery=new AV.Query('EmployeeCard');
                 cardQuery.equalTo('isDel',false);
                 cardQuery.equalTo('card',record.card);
                 cardQuery.first().then(function(card){
+                    if(typeof(passage)=="undefined"){
+                        result['message']="未找到此卡";
+                        callback(null,record);
+                    }
                     obj.set('deviceId', deviceId);
                     obj.set('passage',record.passage);
                     obj.set('card',record.card);
