@@ -137,7 +137,7 @@ function doWork(cus,box,deviceId,card,passage,res){
                 }
             });
         }else{
-            message="无权限";
+            message="无取货无权限";
             callback(null,false);
         }
     }
@@ -227,7 +227,6 @@ router.get('/fail/:id', function(req, res) {
             passageQuery.equalTo('boxId',box);
             passageQuery.equalTo('seqNo',seqNo);
             passageQuery.first().then(function(passage){
-                console.log(seqNo);
                 passage.increment('stock',1);
                 passage.save();
             });
