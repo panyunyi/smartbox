@@ -19,6 +19,7 @@ var takeout_record=require('./routes/takeout_record');
 var supply_record=require('./routes/supply_record');
 var borrow_record=require('./routes/borrow_record');
 var datatable=require('./routes/datatable');
+var update=require('./routes/update');
 
 // 设置模板引擎
 app.set('views', path.join(__dirname, 'views'));
@@ -58,6 +59,7 @@ app.use('/api/takeout_record',takeout_record);
 app.use('/api/supply_record',supply_record);
 app.use('/api/borrow_record',borrow_record);
 app.use('/api/error',error);
+app.use('/api/update',update);
 // 可以将一类的路由单独保存在一个文件中
 //app.use('/todos', todos);
 //app.use('/tool',tool);
