@@ -102,7 +102,7 @@ function doWork(cus,box,res,ts){
         query.find().then(function (results) {
             var arr=[];
             results.forEach(function(result){
-                var one={"flag":result.get('flag'),"capacity":result.get('capacity'),"isDel":result.get('isDel'),"seqNo":result.get('seqNo'),"used":result.get('used')?result.get('used').get('id'):null,"whorlSize":result.get('whorlSize'),"product":result.get('product').get('id'),"borrowState":result.get('borrowState'),"stock":result.get('stock'),"isSend":result.get('isSend'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+                var one={"flag":result.get('flag'),"capacity":result.get('capacity'),"isDel":result.get('isDel'),"seqNo":result.get('seqNo'),"used":result.get('used')?result.get('used').get('id'):"","whorlSize":result.get('whorlSize'),"product":result.get('product').get('id'),"borrowState":result.get('borrowState'),"stock":result.get('stock'),"isSend":result.get('isSend'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
                 arr.push(one);
             });
             data["Passage"]=arr;

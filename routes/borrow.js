@@ -104,7 +104,7 @@ function doWork(cus,box,deviceId,card,passage,res){
                         cardQuery.equalTo('card',one.card);
                         cardQuery.first().then(function(cardobj){
                             passage.set('borrowState',true);
-                            passage.set('stock',passage.get('stock')-1);
+                            passage.increment('stock',-1);
                             passage.set('used',cardobj.get('emp'));
                             passage.save().then(function(){
                                 callback(null,true);
@@ -215,7 +215,7 @@ router.get('/fail/:id', function(req, res) {
                     cardQuery.equalTo('card',borrow.card);
                     cardQuery.first().then(function(card){
                         passage.set('borrowState',false);
-                        passage.set('stock',passage.get('stock')+1);
+                        passage.increment('stock',1);
                         passage.set('used',null)
                         passage.save();
                     });

@@ -81,7 +81,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         },function(error,results){
             return callback(null,flag);
         });
-          
+
     }
     function verifyPower(onetake,product,power,callback,callback1){
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
@@ -123,7 +123,7 @@ function doWork(cus,box,deviceId,card,passage,res){
                         passageQuery.equalTo('boxId',box);
                         passageQuery.equalTo('seqNo',passage);
                         passageQuery.first().then(function(passagedata){
-                            passagedata.set('stock',passagedata.get('stock')-1);
+                            passagedata.increment('stock',-1);
                             passagedata.save().then(function(){
                                 callback(null,true);
                                 return callback1(null,true);
@@ -228,7 +228,7 @@ router.get('/fail/:id', function(req, res) {
             passageQuery.equalTo('seqNo',seqNo);
             passageQuery.first().then(function(passage){
                 console.log(seqNo);
-                passage.set('stock',passage.get('stock')+1);
+                passage.increment('stock',1);
                 passage.save();
             });
         });

@@ -65,7 +65,7 @@ router.get('/:id/:card/:passage', function(req, res) {
 
 	            });
 	            data.set('borrowState',false);
-                data.set('stock',data.get('stock')+1);
+                data.increment('stock',1);
                 data.set('used',null)
                 data.save();
 	    	});
@@ -123,7 +123,7 @@ router.get('/fail/:id/', function(req, res) {
                     cardQuery.equalTo('card',data.card);
                     cardQuery.first().then(function(card){
                         passage.set('borrowState',false);
-                        passage.set('stock',passage.get('stock')-1);
+                        passage.increment('stock',-1);
                         passage.set('used',card.get('emp'))
                         passage.save();
                     });

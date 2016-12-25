@@ -33,7 +33,7 @@ router.post('/', function(req, res, next) {
         query.equalTo('isDel',false);
         query.equalTo('boxId',box);
         query.first().then(function(passage){
-          passage.set('stock',passage.get('stock')+record.count);
+          passage.increment('stock',record.count);
           passage.save();
         });
       });
