@@ -19,7 +19,7 @@ function doWork(deviceId,records,res){
         boxQuery.equalTo('deviceId',deviceId);
         boxQuery.first().then(function(box){
             if(typeof(box)=="undefined"){
-                result['message']="无此设备号"；
+                result['message']="无此设备号";
                 return res.jsonp(result);
             }
             var passageQuery=new AV.Query('Passage');
