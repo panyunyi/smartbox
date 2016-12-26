@@ -67,8 +67,9 @@
     <script src="../dist/js/semantic.min.js"></script>
     <script>
         var t= $('#table').DataTable( {
+            "processing": true,
             stateSave: true,
-           "ajax": '../api/json/passtock',
+           "ajax": '../api/json/pasrecord',
            "columns": [
                 {"data":null},
                 { "data": "time" },
@@ -80,7 +81,7 @@
                 { "data": "sku" },
                 { "data": "product" },
                 { "data": "count" },
-                { "data": "assortment" },
+                { "data": "unit" },
                 { "data": "employee" },
                 { "data": "empNo" },
                 { "data": "empCard" }

@@ -62,6 +62,7 @@
     <script src="../dist/js/semantic.min.js"></script>
     <script>
         var t= $('#table').DataTable( {
+            "processing": true,
             stateSave: true,
            "ajax": '../api/json/passtock',
            "columns": [
