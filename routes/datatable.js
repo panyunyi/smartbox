@@ -279,7 +279,6 @@ router.get('/supply',function(req,res){
                 }
                 passageQuery.include('product');
                 passageQuery.first().then(function(passage){
-                    //console.log(passage.get('product').get('name'));
                     result.set('product',passage.get('product').get('name'));
                     result.set('time',new moment(result.get('time')).format('L'));
                     result.set('sku',passage.get('product').get('sku'));
