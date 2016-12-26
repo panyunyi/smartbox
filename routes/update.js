@@ -20,6 +20,7 @@ router.get('/:id/:code', function(req, res) {
             result['data']={"result":false};
             return res.jsonp(result);
         }
+        data.set('result',true);
         result['data']=data;
         result['message']="";
         res.jsonp(result);
