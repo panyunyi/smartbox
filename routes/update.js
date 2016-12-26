@@ -17,9 +17,10 @@ router.get('/:id/:code', function(req, res) {
     query.first().then(function(data){
         if(typeof(data)=="undefined"){
             result['message']="无此设备版本号";
-            result['data']=false;
+            result['data']={"result":false};
             return res.jsonp(result);
         }
+        data.set('result',true);
         result['data']=data;
         result['message']="";
         res.jsonp(result);
