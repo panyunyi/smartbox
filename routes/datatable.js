@@ -91,6 +91,8 @@ router.get('/employee',function(req,res){
             result.set('sex',result.get('sex')?"男":"女");
             result.set('cusId',result.get('cusId').get('name'));
             result.set('job',result.get('job')?result.get('job'):"");
+            result.set('notice',result.get('notice')?result.get('notice'):"");
+            result.set('dept',result.get('dept')?result.get('dept'):"");
             async.map(result.get('card'),function(cardId,callback2){
                 var card=AV.Object.createWithoutData('EmployeeCard',cardId);
                 card.fetch().then(function(one){
@@ -187,7 +189,7 @@ router.get('/pasrecord',function(req,res){
                 var product=takeout.get('product').get('name');
                 var unit=takeout.get('product').get('unit');
                 var passage=takeout.get('passage');
-                var time=new moment(takeout.get('time')).format('L');
+                var time=new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
                 var empQuery=new AV.Query('EmployeeCard');
                 empQuery.select(['emp','card']);
                 empQuery.equalTo('isDel',false);
@@ -221,7 +223,7 @@ router.get('/pasrecord',function(req,res){
                 var product=borrow.get('product').get('name');
                 var unit=borrow.get('product').get('unit');
                 var passage=borrow.get('passage');
-                var time=new moment(borrow.get('time')).format('L');
+                var time=new moment(borrow.get('time')).format('YYYY-MM-DD HH:mm:ss');
                 var empQuery=new AV.Query('EmployeeCard');
                 var flag=borrow.get('borrow');
                 empQuery.select(['emp','card']);
@@ -260,7 +262,6 @@ router.get('/supply',function(req,res){
     query.equalTo('isDel',false);
     query.greaterThan('count',0);
     query.find().then(function(results){
-        console.log(results.length);
         async.map(results,function(result,callback){
             var boxQuery=new AV.Query('BoxInfo');
             boxQuery.equalTo('isDel',false);
@@ -280,7 +281,7 @@ router.get('/supply',function(req,res){
                 passageQuery.include('product');
                 passageQuery.first().then(function(passage){
                     result.set('product',passage.get('product').get('name'));
-                    result.set('time',new moment(result.get('time')).format('L'));
+                    result.set('time',new moment(result.get('time')).format('YYYY-MM-DD HH:mm:ss'));
                     result.set('sku',passage.get('product').get('sku'));
                     result.set('cus',cus);
                     callback(null,result);
