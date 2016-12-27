@@ -27,7 +27,7 @@ app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
 // 设置默认超时时间
-app.use(timeout('15s'));
+app.use(timeout('35s'));
 
 // 加载云函数定义
 require('./cloud');

@@ -295,6 +295,11 @@ router.get('/supply',function(req,res){
     });
 });
 
+//补货计划
+router.get('/supplyplan',function(req,res){
+
+});
+
 //盘点业务
 router.get('/checklist',function(req,res){
 

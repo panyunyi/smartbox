@@ -114,6 +114,14 @@ router.get('/supply', function(req, res) {
     }
 });
 
+router.get('/supplyplan', function(req, res) {
+    if(req.currentUser){
+    	res.render('supplyplan');
+    }else{
+    	res.redirect('../login');
+    }
+});
+
 router.get('/warehouse', function(req, res) {
     if(req.currentUser){
     	res.render('warehouse');
