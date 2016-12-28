@@ -261,37 +261,23 @@ router.get('/supply',function(req,res){
     var query=new AV.Query('Supply');
     query.equalTo('isDel',false);
     query.greaterThan('count',0);
+    query.include('box');
+    query.include('card');
+    query.include('passage');
+    query.include('passage.product');
+    query.include('box.cusId');
     query.find().then(function(results){
-        async.map(results,function(result,callback){
-            var boxQuery=new AV.Query('BoxInfo');
-            boxQuery.equalTo('isDel',false);
-            boxQuery.equalTo('deviceId',result.get('deviceId'));
-            boxQuery.include('cusId');
-            boxQuery.first().then(function(box){
-                var cus=box.get('cusId').get('name');
-                var passageQuery=new AV.Query('Passage');
-                passageQuery.equalTo('isDel',false);
-                passageQuery.equalTo('boxId',box);
-                if(result.get('passage').length==3){
-                    passageQuery.equalTo('flag',result.get('passage').substr(0,1));
-                    passageQuery.equalTo('seqNo',result.get('passage').substr(1,2));
-                }else{
-                    passageQuery.equalTo('seqNo',result.get('passage'));
-                }
-                passageQuery.include('product');
-                passageQuery.first().then(function(passage){
-                    result.set('product',passage.get('product').get('name'));
-                    result.set('time',new moment(result.get('time')).format('YYYY-MM-DD HH:mm:ss'));
-                    result.set('sku',passage.get('product').get('sku'));
-                    result.set('cus',cus);
-                    callback(null,result);
-                },function(error){
-                    callback(error);
-                });
-            });
-        },function(error,results){
-            res.jsonp({"data":results});
+        results.forEach(function(result){
+            result.set('product',result.get('passage').get('product').get('name'));
+            result.set('time',new moment(result.get('time')).format('YYYY-MM-DD HH:mm:ss'));
+            result.set('sku',result.get('passage').get('product').get('sku'));
+            result.set('cus',result.get('box').get('cusId').get('name'));
+            result.set('deviceId',result.get('box').get('deviceId'));
+            result.set('card',result.get('card').get('card'));
+            result.set('passage',result.get('passage').get('flag')?
+            result.get('passage').get('flag')+result.get('passage').get('seqNo'):result.get('passage').get('seqNo'));
         });
+        res.jsonp({"data":results});
     });
 });
 
