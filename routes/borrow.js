@@ -10,25 +10,26 @@ function doWork(cus,box,deviceId,card,passage,res){
     var resdata={};
     var message="无权限";
     resdata["result"]=flag;
+    var oneborrow=new Borrow();
+
     function promise1(callback){
         var cardQuery=new AV.Query('EmployeeCard');
         cardQuery.equalTo('card',card);
         cardQuery.equalTo('isDel',false);
+        cardQuery.equalTo('cusId',cus);
+        cardQuery.include('emp');
         cardQuery.first().then(function(cardObj){
             if (typeof(cardObj) == "undefined") {
                 return callback(null,0,null);
             }
-            var empQuery=new AV.Query('Employee');
-            empQuery.equalTo('card',cardObj.get('id'));
-            empQuery.equalTo('isDel',false);
-            empQuery.first().then(function(data){
-                if(typeof(data)=="undefined"){
-                    return callback(null,0,null);
-                }
-                message="卡号";
-                return callback(null,1,data);
-            },function(error){
-            });
+            oneborrow.set('isDel',false);
+            oneborrow.set('box',box);
+            oneborrow.set('time',new Date());
+            oneborrow.set('card',cardObj);
+            oneborrow.set('result',false);
+            oneborrow.set('borrow',true);
+            oneborrow.save();
+            return callback(null,1,cardObj.get('emp'));
         },function(error){
             return callback(error);
         });
@@ -41,12 +42,18 @@ function doWork(cus,box,deviceId,card,passage,res){
         passageQuery.equalTo('isDel',false);
         passageQuery.equalTo('flag',passage.substr(0,1));
         passageQuery.equalTo('isSend',false);
-        passageQuery.equalTo('borrowState',false);
+        //passageQuery.equalTo('borrowState',false);
         passageQuery.equalTo('seqNo',passage.substr(1,2));
         passageQuery.equalTo('boxId',box);
-        passageQuery.equalTo('used',null);
+        //passageQuery.equalTo('used',null);
         passageQuery.first().then(function(passageObj){
-            message="货道";
+            oneborrow.set('passage',passageObj);
+            oneborrow.set('product',passageObj.get('product'));
+            oneborrow.save();
+            if(passageObj.get('borrowState')||passageObj.get('used')!=null){
+                message="格子柜为借出状态";
+                return callback(null,false,null);
+            }
             return callback(null,passageObj,arg2);
         },function(error){
             return callback(error);
@@ -58,22 +65,13 @@ function doWork(cus,box,deviceId,card,passage,res){
         }
         var product=arg1.get('product');
         var empPower=arg2.get('power');
-        var oneborrow=new Borrow();
-        oneborrow.set('isDel',false);
-        oneborrow.set('deviceId',deviceId);
-        oneborrow.set('time',new Date());
-        oneborrow.set('card',card);
-        oneborrow.set('result',false);
-        oneborrow.set('passage',passage);
-        oneborrow.set('product',product);
-        oneborrow.set('borrow',true);
         async.mapSeries(empPower,function(emppower,callback1){
             var powerQuery=new AV.Query('EmployeePower');
             powerQuery.equalTo('objectId',emppower);
             powerQuery.equalTo('isDel',false);
             powerQuery.first().then(function(power){
                 if (typeof(power)!="undefined") {
-                    verifyPower(oneborrow,product,power,callback1,callback);
+                    verifyPower(product,power,callback1,callback);
                 }
             },function(error){
                 return callback(error);
@@ -82,7 +80,7 @@ function doWork(cus,box,deviceId,card,passage,res){
             return callback(null,flag);
         });
     }
-    function verifyPower(oneborrow,product,power,callback,callback1){
+    function verifyPower(product,power,callback,callback1){
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
             flag=true;
             oneborrow.set('result',true);
@@ -90,28 +88,13 @@ function doWork(cus,box,deviceId,card,passage,res){
                 message="";
                 resdata["result"]=flag;
                 resdata["objectId"]=one.id;
-                var borrowQuery=new AV.Query('Borrow');
-                borrowQuery.get(one.id).then(function(borrowPassage){
-                    var seqNo=borrowPassage.get('passage').substr(1,2);
-                    var flag=borrowPassage.get('passage').substr(0,1);
-                    var passageQuery=new AV.Query('Passage');
-                    passageQuery.equalTo('boxId',box);
-                    passageQuery.equalTo('seqNo',seqNo);
-                    passageQuery.equalTo('flag',flag);
-                    passageQuery.first().then(function(passage){
-                        var cardQuery=new AV.Query('EmployeeCard');
-                        cardQuery.equalTo('isDel',false);
-                        cardQuery.equalTo('card',one.card);
-                        cardQuery.first().then(function(cardobj){
-                            passage.set('borrowState',true);
-                            passage.increment('stock',-1);
-                            passage.set('used',cardobj.get('emp'));
-                            passage.save().then(function(){
-                                callback(null,true);
-                                return callback1(null,true);
-                            });
-                        });
-                    });
+                var passage=one.get('passage');
+                passage.set('borrowState',true);
+                passage.increment('stock',-1);
+                passage.set('used',one.get('card').get('emp'));
+                passage.save().then(function(){
+                    callback(null,true);
+                    return callback1(null,true);
                 });
             });
         }else{
@@ -187,41 +170,14 @@ router.get('/fail/:id', function(req, res) {
     borrow.set('borrow',true);
     borrow.save();
     borrow.fetch().then(function(){
-        var result={
-          status:200,
-          message:"",
-          data:true,
-          server_time:new Date()
-        }
+        result['message']="";
+        result['data']=true;
         res.jsonp(result);
-        var deviceId=borrow.get('deviceId');
-        var borrowQuery=new AV.Query('Borrow');
-        borrowQuery.get(borrow.id).then(function(borrowPassage){
-            var seqNo=borrowPassage.get('passage').substr(1,2);
-            var flag=borrowPassage.get('passage').substr(0,1);
-            var boxQuery=new AV.Query('BoxInfo');
-            boxQuery.equalTo('deviceId',deviceId);
-            boxQuery.first().then(function(box){
-                if(typeof(box)=="undefined"){
-                    return res.jsonp(result);
-                }
-                var passageQuery=new AV.Query('Passage');
-                passageQuery.equalTo('boxId',box);
-                passageQuery.equalTo('seqNo',seqNo);
-                passageQuery.equalTo('flag',flag);
-                passageQuery.first().then(function(passage){
-                    var cardQuery=new AV.Query('EmployeeCard');
-                    cardQuery.equalTo('isDel',false);
-                    cardQuery.equalTo('card',borrow.card);
-                    cardQuery.first().then(function(card){
-                        passage.set('borrowState',false);
-                        passage.increment('stock',1);
-                        passage.set('used',null)
-                        passage.save();
-                    });
-                });
-            });
-        });
+        var passage=borrow.get('passage');
+        passage.set('borrowState',false);
+        passage.increment('stock',1);
+        passage.set('used',null)
+        passage.save();
     },function(error){
         res.jsonp(result);
     });

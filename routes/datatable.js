@@ -212,32 +212,30 @@ router.get('/pasrecord',function(req,res){
         borrowQuery.equalTo('isDel',false);
         borrowQuery.equalTo('result',true);
         borrowQuery.include('product');
-        borrowQuery.select(['deviceId','time','card','borrow','passage','product']);
+        borrowQuery.include('passage');
+        borrowQuery.include('box');
+        borrowQuery.include('card');
+        borrowQuery.include('box.cusId');
+        borrowQuery.include('card.emp');
         borrowQuery.find().then(function(borrows){
             async.map(borrows,function(borrow,callback1){
-                var deviceId=borrow.get('deviceId');
-                var card=borrow.get('card');
+                var deviceId=borrow.get('box').get('deviceId');
+                var card=borrow.get('card').get('card');
                 var sku=borrow.get('product').get('sku');
                 var product=borrow.get('product').get('name');
                 var unit=borrow.get('product').get('unit');
-                var passage=borrow.get('passage');
+                var passage=borrow.get('passage').get('flag')+borrow.get('passage').get('seqNo');
                 var time=new moment(borrow.get('time')).format('YYYY-MM-DD HH:mm:ss');
-                var empQuery=new AV.Query('EmployeeCard');
+                var cus=borrow.get('box').get('cusId').get('name');
+                var emp=borrow.get('card').get('emp').get('name');
+                var empNo=borrow.get('card').get('emp').get('empNo');
                 var flag=borrow.get('borrow');
-                empQuery.select(['emp','card']);
-                empQuery.equalTo('isDel',false);
-                empQuery.include('emp');
-                empQuery.include('emp.cusId');
-                empQuery.equalTo('card',card);
-                empQuery.first().then(function(emp){
-                    var oneborrow={"time":time,"type":flag?"借":"还",
-                    "objectId":borrow.get('id'),"cus":emp.get('emp').get('cusId').get('name'),
-                    "deviceId":deviceId,"passage":passage,"sku":sku,"product":product,
-                    "count":flag?-1:+1,"unit":unit,"employee":emp.get('emp').get('name'),
-                    "empNo":emp.get('emp').get('empNo'),"empCard":card};
-                    jsondata.push(oneborrow);
-                    callback1(null,oneborrow);
-                });
+                var oneborrow={"time":time,"type":flag?"借":"还",
+                "objectId":borrow.get('id'),"cus":cus,"deviceId":deviceId,
+                "passage":passage,"sku":sku,"product":product,"count":flag?-1:+1,
+                "unit":unit,"employee":emp,"empNo":empNo,"empCard":card};
+                jsondata.push(oneborrow);
+                callback1(null,oneborrow);
             },function(error,results){
                 return callback(null,results);
             });
