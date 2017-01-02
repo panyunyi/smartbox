@@ -29,6 +29,7 @@ function doWork(deviceId,records,res){
                 obj.set('isDel',false);
                 var empCardQuery=new AV.Query('EmployeeCard');
                 empCardQuery.equalTo('card',record.card);
+                empCardQuery.equalTo('cusId',box.get('cusId'));
                 empCardQuery.first().then(function(card){
                     obj.set('card',card);
                     objects.push(obj);

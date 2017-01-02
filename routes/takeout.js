@@ -16,7 +16,9 @@ function doWork(cus,box,deviceId,card,passage,res){
     function promise1(callback){
         var cardQuery=new AV.Query('EmployeeCard');
         cardQuery.equalTo('card',card);
+        cardQuery.equalTo('cusId',cus);
         cardQuery.equalTo('isDel',false);
+        cardQuery.include('emp');
         cardQuery.first().then(function(cardObj){
             if (typeof(cardObj) == "undefined") {
                 return callback(null,0,null);
@@ -27,17 +29,7 @@ function doWork(cus,box,deviceId,card,passage,res){
             onetake.set('card',cardObj);
             onetake.set('result',false);
             onetake.save();
-            var empQuery=new AV.Query('Employee');
-            empQuery.equalTo('card',cardObj.get('id'));
-            empQuery.equalTo('isDel',false);
-            empQuery.first().then(function(data){
-                if(typeof(data)=="undefined"){
-                    message="卡号异常";
-                    return callback(null,0,null);
-                }
-                return callback(null,1,data);
-            },function(error){
-            });
+            return callback(null,1,cardObj.get('emp'));
         },function(error){
             message="卡号异常";
             return callback(error);
