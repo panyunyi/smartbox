@@ -180,31 +180,29 @@ router.get('/pasrecord',function(req,res){
         takeoutQuery.equalTo('isDel',false);
         takeoutQuery.equalTo('result',true);
         takeoutQuery.include('product');
-        takeoutQuery.select(['deviceId','card','time','product','passage']);
+        takeoutQuery.include('passage');
+        takeoutQuery.include('box');
+        takeoutQuery.include('card');
+        takeoutQuery.include('box.cusId');
+        takeoutQuery.include('card.emp');
         takeoutQuery.find().then(function(takeouts){
             async.map(takeouts,function(takeout,callback1){
-                var deviceId=takeout.get('deviceId');
-                var card=takeout.get('card');
+                var deviceId=takeout.get('box').get('deviceId');
+                var card=takeout.get('card').get('card');
                 var sku=takeout.get('product').get('sku');
                 var product=takeout.get('product').get('name');
                 var unit=takeout.get('product').get('unit');
-                var passage=takeout.get('passage');
+                var passage=takeout.get('passage').get('seqNo');
                 var time=new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
-                var empQuery=new AV.Query('EmployeeCard');
-                empQuery.select(['emp','card']);
-                empQuery.equalTo('isDel',false);
-                empQuery.include('emp');
-                empQuery.include('emp.cusId');
-                empQuery.equalTo('card',card);
-                empQuery.first().then(function(emp){
-                    var onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
-                    "cus":emp.get('emp').get('cusId').get('name'),"deviceId":deviceId,
-                    "passage":passage,"count":-1,"product":product,"sku":sku,
-                    "unit":unit,"employee":emp.get('emp').get('name'),
-                    "empNo":emp.get('emp').get('empNo'),"empCard":card};
-                    jsondata.push(onetake);
-                    callback1(null,onetake);
-                });
+                var cus=takeout.get('box').get('cusId').get('name');
+                var emp=takeout.get('card').get('emp').get('name');
+                var empNo=takeout.get('card').get('emp').get('empNo');
+                var onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
+                "cus":cus,"deviceId":deviceId,"passage":passage,"count":-1,
+                "product":product,"sku":sku,"unit":unit,"employee":emp,
+                "empNo":empNo,"empCard":card};
+                jsondata.push(onetake);
+                callback1(null,onetake);
             },function(error,results){
                 return callback(null,results);
             });
