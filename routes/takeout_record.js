@@ -21,15 +21,21 @@ function doWork(deviceId,records,res){
                     passage.increment('stock',-1);
                     passage.save();
                 }
-                obj.set('deviceId', deviceId);
-                obj.set('passage',record.passage);
-                obj.set('card',record.card);
+                obj.set('box', box);
+                obj.set('passage',passage);
                 obj.set('product',passage.get('product'));
                 obj.set('time',new Date(record.time));
                 obj.set('result',record.result);
                 obj.set('isDel',false);
-                objects.push(obj);
-                callback(null,record);
+                var empCardQuery=new AV.Query('EmployeeCard');
+                empCardQuery.equalTo('card',record.card);
+                empCardQuery.first().then(function(card){
+                    obj.set('card',card);
+                    objects.push(obj);
+                    callback(null,record);
+                },function(error){
+                    callback(null,error);
+                });
             });
         });
     },function(error,results){
