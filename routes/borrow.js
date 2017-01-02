@@ -42,10 +42,8 @@ function doWork(cus,box,deviceId,card,passage,res){
         passageQuery.equalTo('isDel',false);
         passageQuery.equalTo('flag',passage.substr(0,1));
         passageQuery.equalTo('isSend',false);
-        //passageQuery.equalTo('borrowState',false);
         passageQuery.equalTo('seqNo',passage.substr(1,2));
         passageQuery.equalTo('boxId',box);
-        //passageQuery.equalTo('used',null);
         passageQuery.first().then(function(passageObj){
             oneborrow.set('passage',passageObj);
             oneborrow.set('product',passageObj.get('product'));
@@ -174,10 +172,14 @@ router.get('/fail/:id', function(req, res) {
         result['data']=true;
         res.jsonp(result);
         var passage=borrow.get('passage');
-        passage.set('borrowState',false);
-        passage.increment('stock',1);
-        passage.set('used',null)
-        passage.save();
+        passage.fetch().then(function(){
+            if(passage.get('borrowState')){
+                passage.set('borrowState',false);
+                passage.increment('stock',1);
+                passage.set('used',null)
+                passage.save();
+            }
+        });
     },function(error){
         res.jsonp(result);
     });

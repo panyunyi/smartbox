@@ -3,8 +3,14 @@ var router = require('express').Router();
 var AV = require('leanengine');
 var ApiLog=require('./log');
 var Borrow = AV.Object.extend('Borrow');
-
+var result={
+  status:200,
+  message:"无权限",
+  data:{"result":false},
+  server_time:new Date()
+};
 router.get('/:id/:card/:passage', function(req, res) {
+    result['data']={"result":false};
     var deviceId=req.params.id;
     var card=req.params.card;
     var passage=req.params.passage;
@@ -19,116 +25,81 @@ router.get('/:id/:card/:passage', function(req, res) {
 	    boxQuery.include('cusId');
 	    boxQuery.first().then(function (box){
 	        if (typeof(box) == "undefined") {
-	          var result={
-	            status:200,
-	            message:"无此设备号的数据",
-	            data:{"result":false},
-	            server_time:new Date()
-	          }
-	          res.jsonp(result);
-	          return;
+                result['message']="无此货柜";
+                res.jsonp(result);
+                return;
 	        }
 	        var oneborrow=new Borrow();
 	        var passageQuery=new AV.Query('Passage');
-	        passageQuery.equalTo('used',cardObj.get('emp'));
 	        passageQuery.equalTo('isDel',false);
 	        passageQuery.equalTo('boxId',box);
 	        passageQuery.equalTo('flag',passage.substr(0,1));
 	        passageQuery.equalTo('seqNo',passage.substr(1,2));
-	        passageQuery.first().then(function(data){
-	        	if (typeof(data) == "undefined") {
-		          var result={
-		            status:200,
-		            message:"请确认借货卡",
-		            data:{"result":false},
-		            server_time:new Date()
-		          }
-		          res.jsonp(result);
-		          return;
-		        }
-	            oneborrow.set('isDel',false);
-	            oneborrow.set('deviceId',deviceId);
-	            oneborrow.set('time',new Date());
-	            oneborrow.set('card',card);
-	            oneborrow.set('result',true);
-	            oneborrow.set('passage',passage);
-	            oneborrow.set('product',data.get('product'));
-	            oneborrow.set('borrow',false);
-	            oneborrow.save().then(function(one){
-	                var result={
-	                    status:200,
-	                    message:"",
-	                    data:{"result":true,"objectId":one.id},
-	                    server_time:new Date()
-	                }
-	                res.jsonp(result);
-
-	            });
-	            data.set('borrowState',false);
-                data.increment('stock',1);
-                data.set('used',null)
-                data.save();
+	        passageQuery.first().then(function(passageObj){
+                if (typeof(passageObj) == "undefined") {
+                    result['message']="格子柜序号有误";
+                    res.jsonp(result);
+                    return;
+                }
+                if(passageObj.get('used')==null){
+                    result['message']="格子柜无借货人";
+                    res.jsonp(result);
+                    return;
+                }
+                if(passageObj.get('used').id!=cardObj.get('emp').id){
+                    result['message']="确认借货人";
+                    res.jsonp(result);
+                    return;
+                }
+                oneborrow.set('isDel',false);
+                oneborrow.set('box',box);
+                oneborrow.set('time',new Date());
+                oneborrow.set('card',cardObj);
+                oneborrow.set('result',true);
+                oneborrow.set('passage',passageObj);
+                oneborrow.set('product',passageObj.get('product'));
+                oneborrow.set('borrow',false);
+                oneborrow.save().then(function(one){
+                    result['message']="";
+                    result['data']={"result":true,"objectId":one.id};
+                    res.jsonp(result);
+                });
+	            passageObj.set('borrowState',false);
+                passageObj.increment('stock',1);
+                passageObj.set('used',null)
+                passageObj.save();
 	    	});
 	    },function (error){
 	        console.log(error);
-	        var result={
-	          status:200,
-	          message:"",
-	          data:{"result":false},
-	          server_time:new Date()
-	        }
+            result['message']=error;
 	        res.jsonp(result);
 	    });
     });
 });
 
 router.get('/fail/:id/', function(req, res) {
-    var result={
-      status:200,
-      message:"",
-      data:false,
-      server_time:new Date()
-    }
+    result['message']="请求失败";
+    result['data']=false;
     var todo={"ip":req.headers['x-real-ip'],"api":"还货失败回调接口","deviceId":"","msg":"objectId:"+req.params.id};
     ApiLog.WorkOn(todo);
     var borrow=AV.Object.createWithoutData('Borrow',req.params.id);
     borrow.set('result',false);
     borrow.set('borrow',false);
-    borrow.save().then(function(data){
-        var result={
-          status:200,
-          message:"",
-          data:true,
-          server_time:new Date()
-        }
+    borrow.save();
+    borrow.fetch().then(function(){
+        result['message']="";
+        result['data']=true;
         res.jsonp(result);
-        var deviceId=borrow.get('deviceId');
-        var borrowQuery=new AV.Query('Borrow');
-        borrowQuery.get(data.id).then(function(borrowPassage){
-            var seqNo=borrowPassage.get('passage').substr(1,2);
-            var flag=borrowPassage.get('passage').substr(0,1);
-            var boxQuery=new AV.Query('BoxInfo');
-            boxQuery.equalTo('deviceId',deviceId);
-            boxQuery.first().then(function(box){
-                if(typeof(box)=="undefined"){
-                    return res.jsonp(result);
-                }
-                var passageQuery=new AV.Query('Passage');
-                passageQuery.equalTo('boxId',box);
-                passageQuery.equalTo('seqNo',seqNo);
-                passageQuery.equalTo('flag',flag);
-                passageQuery.first().then(function(passage){
-                    var cardQuery=new AV.Query('EmployeeCard');
-                    cardQuery.equalTo('isDel',false);
-                    cardQuery.equalTo('card',data.card);
-                    cardQuery.first().then(function(card){
-                        passage.set('borrowState',false);
-                        passage.increment('stock',-1);
-                        passage.set('used',card.get('emp'))
-                        passage.save();
-                    });
+        var passage=borrow.get('passage');
+        passage.fetch().then(function(){
+            if(!passage.get('borrowState')){
+                passage.set('borrowState',true);
+                passage.increment('stock',-1);
+                borrow.get('card').fetch().then(function(){
+                    passage.set('used',borrow.get('card').get('emp'));
+                    passage.save();
                 });
-            });
+            }
         });
     },function(error){
         res.jsonp(result);
