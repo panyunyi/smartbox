@@ -11,6 +11,7 @@ function doWork(cus,box,deviceId,card,passage,res){
     var resdata={};
     var message="无权限";
     resdata["result"]=flag;
+    var onetake=new TakeOut();
 
     function promise1(callback){
         var cardQuery=new AV.Query('EmployeeCard');
@@ -20,6 +21,12 @@ function doWork(cus,box,deviceId,card,passage,res){
             if (typeof(cardObj) == "undefined") {
                 return callback(null,0,null);
             }
+            onetake.set('isDel',false);
+            onetake.set('box',box);
+            onetake.set('time',new Date());
+            onetake.set('card',cardObj);
+            onetake.set('result',false);
+            onetake.save();
             var empQuery=new AV.Query('Employee');
             empQuery.equalTo('card',cardObj.get('id'));
             empQuery.equalTo('isDel',false);
@@ -45,6 +52,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         passageQuery.equalTo('seqNo',passage);
         passageQuery.equalTo('boxId',box);
         passageQuery.first().then(function(passageObj){
+            onetake.set('passage',passageObj);
             return callback(null,passageObj,arg2);
         },function(error){
             message="货道异常";
@@ -56,23 +64,16 @@ function doWork(cus,box,deviceId,card,passage,res){
             return callback(null,false);
         }
         var product=arg1.get('product');
-        var empPower=arg2.get('power');
-        var onetake=new TakeOut();
-        onetake.set('isDel',false);
-        onetake.set('deviceId',deviceId);
-        onetake.set('time',new Date());
-        onetake.set('card',card);
-        onetake.set('result',false);
-        onetake.set('passage',passage);
         onetake.set('product',product);
         onetake.save();
+        var empPower=arg2.get('power');
         async.map(empPower,function(emppower,callback1){
             var powerQuery=new AV.Query('EmployeePower');
             powerQuery.equalTo('objectId',emppower);
             powerQuery.equalTo('isDel',false);
             powerQuery.first().then(function(power){
                 if (typeof(power)!="undefined") {
-                    verifyPower(onetake,product,power,callback1,callback);
+                    verifyPower(product,power,callback1,callback);
                 }
             },function(error){
                 message="权限验证异常";
@@ -83,7 +84,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         });
 
     }
-    function verifyPower(onetake,product,power,callback,callback1){
+    function verifyPower(product,power,callback,callback1){
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
             var unit=power.get('unit');
             var period=power.get('period');
@@ -137,7 +138,7 @@ function doWork(cus,box,deviceId,card,passage,res){
                 }
             });
         }else{
-            message="无取货无权限";
+            message="无取货权限";
             callback(null,false);
         }
     }
@@ -205,32 +206,21 @@ router.get('/fail/:id', function(req, res) {
     var todo={"ip":req.headers['x-real-ip'],"api":"取货失败回调接口","deviceId":"","msg":"objectId:"+req.params.id};
     ApiLog.WorkOn(todo);
     var takeout=AV.Object.createWithoutData('TakeOut',req.params.id);
-    takeout.set('result',false);
-    takeout.save();
     takeout.fetch().then(function(){
-        var result={
-          status:200,
-          message:"",
-          data:true,
-          server_time:new Date()
+        var flag=takeout.get('result');
+        if(flag){
+            takeout.set('result',false);
+            takeout.save();
+            result['message']="";
+            result['data']=true;
+            res.jsonp(result);
+            var passage=takeout.get('passage');
+            passage.increment('stock',1);
+            passage.save();
+        }else{
+            result['message']="操作已回滚";
+            res.jsonp(result);
         }
-        res.jsonp(result);
-        var deviceId=takeout.get('deviceId');
-        var seqNo=takeout.get('passage');
-        var boxQuery=new AV.Query('BoxInfo');
-        boxQuery.equalTo('deviceId',deviceId);
-        boxQuery.first().then(function(box){
-            if(typeof(box)=="undefined"){
-                return res.jsonp(result);
-            }
-            var passageQuery=new AV.Query('Passage');
-            passageQuery.equalTo('boxId',box);
-            passageQuery.equalTo('seqNo',seqNo);
-            passageQuery.first().then(function(passage){
-                passage.increment('stock',1);
-                passage.save();
-            });
-        });
     },function(error){
         res.jsonp(result);
     });
