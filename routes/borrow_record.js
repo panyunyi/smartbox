@@ -39,9 +39,9 @@ function doWork(deviceId,records,res){
                         result['message']="未找到此卡";
                         callback(null,record);
                     }
-                    obj.set('deviceId', deviceId);
-                    obj.set('passage',record.passage);
-                    obj.set('card',record.card);
+                    obj.set('box', box);
+                    obj.set('passage',passage);
+                    obj.set('card',card);
                     obj.set('borrow',record.borrow);
                     obj.set('product',passage.get('product'));
                     obj.set('time',new Date(record.time));
@@ -65,21 +65,13 @@ function doWork(deviceId,records,res){
         });
     },function(error,results){
         AV.Object.saveAll(objects).then(function (objects) {
-            var result={
-              status:200,
-              message:"",
-              data:true,
-              server_time:new Date()
-            }
+            result['message']="";
+            result['data']=true;
             res.jsonp(result);
         }, function (error) {
             console.log(error);
-            var result={
-              status:200,
-              message:"提交失败",
-              data:false,
-              server_time:new Date()
-            }
+            result['message']=error;
+            result['data']=false;
             res.jsonp(result);
         });
     });
