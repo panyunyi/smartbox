@@ -59,7 +59,17 @@
 <script src="../dist/js/jquery.dataTables.min.js"></script>
 <script src="../dist/js/dataTables.semanticui.min.js"></script>
 <script src="../dist/js/semantic.min.js"></script>
+<script src="../dist/js/dataTables.editor.min.js"></script>
+<script src="../dist/js/editor.semanticui.min.js"></script>
 <script>
+    var editor = new $.fn.dataTable.Editor( {
+        ajax: "",
+        table: "#table",
+        fields: [
+            { label: 'First name', name: 'first_name' },
+            { label: 'Last name',  name: 'last_name'  },
+        ]
+    } );
     var t= $('#table').DataTable( {
         "processing": true,
         stateSave: true,
@@ -74,6 +84,11 @@
             { "data": "area" },
             { "data": "address" }
         ],
+        select:true,
+        buttons: [
+        { extend: 'create', editor: editor },
+        { extend: 'edit',   editor: editor },
+        { extend: 'remove', editor: editor }],
         "columnDefs": [{
             "searchable": false,
             "orderable": false,
