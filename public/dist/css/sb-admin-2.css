@@ -432,3 +432,21 @@ table.dataTable thead .sorting:after {
     border-left-width: 0;
   }
 }
+.dataTables_length,.dataTables_info,.editor{
+    display: inline-flex;
+}
+.dataTables_length{
+    margin-left: 10px;
+}
+.dataTables_filter,.dataTables_paginate{
+    float: right;
+}
+.bottom{
+    padding-top: 1rem;
+}
+.top{
+    padding-bottom: 2.5rem;
+}
+.dt-buttons{
+
+}

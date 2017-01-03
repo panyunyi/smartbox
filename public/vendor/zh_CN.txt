@@ -1,6 +1,6 @@
 {
 	"processing": "加载中...",
-	"lengthMenu": "每页显示 _MENU_ 条记录",
+	"lengthMenu": "显示 _MENU_ 条",
 	"zeroRecords": "没有匹配结果",
 	"info": "当前显示 _START_ 到 _END_ 条，共 _TOTAL_ 条记录",
 	"infoEmpty": "显示第 0 到 0 条记录，共 0 条",
@@ -14,4 +14,5 @@
 		"next":     "下页",
 		"last":     "末页"
 	}
+
 }

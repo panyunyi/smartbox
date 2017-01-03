@@ -61,20 +61,31 @@
 <script src="../dist/js/semantic.min.js"></script>
 <script src="../dist/js/dataTables.editor.min.js"></script>
 <script src="../dist/js/editor.semanticui.min.js"></script>
+<script src="../dist/js/buttons.semanticui.min.js"></script>
+<script src="../dist/js/dataTables.buttons.min.js"></script>
+<script src="../dist/js/dataTables.select.min.js"></script>
 <script>
-    var editor = new $.fn.dataTable.Editor( {
+var editor;
+$(document).ready(function() {
+        editor = new $.fn.dataTable.Editor( {
         ajax: "",
         table: "#table",
         fields: [
-            { label: 'First name', name: 'first_name' },
-            { label: 'Last name',  name: 'last_name'  },
+            { label: '客户名称', name: 'name' },
+            { label: '联系人',  name: 'connecter'  },
+            { label: '联系人电话',  name: 'connecterPhone'  },
+            { label: '省',  name: 'province'  },
+            { label: '市',  name: 'city'  },
+            { label: '区',  name: 'area'  },
+            { label: '地址',  name: 'address'  }
         ]
     } );
-    var t= $('#table').DataTable( {
+    var table= $('#table').DataTable( {
         "processing": true,
         stateSave: true,
-       "ajax": '../api/json/customer',
-       "columns": [
+        lengthChange: false,
+        "ajax": '../api/json/customer',
+        "columns": [
             {"data":null},
             { "data": "name" },
             { "data": "connecter" },
@@ -85,10 +96,6 @@
             { "data": "address" }
         ],
         select:true,
-        buttons: [
-        { extend: 'create', editor: editor },
-        { extend: 'edit',   editor: editor },
-        { extend: 'remove', editor: editor }],
         "columnDefs": [{
             "searchable": false,
             "orderable": false,
@@ -99,14 +106,23 @@
             "url": "../vendor/zh_CN.txt"
         }
     });
-    t.on('order.dt search.dt',function() {
-                t.column(0, {
+    table.on('order.dt search.dt',function() {
+                table.column(0, {
                     search: 'applied',
                     order: 'applied'
                 }).nodes().each(function(cell, i) {
                     cell.innerHTML = i + 1;
                 });
             }).draw();
+            new $.fn.dataTable.Buttons( table, [
+        { extend: "create", editor: editor },
+        { extend: "edit",   editor: editor },
+        { extend: "remove", editor: editor }
+    ] );
+
+    table.buttons().container()
+        .appendTo( $('div.eight.column:eq(0)', table.table().container()) );
+});
 </script>
 </body>
 
