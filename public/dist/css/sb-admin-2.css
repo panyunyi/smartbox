@@ -445,8 +445,5 @@ table.dataTable thead .sorting:after {
     padding-top: 1rem;
 }
 .top{
-    padding-bottom: 2.5rem;
-}
-.dt-buttons{
-
+    padding-bottom: 1.5rem;
 }

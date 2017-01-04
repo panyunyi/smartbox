@@ -67,12 +67,12 @@
 <script src="../dist/js/dataTables.buttons.min.js"></script>
 <script src="../dist/js/dataTables.select.min.js"></script>-->
 
-<script src="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.6/semantic.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.13/js/dataTables.semanticui.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/1.2.4/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/1.2.4/js/buttons.semanticui.min.js"></script>
-<script src="https://cdn.datatables.net/select/1.2.1/js/dataTables.select.min.js"></script>
+<script src="../dist/js/semantic.min.js"></script>
+<script src="../dist/js/jquery.dataTables.min.js"></script>
+<script src="../dist/js/dataTables.semanticui.min.js"></script>
+<script src="../dist/js/dataTables.buttons.min.js"></script>
+<script src="../dist/js/buttons.semanticui.min.js"></script>
+<script src="../dist/js/dataTables.select.min.js"></script>
 <script src="../dist/js/dataTables.editor.min.js"></script>
 <script src="../dist/js/editor.semanticui.min.js"></script>
 <script>
@@ -94,7 +94,7 @@ $(document).ready(function() {
     var table= $('#table').DataTable( {
         "processing": true,
         stateSave: true,
-        lengthChange: false,
+        "dom": '<"top"Brf>t<"bottom"ilp>',
         "ajax": '../api/json/customer',
         "columns": [
             {"data":null},
@@ -107,6 +107,11 @@ $(document).ready(function() {
             { "data": "address" }
         ],
         select:true,
+        buttons: [
+    { extend: "create",text:"新增", editor: editor },
+    { extend: "edit", text:"编辑",  editor: editor },
+    { extend: "remove", text:"删除",editor: editor }
+] ,
         "columnDefs": [{
             "searchable": false,
             "orderable": false,
@@ -125,14 +130,10 @@ $(document).ready(function() {
                     cell.innerHTML = i + 1;
                 });
             }).draw();
-            new $.fn.dataTable.Buttons( table, [
-        { extend: "create", editor: editor },
-        { extend: "edit",   editor: editor },
-        { extend: "remove", editor: editor }
-    ] );
 
-    table.buttons().container()
-        .appendTo( $('div.eight.column:eq(0)', table.table().container()) );
+        //new $.fn.dataTable.Buttons( table,);
+
+    //table.buttons().container().appendTo( $('#table_wrapper'));
 });
 </script>
 </body>
