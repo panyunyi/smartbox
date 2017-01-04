@@ -30,6 +30,7 @@ router.get('/admincard', function(req, res) {
     });
 });
 
+//客户
 router.get('/customer',function(req,res){
     var query=new AV.Query('Customer');
     query.equalTo('isDel',false);
@@ -37,7 +38,32 @@ router.get('/customer',function(req,res){
         res.jsonp({"data":results});
     });
 });
-
+//增加客户
+var Customer = AV.Object.extend('Customer');
+router.post('/customer/add',function(req,res){
+    var arr=JSON.parse(req.body)
+    console.log(arr);
+    /*
+    var customer=new Customer();
+    customer.set('name',req.body.name);
+    customer.set('connecter',req.body.connecter);
+    customer.set('connecterPhone',req.body.connecterPhone);
+    customer.set('province',req.body.province);
+    customer.set('city',req.body.city);
+    customer.set('area',req.body.area);
+    customer.set('address',req.body.address);
+    customer.save().then(function(cus){
+        req.jsonp(cus);
+    });*/
+    res.jsonp(1);
+});
+router.put('/customer/edit/:id',function(req,res){
+    res.jsonp(req.params.id);
+});
+router.delete('/customer/remove/:id',function(req,res){
+    res.jsonp(req.params.id);
+});
+//产品
 router.get('/product',function(req,res){
     var query=new AV.Query('Product');
     query.equalTo('isDel',false);
@@ -54,6 +80,7 @@ router.get('/product',function(req,res){
     });
 });
 
+//产品分类
 router.get('/category',function(req,res){
     var query=new AV.Query('Assortment');
     query.equalTo('isDel',false);
@@ -81,6 +108,7 @@ router.get('/customerProduct',function(req,res){
     });
 });
 
+//客户员工
 router.get('/employee',function(req,res){
     var query=new AV.Query('Employee');
     query.include('cusId');
@@ -112,6 +140,7 @@ router.get('/employee',function(req,res){
     });
 });
 
+//员工权限
 router.get('/empPower',function(req,res){
     var query=new AV.Query('EmployeePower');
     query.include('boxId');
@@ -152,6 +181,7 @@ router.get('/box',function(req,res){
     });
 });
 
+//售货机货道库存
 router.get('/passtock',function(req,res){
     var query=new AV.Query('Passage');
     query.equalTo('isDel',false);
