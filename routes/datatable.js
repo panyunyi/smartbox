@@ -220,10 +220,48 @@ router.get('/category',function(req,res){
     var query=new AV.Query('Assortment');
     query.equalTo('isDel',false);
     query.find().then(function(results){
+        results.forEach(function(result){
+            result.set('DT_RowId',result.id);
+        });
         res.jsonp({"data":results});
     });
 });
-
+//增加产品分类
+var Assortment = AV.Object.extend('Assortment');
+router.post('/category/add',function(req,res){
+    var arr=req.body;
+    var assortment=new Assortment();
+    assortment.set('name',arr['data[0][name]']);
+    assortment.set('isDel',false);
+    assortment.save().then(function(ass){
+        var data=[];
+        ass.set('DT_RowId',ass.id);
+        data.push(ass);
+        res.jsonp({"data":data});
+    });
+});
+//更新产品分类
+router.put('/category/edit/:id',function(req,res){
+    var arr=req.body;
+    var id=req.params.id;
+    var assortment = AV.Object.createWithoutData('Assortment', id);
+    assortment.set('name',arr['data['+id+'][name]']);
+    assortment.save().then(function(ass){
+        var data=[];
+        ass.set('DT_RowId',ass.id);
+        data.push(ass);
+        res.jsonp({"data":data});
+    });
+});
+//删除产品分类
+router.delete('/category/remove/:id',function(req,res){
+    var id=req.params.id;
+    var assortment = AV.Object.createWithoutData('Assortment', id);
+    assortment.set('isDel',true);
+    assortment.save().then(function(){
+        res.jsonp({"data":[]});
+    });
+});
 //客户管理
 router.get('/customerProduct',function(req,res){
     var query=new AV.Query('CustomerProduct');

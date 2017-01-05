@@ -36,51 +36,106 @@
         </div>
         <!-- /#page-wrapper -->
 
-    </div>
-    <!-- /#wrapper -->
+</div>
+<!-- /#wrapper -->
 
-    <!-- jQuery -->
-    <script src="../vendor/jquery/jquery.min.js"></script>
+<!-- jQuery -->
+<script src="../vendor/jquery/jquery.min.js"></script>
 
-    <!-- Bootstrap Core JavaScript -->
-    <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 
-    <!-- Metis Menu Plugin JavaScript -->
-    <script src="../vendor/metisMenu/metisMenu.min.js"></script>
+<!-- Metis Menu Plugin JavaScript -->
+<script src="../vendor/metisMenu/metisMenu.min.js"></script>
 
-    <!-- Custom Theme JavaScript -->
-    <script src="../dist/js/sb-admin-2.js"></script>
-    <script src="../dist/js/jquery.dataTables.min.js"></script>
-    <script src="../dist/js/dataTables.semanticui.min.js"></script>
-    <script src="../dist/js/semantic.min.js"></script>
-    <script>
-        var t= $('#table').DataTable( {
-            "processing": true,
-            stateSave: true,
-           "ajax": '../api/json/category',
-           "columns": [
-                {"data":null},
-                { "data": "name" }
-            ],
-            "columnDefs": [{
-                "searchable": false,
-                "orderable": false,
-                "targets": 0
-            }],
-            "order": [[1, 'asc']],
-            "language": {
-                "url": "../vendor/zh_CN.txt"
+<!-- Custom Theme JavaScript -->
+<script src="../dist/js/sb-admin-2.js"></script>
+<script src="../dist/js/semantic.min.js"></script>
+<script src="../dist/js/jquery.dataTables.min.js"></script>
+<script src="../dist/js/dataTables.semanticui.min.js"></script>
+<script src="../dist/js/dataTables.buttons.min.js"></script>
+<script src="../dist/js/buttons.semanticui.min.js"></script>
+<script src="../dist/js/dataTables.select.min.js"></script>
+<script src="../dist/js/dataTables.editor.min.js"></script>
+<script src="../dist/js/editor.semanticui.min.js"></script>
+<script>
+var editor;
+$(document).ready(function() {
+        editor = new $.fn.dataTable.Editor( {
+        ajax: {
+            create: {
+                type: 'POST',
+                url:  '../api/json/category/add'
+            },
+            edit: {
+                type: 'PUT',
+                url:  '../api/json/category/edit/_id_'
+            },
+            remove: {
+                type: 'DELETE',
+                url:  '../api/json/category/remove/_id_'
             }
-        });
-        t.on('order.dt search.dt',function() {
-                    t.column(0, {
-                        search: 'applied',
-                        order: 'applied'
-                    }).nodes().each(function(cell, i) {
-                        cell.innerHTML = i + 1;
-                    });
-                }).draw();
-    </script>
+        },
+        table: "#table",
+        fields: [
+            { label: '产品分类名称', name: 'name' },
+        ],i18n: {
+                create: {
+                    button: "新增",
+                    title:  "新建产品分类",
+                    submit: "创建"
+                },
+                edit: {
+                    button: "编辑",
+                    title:  "产品分类修改",
+                    submit: "更新"
+                },
+                remove: {
+                    button: "删除",
+                    title:  "删除",
+                    submit: "删除",
+                    confirm: {
+                        _: "确定要删除 %d 条吗?",
+                        1: "确定要删除这条产品分类吗?"
+                    }
+                }
+            }
+    } );
+    var table= $('#table').DataTable( {
+        "processing": true,
+        stateSave: true,
+        "dom": '<"top"Brf>t<"bottom"ilp>',
+        "ajax": '../api/json/category',
+        "columns": [
+            {"data":null},
+            { "data": "name" }
+        ],
+        select:true,
+        buttons: [
+        { extend: "create", editor: editor },
+        { extend: "edit",  editor: editor },
+        { extend: "remove", editor: editor }
+        ] ,
+        "columnDefs": [{
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+        }],
+        "order": [[1, 'asc']],
+        "language": {
+            "url": "../vendor/zh_CN.txt"
+        }
+    });
+    table.on('order.dt search.dt',function() {
+                table.column(0, {
+                    search: 'applied',
+                    order: 'applied'
+                }).nodes().each(function(cell, i) {
+                    cell.innerHTML = i + 1;
+                });
+            }).draw();
+});
+</script>
 </body>
 
 </html>
