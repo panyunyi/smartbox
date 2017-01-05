@@ -5,31 +5,97 @@ var async = require('async');
 var ApiLog=require('./log');
 var moment=require('moment');
 
-//基础数据
+//管理卡
 router.get('/admincard', function(req, res) {
-    var query=new AV.Query('AdminCard');
-    query.include('customer');
-    query.equalTo('isDel',false);
-    query.find().then(function (results){
-        var jsondata=[];
-        async.map(results,function(result,callback1){
-        	async.map(result.get('box'),function(boxId,callback2){
-        		var box=AV.Object.createWithoutData('BoxInfo',boxId);
-        		box.fetch().then(function(data){
-        			callback2(null,data.get('deviceId'));
-        		});
-        	},function(err,boxes){
-           		var one={"card":result.get('card'),"box":boxes,"customer":result.get('customer').get('name')};
-            	jsondata.push(one);
-            	callback1(null,boxes);
-        	});
-        },function(err,results2){
-        	res.jsonp({"data":jsondata});
+    var resdata={};
+    function promise1(callback){
+        var query=new AV.Query('AdminCard');
+        //query.include('customer');
+        query.equalTo('isDel',false);
+        query.find().then(function (results){
+            var jsondata=[];
+            async.map(results,function(result,callback1){
+            	async.map(result.get('box'),function(boxId,callback2){
+            		var box=AV.Object.createWithoutData('BoxInfo',boxId);
+            		box.fetch().then(function(data){
+            			callback2(null,data.get('deviceId'));
+            		});
+            	},function(err,boxes){
+               		var one={"DT_RowId":result.id,"card":result.get('card'),
+                    "box":boxes};
+                	jsondata.push(one);
+                	callback1(null,boxes);
+            	});
+            },function(err,results2){
+                resdata["data"]=jsondata;
+                callback(null,jsondata);
+            });
         });
-
+    }
+    function promise2(callback){
+        var query=new AV.Query('BoxInfo');
+        query.equalTo('isDel',false);
+        query.find().then(function(results){
+            async.map(results,function(result,callback1){
+                result.set('label',result.get('deviceId'));
+                result.set('value',result.id);
+                callback1(null,result);
+            },function(err,data){
+                data={"cus.box":data};
+                resdata["options"]=data;
+                callback(null,data);
+            });
+        });
+    }
+    async.parallel([
+        function (callback){
+            promise1(callback);
+        },
+        function (callback){
+            promise2(callback);
+        }],function(err,results){
+            res.jsonp(resdata);
     });
 });
-
+//增加管理卡
+var AdminCard = AV.Object.extend('Admincard');
+router.post('/admincard/add',function(req,res){
+    var arr=req.body;
+    var admincard=new Admincard();
+    admincard.set('name',arr['data[0][name]']);
+    admincard.set('box',arr['data[0][connecter]']);
+    admincard.set('customer',arr['data[0][connectPhone]']);
+    admincard.save().then(function(ac){
+        var data=[];
+        ac.set('DT_RowId',ac.id);
+        data.push(ac);
+        res.jsonp({"data":data});
+    });
+});
+//更新管理卡
+router.put('/admincard/edit/:id',function(req,res){
+    var arr=req.body;
+    var id=req.params.id;
+    var admincard = AV.Object.createWithoutData('AdminCard', id);
+    admincard.set('name',arr['data['+id+'][name]']);
+    admincard.set('connecter',arr['data['+id+'][connecter]']);
+    admincard.set('connectPhone',arr['data['+id+'][connectPhone]']);
+    admincard.save().then(function(ac){
+        var data=[];
+        ac.set('DT_RowId',ac.id);
+        data.push(ac);
+        res.jsonp({"data":data});
+    });
+});
+//删除管理卡
+router.delete('/customer/remove/:id',function(req,res){
+    var id=req.params.id;
+    var admincard = AV.Object.createWithoutData('Customer', id);
+    admincard.set('isDel',true);
+    admincard.save().then(function(){
+        res.jsonp({"data":[]});
+    });
+});
 //客户
 router.get('/customer',function(req,res){
     var query=new AV.Query('Customer');
