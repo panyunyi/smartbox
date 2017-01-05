@@ -35,33 +35,67 @@ router.get('/customer',function(req,res){
     var query=new AV.Query('Customer');
     query.equalTo('isDel',false);
     query.find().then(function(results){
-        res.jsonp({"data":results});
+        async.map(results,function(result,callback){
+            result.set('DT_RowId',result.id);
+            result.set('name',result.get('name')?result.get('name'):"");
+            result.set('connecter',result.get('connecter')?result.get('connecter'):"");
+            result.set('connectPhone',result.get('connectPhone')?result.get('connectPhone'):"");
+            result.set('province',result.get('province')?result.get('province'):"");
+            result.set('city',result.get('city')?result.get('city'):"");
+            result.set('area',result.get('area')?result.get('area'):"");
+            result.set('address',result.get('address')?result.get('address'):"");
+            callback(null,result);
+        },function(err,data){
+            res.jsonp({"data":data});
+        });
     });
 });
 //增加客户
 var Customer = AV.Object.extend('Customer');
 router.post('/customer/add',function(req,res){
-    var arr=JSON.parse(req.body)
-    console.log(arr);
-    /*
+    var arr=req.body;
     var customer=new Customer();
-    customer.set('name',req.body.name);
-    customer.set('connecter',req.body.connecter);
-    customer.set('connecterPhone',req.body.connecterPhone);
-    customer.set('province',req.body.province);
-    customer.set('city',req.body.city);
-    customer.set('area',req.body.area);
-    customer.set('address',req.body.address);
+    customer.set('name',arr['data[0][name]']);
+    customer.set('connecter',arr['data[0][connecter]']);
+    customer.set('connectPhone',arr['data[0][connectPhone]']);
+    customer.set('province',arr['data[0][province]']);
+    customer.set('city',arr['data[0][city]']);
+    customer.set('area',arr['data[0][area]']);
+    customer.set('address',arr['data[0][address]']);
     customer.save().then(function(cus){
-        req.jsonp(cus);
-    });*/
-    res.jsonp(1);
+        var data=[];
+        cus.set('DT_RowId',cus.id);
+        data.push(cus);
+        res.jsonp({"data":data});
+    });
 });
+//更新客户资料
 router.put('/customer/edit/:id',function(req,res){
-    res.jsonp(req.params.id);
+    var arr=req.body;
+    var id=req.params.id;
+    var customer = AV.Object.createWithoutData('Customer', id);
+    customer.set('name',arr['data['+id+'][name]']);
+    customer.set('connecter',arr['data['+id+'][connecter]']);
+    customer.set('connectPhone',arr['data['+id+'][connectPhone]']);
+    customer.set('province',arr['data['+id+'][province]']);
+    customer.set('city',arr['data['+id+'][city]']);
+    customer.set('area',arr['data['+id+'][area]']);
+    customer.set('address',arr['data['+id+'][address]']);
+    customer.save().then(function(cus){
+        var data=[];
+        cus.set('DT_RowId',cus.id);
+        data.push(cus);
+        res.jsonp({"data":data});
+    });
 });
+//删除客户资料
 router.delete('/customer/remove/:id',function(req,res){
-    res.jsonp(req.params.id);
+    var id=req.params.id;
+    var customer = AV.Object.createWithoutData('Customer', id);
+    customer.set('isDel',true);
+    customer.save().then(function(){
+        res.jsonp({"data":[]});
+    });
 });
 //产品
 router.get('/product',function(req,res){
