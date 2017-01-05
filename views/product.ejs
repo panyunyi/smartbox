@@ -58,26 +58,110 @@
 
 <!-- Custom Theme JavaScript -->
 <script src="../dist/js/sb-admin-2.js"></script>
+<script src="../dist/js/semantic.min.js"></script>
 <script src="../dist/js/jquery.dataTables.min.js"></script>
 <script src="../dist/js/dataTables.semanticui.min.js"></script>
-<script src="../dist/js/semantic.min.js"></script>
+<script src="../dist/js/dataTables.buttons.min.js"></script>
+<script src="../dist/js/buttons.semanticui.min.js"></script>
+<script src="../dist/js/dataTables.select.min.js"></script>
+<script src="../dist/js/dataTables.editor.min.js"></script>
+<script src="../dist/js/editor.semanticui.min.js"></script>
 <script>
-    var t= $('#table').DataTable( {
+var editor;
+$(document).ready(function() {
+        editor = new $.fn.dataTable.Editor( {
+        ajax: {
+            create: {
+                type: 'POST',
+                url:  '../api/json/product/add'
+            },
+            edit: {
+                type: 'PUT',
+                url:  '../api/json/product/edit/_id_'
+            },
+            remove: {
+                type: 'DELETE',
+                url:  '../api/json/product/remove/_id_'
+            }
+        },
+        table: "#table",
+        fields: [
+            { label: '产品名称', name: 'name' },
+            { label: '产品分类',  name: 'assort',type:'select'},
+            { label: '产品编码',  name: 'sku'  },
+            { label: '单位',  name: 'unit'  },
+            { label: '单价',  name: 'price'  },
+            { label: '规格',  name: 'spec'  },
+            { label: '补货提示点',  name: 'cue'  },
+            { label: '库存预警值',  name: 'warning'  },
+            { label: '备货天数',  name: 'stockDays'  }
+        ],i18n: {
+                create: {
+                    button: "新增",
+                    title:  "新建产品",
+                    submit: "创建"
+                },
+                edit: {
+                    button: "编辑",
+                    title:  "产品资料修改",
+                    submit: "更新"
+                },
+                remove: {
+                    button: "删除",
+                    title:  "删除",
+                    submit: "删除",
+                    confirm: {
+                        _: "确定要删除 %d 条吗?",
+                        1: "确定要删除这条产品资料吗?"
+                    }
+                }
+            }
+    } );
+    var table= $('#table').DataTable( {
         "processing": true,
         stateSave: true,
-       "ajax": '../api/json/product',
-       "columns": [
+        "dom": '<"top"Brf>t<"bottom"ilp>',
+        "ajax": '../api/json/product',
+        "columns": [
             {"data":null},
             { "data": "name" },
             { "data": "type" },
             { "data": "sku" },
             { "data": "unit" },
-            { "data": "price" },
+            { "data": "price",render: $.fn.dataTable.render.number( ',', '.', 0, '¥' ) },
             { "data": "spec" },
             { "data": "cue" },
             { "data": "warning" },
             { "data": "stockDays" },
         ],
+        select:true,
+        buttons: [
+        { extend: "create", editor: editor },
+        { extend: "edit",  editor: editor },
+        {
+                extend: "selectedSingle",
+                text: '复制',
+                action: function ( e, dt, node, config ) {
+                    // Place the selected row into edit mode (but hidden),
+                    // then get the values for all fields in the form
+                    var values = editor.edit(
+                            table.row( { selected: true } ).index(),
+                            false
+                        )
+                        .val();
+
+                    // Create a new entry (discarding the previous edit) and
+                    // set the values from the read values
+                    editor
+                        .create( {
+                            title: '复制记录',
+                            buttons: '创建'
+                        } )
+                        .set( values );
+                }
+            },
+        { extend: "remove", editor: editor }
+        ] ,
         "columnDefs": [{
             "searchable": false,
             "orderable": false,
@@ -88,14 +172,15 @@
             "url": "../vendor/zh_CN.txt"
         }
     });
-    t.on('order.dt search.dt',function() {
-                t.column(0, {
+    table.on('order.dt search.dt',function() {
+                table.column(0, {
                     search: 'applied',
                     order: 'applied'
                 }).nodes().each(function(cell, i) {
                     cell.innerHTML = i + 1;
                 });
             }).draw();
+});
 </script>
 </body>
 

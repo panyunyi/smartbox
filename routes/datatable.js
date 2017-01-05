@@ -62,6 +62,7 @@ router.post('/customer/add',function(req,res){
     customer.set('city',arr['data[0][city]']);
     customer.set('area',arr['data[0][area]']);
     customer.set('address',arr['data[0][address]']);
+    customer.set('isDel',false);
     customer.save().then(function(cus){
         var data=[];
         cus.set('DT_RowId',cus.id);
@@ -99,21 +100,121 @@ router.delete('/customer/remove/:id',function(req,res){
 });
 //产品
 router.get('/product',function(req,res){
-    var query=new AV.Query('Product');
-    query.equalTo('isDel',false);
-    query.include('type');
-    query.find().then(function(results){
-        async.map(results,function(result,callback){
-            result.set('type',result.get('type')?result.get('type').get('name'):null);
-            result.set('price',"¥"+result.get('price'));
-            result.set('spec',result.get('spec')+"(cm)");
-            callback(null,result);
-        },function(err,data){
+    var resdata={};
+    function promise1(callback1){
+        var query=new AV.Query('Product');
+        query.equalTo('isDel',false);
+        query.include('type');
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('DT_RowId',result.id);
+                result.set('typeId',result.get('type').id);
+                result.set('type',result.get('type')?result.get('type').get('name'):"");
+                result.set('price',result.get('price'));
+                result.set('spec',result.get('spec')?result.get('spec'):"");
+                callback(null,result);
+            },function(err,data){
+                resdata["data"]=data;
+                callback1(null,data);
+            });
+        });
+    }
+    function promise2(callback1){
+        var query=new AV.Query('Assortment');
+        query.equalTo('isDel',false);
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('label',result.get('name'));
+                result.set('value',result.id);
+                callback(null,result);
+            },function(err,data){
+                data={"assort":data};
+                resdata["options"]=data;
+                callback1(null,data);
+            });
+        });
+    }
+    async.parallel([
+        function (callback){
+            promise1(callback);
+        },
+        function (callback){
+            promise2(callback);
+        }],function(err,results){
+            res.jsonp(resdata);
+    });
+});
+//增加产品
+var Product = AV.Object.extend('Product');
+router.post('/product/add',function(req,res){
+    var arr=req.body;
+    var product=new Product();
+    product.set('name',arr['data[0][name]']);
+    product.set('unit',arr['data[0][unit]']);
+    var type=AV.Object.createWithoutData('Assortment', arr['data[0][assort]']);
+    product.set('type',type);
+    product.set('stockDays',arr['data[0][stockDays]']*1);
+    product.set('spec',arr['data[0][spec]']);
+    product.set('cue',arr['data[0][cue]']*1);
+    product.set('price',arr['data[0][price]']*1);
+    product.set('warning',arr['data[0][warning]']*1);
+    product.set('sku',arr['data[0][sku]']);
+    product.set('isDel',false);
+    product.save().then(function(pro){
+        var data=[];
+        pro.set('DT_RowId',pro.id);
+        pro.set('typeId',pro.get('type').id);
+        pro.set('price',pro.get('price'));
+        pro.set('spec',pro.get('spec')?pro.get('spec'):"");
+        type.fetch().then(function(){
+            pro.set('type',type.get('name'));
+            data.push(pro);
+            console.log(data);
+            res.jsonp({"data":data});
+        });
+    },function(error){
+        console.log(error);
+    });
+});
+//更新产品资料
+router.put('/product/edit/:id',function(req,res){
+    var arr=req.body;
+    var id=req.params.id;
+    var product = AV.Object.createWithoutData('Product', id);
+    product.set('name',arr['data['+id+'][name]']);
+    product.set('unit',arr['data['+id+'][unit]']);
+    var type=AV.Object.createWithoutData('Assortment', arr['data['+id+'][assort]']);
+    product.set('type',type);
+    product.set('stockDays',arr['data['+id+'][stockDays]']*1);
+    product.set('spec',arr['data['+id+'][spec]']);
+    product.set('cue',arr['data['+id+'][cue]']*1);
+    product.set('price',arr['data['+id+'][price]']*1);
+    product.set('warning',arr['data['+id+'][warning]']*1);
+    product.set('sku',arr['data['+id+'][sku]']);
+    product.set('isDel',false);
+    product.save().then(function(pro){
+        var data=[];
+        pro.set('DT_RowId',pro.id);
+        pro.set('typeId',pro.get('type').id);
+        pro.set('price',pro.get('price'));
+        pro.set('spec',pro.get('spec')?pro.get('spec'):"");
+        type.fetch().then(function(){
+            pro.set('type',type.get('name'));
+            data.push(pro);
+            console.log(data);
             res.jsonp({"data":data});
         });
     });
 });
-
+//删除产品
+router.delete('/product/remove/:id',function(req,res){
+    var id=req.params.id;
+    var customer = AV.Object.createWithoutData('Product', id);
+    customer.set('isDel',true);
+    customer.save().then(function(){
+        res.jsonp({"data":[]});
+    });
+});
 //产品分类
 router.get('/category',function(req,res){
     var query=new AV.Query('Assortment');
