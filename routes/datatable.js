@@ -10,15 +10,19 @@ router.get('/admincard', function(req, res) {
     var resdata={};
     function promise1(callback){
         var query=new AV.Query('AdminCard');
-        //query.include('customer');
         query.equalTo('isDel',false);
         query.find().then(function (results){
             var jsondata=[];
             async.map(results,function(result,callback1){
+                var arrboxes=[];
             	async.map(result.get('box'),function(boxId,callback2){
             		var box=AV.Object.createWithoutData('BoxInfo',boxId);
             		box.fetch().then(function(data){
-            			callback2(null,data.get('deviceId'));
+                        var boxdata={};
+                        boxdata['id']=data.id;
+                        boxdata['name']=data.get('deviceId');
+                        arrboxes.push(boxdata);
+            			callback2(null,boxdata);
             		});
             	},function(err,boxes){
                		var one={"DT_RowId":result.id,"card":result.get('card'),
@@ -41,7 +45,7 @@ router.get('/admincard', function(req, res) {
                 result.set('value',result.id);
                 callback1(null,result);
             },function(err,data){
-                data={"cus.box":data};
+                data={"box[].id":data};
                 resdata["options"]=data;
                 callback(null,data);
             });
@@ -62,9 +66,11 @@ var AdminCard = AV.Object.extend('Admincard');
 router.post('/admincard/add',function(req,res){
     var arr=req.body;
     var admincard=new Admincard();
-    admincard.set('name',arr['data[0][name]']);
-    admincard.set('box',arr['data[0][connecter]']);
-    admincard.set('customer',arr['data[0][connectPhone]']);
+    admincard.set('card',arr['data[0][name]']);
+    for(int i=0;i<arr['data[0]][box-many-count]']*1;i++){
+        
+    }
+    admincard.set('box',arr['data[0][box]']);
     admincard.save().then(function(ac){
         var data=[];
         ac.set('DT_RowId',ac.id);
@@ -78,8 +84,7 @@ router.put('/admincard/edit/:id',function(req,res){
     var id=req.params.id;
     var admincard = AV.Object.createWithoutData('AdminCard', id);
     admincard.set('name',arr['data['+id+'][name]']);
-    admincard.set('connecter',arr['data['+id+'][connecter]']);
-    admincard.set('connectPhone',arr['data['+id+'][connectPhone]']);
+    admincard.set('box',arr['data['+id+'][box]']);
     admincard.save().then(function(ac){
         var data=[];
         ac.set('DT_RowId',ac.id);

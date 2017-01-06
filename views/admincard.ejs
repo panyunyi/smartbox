@@ -80,7 +80,7 @@
             table: "#table",
             fields: [
                 { label: '卡号', name: 'card' },
-                { label: '售货机',  name: 'cus.box' ,type:'checkbox' }
+                { label: '售货机',  name: 'box[].id' ,type:'checkbox' }
             ],i18n: {
                     create: {
                         button: "新增",
@@ -112,7 +112,7 @@
             "columns": [
                 {"data":null},
                 { "data": "card" },
-                { "data": "box" }
+                { "data": "box",render: "[, ].name" }
             ],
             select:true,
             buttons: [
