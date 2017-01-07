@@ -9,7 +9,6 @@ function doWork(cus,box,res,ts){
     function promise1(callback){
       var query = new AV.Query('AdminCard');
       query.greaterThanOrEqualTo('updatedAt',ts);
-      query.equalTo('customer',cus);
       if(ts-new Date(0)==0){
           query.equalTo('isDel',false);
       }
