@@ -358,7 +358,7 @@ router.delete('/category/remove/:id',function(req,res){
         res.jsonp({"data":[]});
     });
 });
-//客户管理
+//客户产品管理
 router.get('/customerProduct',function(req,res){
     var query=new AV.Query('CustomerProduct');
     query.equalTo('isDel',false);

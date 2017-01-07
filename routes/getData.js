@@ -32,7 +32,7 @@ function doWork(cus,box,res,ts){
       query.find().then(function (results) {
           var arr=[];
           results.forEach(function(result){
-              var one={"cusProductName":result.get('cusProductName'),"isDel":result.get('isDel'),"productName":result.get('product').get('name'),"objectId":result.get('product').get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+              var one={"cusProductName":result.get('product').get('name'),"isDel":result.get('isDel'),"productName":result.get('product').get('name'),"objectId":result.get('product').get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
               arr.push(one);
           });
           data["Product"]=arr;
