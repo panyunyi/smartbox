@@ -67,9 +67,9 @@ router.post('/admincard/add',function(req,res){
     var arr=req.body;
     var admincard=new Admincard();
     admincard.set('card',arr['data[0][name]']);
-    for(int i=0;i<arr['data[0]][box-many-count]']*1;i++){
-        
-    }
+    /*for(int i=0;i<arr['data[0]][box-many-count]']*1;i++){
+
+    }*/
     admincard.set('box',arr['data[0][box]']);
     admincard.save().then(function(ac){
         var data=[];

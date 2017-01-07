@@ -12,7 +12,7 @@ function doWork(cus,box,deviceId,card,passage,res){
     var message="无权限";
     resdata["result"]=flag;
     var onetake=new TakeOut();
-
+    var empcard=null;
     function promise1(callback){
         var cardQuery=new AV.Query('EmployeeCard');
         cardQuery.equalTo('card',card);
@@ -23,6 +23,7 @@ function doWork(cus,box,deviceId,card,passage,res){
             if (typeof(cardObj) == "undefined") {
                 return callback(null,0,null);
             }
+            empcard=cardObj;
             onetake.set('isDel',false);
             onetake.set('box',box);
             onetake.set('time',new Date());
@@ -99,8 +100,8 @@ function doWork(cus,box,deviceId,card,passage,res){
             var takeoutQuery=new AV.Query('TakeOut');
             takeoutQuery.equalTo('isDel',false);
             takeoutQuery.equalTo('result',true);
-            takeoutQuery.equalTo('deviceId',deviceId);
-            takeoutQuery.equalTo('card',card);
+            takeoutQuery.equalTo('box',box);
+            takeoutQuery.equalTo('card',empcard);
             takeoutQuery.equalTo('product',product);
             takeoutQuery.greaterThanOrEqualTo('time',begin.toDate());
             takeoutQuery.lessThanOrEqualTo('time',new Date());
@@ -124,7 +125,7 @@ function doWork(cus,box,deviceId,card,passage,res){
                         });
                     });
                 }else{
-                    message="超过领取次数";
+                    message="已取货："+takecount+"，超过领取次数";
                     resdata["result"]=flag;
                     callback(null,false);
                 }
