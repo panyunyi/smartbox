@@ -62,20 +62,32 @@ router.get('/admincard', function(req, res) {
     });
 });
 //增加管理卡
-var AdminCard = AV.Object.extend('Admincard');
+var AdminCard = AV.Object.extend('AdminCard');
 router.post('/admincard/add',function(req,res){
     var arr=req.body;
-    var admincard=new Admincard();
-    admincard.set('card',arr['data[0][name]']);
-    /*for(int i=0;i<arr['data[0]][box-many-count]']*1;i++){
-
-    }*/
-    admincard.set('box',arr['data[0][box]']);
-    admincard.save().then(function(ac){
-        var data=[];
-        ac.set('DT_RowId',ac.id);
-        data.push(ac);
-        res.jsonp({"data":data});
+    var admincard=new AdminCard();
+    var box=[];
+    var boxarr=[];
+    admincard.set('card',arr['data[0][card]']);
+    async.times(arr['data[0][box-many-count]']*1,function(i,callback){
+        var boxdata={};
+        box.push(arr['data[0][box]['+i+'][id]']);
+        boxdata['id']=arr['data[0][box]['+i+'][id]'];
+        var boxObj=AV.Object.createWithoutData('BoxInfo', arr['data[0][box]['+i+'][id]']);
+        boxObj.fetch().then(function(){
+            boxdata['name']=boxObj.get('deviceId');
+            boxarr.push(boxdata);
+            callback(null,boxdata);
+        });
+    },function(err,results){
+        admincard.set('box',box);
+        admincard.save().then(function(ac){
+            var data=[];
+            ac.set('DT_RowId',ac.id);
+            ac.set('box',boxarr);
+            data.push(ac);
+            res.jsonp({"data":data});
+        });
     });
 });
 //更新管理卡
@@ -83,19 +95,34 @@ router.put('/admincard/edit/:id',function(req,res){
     var arr=req.body;
     var id=req.params.id;
     var admincard = AV.Object.createWithoutData('AdminCard', id);
-    admincard.set('name',arr['data['+id+'][name]']);
-    admincard.set('box',arr['data['+id+'][box]']);
-    admincard.save().then(function(ac){
-        var data=[];
-        ac.set('DT_RowId',ac.id);
-        data.push(ac);
-        res.jsonp({"data":data});
+    var box=[];
+    var boxarr=[];
+    admincard.set('card',arr['data['+id+'][card]']);
+    async.times(arr['data['+id+'][box-many-count]']*1,function(i,callback){
+        var boxdata={};
+        box.push(arr['data['+id+'][box]['+i+'][id]']);
+        boxdata['id']=arr['data['+id+'][box]['+i+'][id]'];
+        var boxObj=AV.Object.createWithoutData('BoxInfo', arr['data['+id+'][box]['+i+'][id]']);
+        boxObj.fetch().then(function(){
+            boxdata['name']=boxObj.get('deviceId');
+            boxarr.push(boxdata);
+            callback(null,boxdata);
+        });
+    },function(err,results){
+        admincard.set('box',box);
+        admincard.save().then(function(ac){
+            var data=[];
+            ac.set('DT_RowId',ac.id);
+            ac.set('box',boxarr);
+            data.push(ac);
+            res.jsonp({"data":data});
+        });
     });
 });
 //删除管理卡
-router.delete('/customer/remove/:id',function(req,res){
+router.delete('/admincard/remove/:id',function(req,res){
     var id=req.params.id;
-    var admincard = AV.Object.createWithoutData('Customer', id);
+    var admincard = AV.Object.createWithoutData('AdminCard', id);
     admincard.set('isDel',true);
     admincard.save().then(function(){
         res.jsonp({"data":[]});
@@ -240,7 +267,6 @@ router.post('/product/add',function(req,res){
         type.fetch().then(function(){
             pro.set('type',type.get('name'));
             data.push(pro);
-            console.log(data);
             res.jsonp({"data":data});
         });
     },function(error){
@@ -272,7 +298,6 @@ router.put('/product/edit/:id',function(req,res){
         type.fetch().then(function(){
             pro.set('type',type.get('name'));
             data.push(pro);
-            console.log(data);
             res.jsonp({"data":data});
         });
     });
