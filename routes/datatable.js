@@ -210,6 +210,7 @@ router.get('/product',function(req,res){
                 result.set('type',result.get('type')?result.get('type').get('name'):"");
                 result.set('price',result.get('price'));
                 result.set('spec',result.get('spec')?result.get('spec'):"");
+                result.set('sku',result.get('sku')?result.get('sku'):"");
                 callback(null,result);
             },function(err,data){
                 resdata["data"]=data;
@@ -251,11 +252,11 @@ router.post('/product/add',function(req,res){
     product.set('unit',arr['data[0][unit]']);
     var type=AV.Object.createWithoutData('Assortment', arr['data[0][assort]']);
     product.set('type',type);
-    product.set('stockDays',arr['data[0][stockDays]']*1);
+    product.set('stockDays',arr['data[0][stockDays]']?arr['data[0][stockDays]']*1:1);
     product.set('spec',arr['data[0][spec]']);
-    product.set('cue',arr['data[0][cue]']*1);
-    product.set('price',arr['data[0][price]']*1);
-    product.set('warning',arr['data[0][warning]']*1);
+    product.set('cue',arr['data[0][cue]']?arr['data[0][cue]']*1:0);
+    product.set('price',arr['data[0][price]']?arr['data[0][price]']*1:0);
+    product.set('warning',arr['data[0][warning]']?arr['data[0][warning]']*1:0);
     product.set('sku',arr['data[0][sku]']);
     product.set('isDel',false);
     product.save().then(function(pro){
@@ -360,20 +361,72 @@ router.delete('/category/remove/:id',function(req,res){
 });
 //客户产品管理
 router.get('/customerProduct',function(req,res){
-    var query=new AV.Query('CustomerProduct');
-    query.equalTo('isDel',false);
-    query.include('product');
-    query.include('cusId');
-    query.find().then(function(results){
-        async.map(results,function(result,callback){
-            result.set('prosku',result.get('product').get('sku'));
-            result.set('product',result.get('product').get('name'));
-            result.set('cusId',result.get('cusId').get('name'));
-            result.set('cusProductPrice',"¥"+result.get('cusProductPrice'));
-            callback(null,result);
-        },function(err,data){
-            res.jsonp({"data":data});
+    var resdata={};
+    var cus={};
+    var pro={};
+    function promise1(callback1){
+        var query=new AV.Query('CustomerProduct');
+        query.equalTo('isDel',false);
+        query.include('product');
+        query.include('cusId');
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('DT_RowId',result.id);
+                result.set('sku',result.get('product').get('sku'));
+                result.set('productId',result.get('product').id);
+                result.set('product',result.get('product').get('name'));
+                result.set('cus',result.get('cusId').get('name'));
+                result.set('cusId',result.get('cusId').id);
+                callback(null,result);
+            },function(err,data){
+                resdata["data"]=data;
+                callback1(data);
+            });
         });
+    }
+    function promise2(callback1){
+        var query=new AV.Query('Customer');
+        query.equalTo('isDel',false);
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('label',result.get('name'));
+                result.set('value',result.id);
+                callback(null,result);
+            },function(err,data){
+                cus={"cusId":data};
+                console.log(cus);
+                callback1(null,cus);
+            });
+        });
+    }
+    function promise3(callback1){
+        var query=new AV.Query('Product');
+        query.equalTo('isDel',false);
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('label',result.get('name'));
+                result.set('value',result.id);
+                callback(null,result);
+            },function(err,data){
+                pro={"productId":data};
+                //resdata["options"]=Object.assign(pro);
+                callback1(null,pro);
+            });
+        });
+    }
+    async.series([
+        function (callback){
+            promise1(callback);
+        },
+        function (callback){
+            promise2(callback);
+        },
+        function (callback){
+            promise3(callback);
+        }],function(err,results){
+            console.log(cus);
+            resdata["options"]=Object.assign(cus,pro);
+            res.jsonp(resdata);
     });
 });
 

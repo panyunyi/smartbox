@@ -53,21 +53,77 @@
 
     <!-- Custom Theme JavaScript -->
     <script src="../dist/js/sb-admin-2.js"></script>
+    <script src="../dist/js/semantic.min.js"></script>
     <script src="../dist/js/jquery.dataTables.min.js"></script>
     <script src="../dist/js/dataTables.semanticui.min.js"></script>
-    <script src="../dist/js/semantic.min.js"></script>
+    <script src="../dist/js/dataTables.buttons.min.js"></script>
+    <script src="../dist/js/buttons.semanticui.min.js"></script>
+    <script src="../dist/js/dataTables.select.min.js"></script>
+    <script src="../dist/js/dataTables.editor.min.js"></script>
+    <script src="../dist/js/editor.semanticui.min.js"></script>
     <script>
-        var t= $('#table').DataTable( {
+    var editor;
+    $(document).ready(function() {
+            editor = new $.fn.dataTable.Editor( {
+            ajax: {
+                create: {
+                    type: 'POST',
+                    url:  '../api/json/cusproduct/add'
+                },
+                edit: {
+                    type: 'PUT',
+                    url:  '../api/json/cusproduct/edit/_id_'
+                },
+                remove: {
+                    type: 'DELETE',
+                    url:  '../api/json/cusproduct/remove/_id_'
+                }
+            },
+            table: "#table",
+            fields: [
+                { label: '客户',  name: 'cusId' ,type:'select' },
+                { label: '产品',  name: 'productId' ,type:'select' },
+                { label: '产品单价', name: 'cusProductPrice' }
+            ],i18n: {
+                    create: {
+                        button: "新增",
+                        title:  "新建客户产品",
+                        submit: "创建"
+                    },
+                    edit: {
+                        button: "编辑",
+                        title:  "价格修改",
+                        submit: "更新"
+                    },
+                    remove: {
+                        button: "删除",
+                        title:  "删除",
+                        submit: "删除",
+                        confirm: {
+                            _: "确定要删除 %d 条吗?",
+                            1: "确定要删除这条客户产品记录吗?"
+                        }
+                    }
+                }
+        } );
+        var table= $('#table').DataTable( {
             "processing": true,
             stateSave: true,
-           "ajax": '../api/json/customerProduct',
-           "columns": [
+            "dom": '<"top"Brf>t<"bottom"ilp>',
+            "ajax": '../api/json/customerProduct',
+            "columns": [
                 {"data":null},
-                { "data": "cusId" },
-                { "data": "prosku" },
+                { "data": "cus" },
+                { "data": "sku" },
                 { "data": "product" },
-                { "data": "cusProductPrice" }
+                { "data": "cusProductPrice",render: $.fn.dataTable.render.number( ',', '.', 0, '¥' ) }
             ],
+            select:true,
+            buttons: [
+            { extend: "create", editor: editor },
+            { extend: "edit",  editor: editor },
+            { extend: "remove", editor: editor }
+            ] ,
             "columnDefs": [{
                 "searchable": false,
                 "orderable": false,
@@ -78,14 +134,15 @@
                 "url": "../vendor/zh_CN.txt"
             }
         });
-        t.on('order.dt search.dt',function() {
-                    t.column(0, {
+        table.on('order.dt search.dt',function() {
+                    table.column(0, {
                         search: 'applied',
                         order: 'applied'
                     }).nodes().each(function(cell, i) {
                         cell.innerHTML = i + 1;
                     });
                 }).draw();
+    });
     </script>
 </body>
 
