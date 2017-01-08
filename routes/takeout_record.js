@@ -15,7 +15,12 @@ function doWork(deviceId,records,res){
         boxQuery.first().then(function(box){
             var passageQuery=new AV.Query('Passage');
             passageQuery.equalTo('boxId',box);
-            passageQuery.equalTo('seqNo',seqNo);
+            if(passage.length==3){
+                passageQuery.equalTo('flag',passage.substr(0,1));
+                passageQuery.equalTo('seqNo',passage.substr(1,2));
+            }else{
+                passageQuery.equalTo('seqNo',passage);
+            }
             passageQuery.first().then(function(passage){
                 if(record.result){
                     passage.increment('stock',-1);
