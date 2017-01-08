@@ -85,7 +85,6 @@ function doWork(cus,box,deviceId,card,passage,res){
     }
     function verifyPower(product,power,callback,callback1){
         if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
-            console.log(1);
             var unit=power.get('unit');
             var period=power.get('period');
             var count=power.get('count');
@@ -120,20 +119,11 @@ function doWork(cus,box,deviceId,card,passage,res){
                         message="成功";
                         resdata["result"]=flag;
                         resdata["objectId"]=one.id;
-                        var passageQuery=new AV.Query('Passage');
-                        passageQuery.equalTo('boxId',box);
-                        if(passage.length==3){
-                            passageQuery.equalTo('flag',passage.substr(0,1));
-                            passageQuery.equalTo('seqNo',passage.substr(1,2));
-                        }else{
-                            passageQuery.equalTo('seqNo',passage);
-                        }
-                        passageQuery.first().then(function(passagedata){
-                            passagedata.increment('stock',-1);
-                            passagedata.save().then(function(){
-                                callback(null,true);
-                                return callback1(null,true);
-                            });
+                        var passagedata=onetake.get('passage');
+                        passagedata.increment('stock',-1);
+                        passagedata.save().then(function(){
+                            callback(null,true);
+                            return callback1(null,true);
                         });
                     });
                 }else{
