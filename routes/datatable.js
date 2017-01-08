@@ -441,6 +441,7 @@ router.get('/employee',function(req,res){
             result.set('sex',result.get('sex')?"男":"女");
             result.set('cusId',result.get('cusId').get('name'));
             result.set('job',result.get('job')?result.get('job'):"");
+            result.set('phone',result.get('phone')?result.get('phone'):"");
             result.set('notice',result.get('notice')?result.get('notice'):"");
             result.set('dept',result.get('dept')?result.get('dept'):"");
             async.map(result.get('card'),function(cardId,callback2){
@@ -539,10 +540,9 @@ router.get('/pasrecord',function(req,res){
         takeoutQuery.include('card.emp');
         takeoutQuery.find().then(function(takeouts){
             async.map(takeouts,function(takeout,callback1){
-                console.log("1:"+takeout.id);
                 var deviceId=takeout.get('box').get('deviceId');
                 var card=takeout.get('card').get('card');
-                var sku=takeout.get('product').get('sku');
+                var sku=takeout.get('product').get('sku')?takeout.get('product').get('sku'):"";
                 var product=takeout.get('product').get('name');
                 var unit=takeout.get('product').get('unit');
                 var passage=takeout.get('passage').get('falg')?takeout.get('passage').get('falg')+takeout.get('passage').get('seqNo'):takeout.get('passage').get('seqNo');
@@ -573,10 +573,9 @@ router.get('/pasrecord',function(req,res){
         borrowQuery.include('card.emp');
         borrowQuery.find().then(function(borrows){
             async.map(borrows,function(borrow,callback1){
-                console.log("2:"+borrow.id);
                 var deviceId=borrow.get('box').get('deviceId');
                 var card=borrow.get('card').get('card');
-                var sku=borrow.get('product').get('sku');
+                var sku=borrow.get('product').get('sku')?borrow.get('product').get('sku'):"";
                 var product=borrow.get('product').get('name');
                 var unit=borrow.get('product').get('unit');
                 var passage=borrow.get('passage').get('flag')+borrow.get('passage').get('seqNo');
