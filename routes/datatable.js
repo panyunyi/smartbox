@@ -515,7 +515,7 @@ router.get('/passtock',function(req,res){
             result.set('cus',result.get('boxId').get('cusId').get('name'));
             result.set('boxId',result.get('boxId').get('deviceId'));
             result.set('type',result.get('flag')?"格子柜":"售货机");
-            result.set('sku',result.get('product').get('sku'));
+            result.set('sku',result.get('product').get('sku')?result.get('product').get('sku'):"");
             result.set('product',result.get('product').get('name'));
             result.set('seqNo',result.get('flag')?result.get('flag')+result.get('seqNo'):result.get('seqNo'));
         });
@@ -539,12 +539,13 @@ router.get('/pasrecord',function(req,res){
         takeoutQuery.include('card.emp');
         takeoutQuery.find().then(function(takeouts){
             async.map(takeouts,function(takeout,callback1){
+                console.log("1:"+takeout.id);
                 var deviceId=takeout.get('box').get('deviceId');
                 var card=takeout.get('card').get('card');
                 var sku=takeout.get('product').get('sku');
                 var product=takeout.get('product').get('name');
                 var unit=takeout.get('product').get('unit');
-                var passage=takeout.get('passage').get('seqNo');
+                var passage=takeout.get('passage').get('falg')?takeout.get('passage').get('falg')+takeout.get('passage').get('seqNo'):takeout.get('passage').get('seqNo');
                 var time=new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
                 var cus=takeout.get('box').get('cusId').get('name');
                 var emp=takeout.get('card').get('emp').get('name');
@@ -556,6 +557,7 @@ router.get('/pasrecord',function(req,res){
                 jsondata.push(onetake);
                 callback1(null,onetake);
             },function(error,results){
+                console.log(error);;
                 return callback(null,results);
             });
         });
@@ -571,6 +573,7 @@ router.get('/pasrecord',function(req,res){
         borrowQuery.include('card.emp');
         borrowQuery.find().then(function(borrows){
             async.map(borrows,function(borrow,callback1){
+                console.log("2:"+borrow.id);
                 var deviceId=borrow.get('box').get('deviceId');
                 var card=borrow.get('card').get('card');
                 var sku=borrow.get('product').get('sku');
@@ -589,6 +592,7 @@ router.get('/pasrecord',function(req,res){
                 jsondata.push(oneborrow);
                 callback1(null,oneborrow);
             },function(error,results){
+                console.log(error);
                 return callback(null,results);
             });
         });
@@ -618,7 +622,7 @@ router.get('/supply',function(req,res){
         results.forEach(function(result){
             result.set('product',result.get('passage').get('product').get('name'));
             result.set('time',new moment(result.get('time')).format('YYYY-MM-DD HH:mm:ss'));
-            result.set('sku',result.get('passage').get('product').get('sku'));
+            result.set('sku',result.get('passage').get('product').get('sku')?result.get('passage').get('product').get('sku'):"");
             result.set('cus',result.get('box').get('cusId').get('name'));
             result.set('deviceId',result.get('box').get('deviceId'));
             result.set('card',result.get('card').get('card'));

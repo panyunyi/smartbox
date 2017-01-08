@@ -21,9 +21,8 @@ router.post('/', function(req, res, next) {
       boxQuery.equalTo('deviceId',deviceId);
       boxQuery.first().then(function(box){
         obj.set('box',box);
-        var cardQuery=new AV.Query('EmployeeCard');
+        var cardQuery=new AV.Query('AdminCard');
         cardQuery.equalTo('isDel',false);
-        cardQuery.equalTo('cusId',box.get('cusId'));
         cardQuery.equalTo('card',record.card);
         cardQuery.first().then(function(card){
             obj.set('card',card);
