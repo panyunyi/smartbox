@@ -380,7 +380,7 @@ router.get('/customerProduct',function(req,res){
                 callback(null,result);
             },function(err,data){
                 resdata["data"]=data;
-                callback1(data);
+                callback1(null,data);
             });
         });
     }
@@ -393,9 +393,7 @@ router.get('/customerProduct',function(req,res){
                 result.set('value',result.id);
                 callback(null,result);
             },function(err,data){
-                cus={"cusId":data};
-                console.log(cus);
-                callback1(null,cus);
+                callback1(null,data);
             });
         });
     }
@@ -408,13 +406,11 @@ router.get('/customerProduct',function(req,res){
                 result.set('value',result.id);
                 callback(null,result);
             },function(err,data){
-                pro={"productId":data};
-                //resdata["options"]=Object.assign(pro);
-                callback1(null,pro);
+                callback1(null,data);
             });
         });
     }
-    async.series([
+    async.parallel([
         function (callback){
             promise1(callback);
         },
@@ -424,12 +420,79 @@ router.get('/customerProduct',function(req,res){
         function (callback){
             promise3(callback);
         }],function(err,results){
-            console.log(cus);
-            resdata["options"]=Object.assign(cus,pro);
+            resdata["options"]=Object.assign({"cusId":results[1]},{"productId":results[2]});
             res.jsonp(resdata);
     });
 });
-
+//增加客户产品
+var Product = AV.Object.extend('CustomerProduct');
+router.post('/cusproduct/add',function(req,res){
+    var arr=req.body;
+    var product=new Product();
+    console.log(arr);
+    product.set('cusProductPrice',arr['data[0][cusProductPrice]']*1);
+    let proobj=AV.Object.createWithoutData('Product', arr['data[0][productId]']);
+    product.set('product',proobj);
+    let cus=AV.Object.createWithoutData('Customer', arr['data[0][cusId]']);
+    product.set('cusId',cus);
+    product.set('isDel',false);
+    product.save().then(function(pro){
+        var data=[];
+        pro.set('DT_RowId',pro.id);
+        pro.set('cusId',pro.get('cusId').id);
+        pro.set('productId',pro.get('product').id);
+        pro.set('sku',pro.get('product').get('sku'));
+        proobj.fetch().then(function(){
+            pro.set('product',proobj.get('name'));
+            cus.fetch().then(function(){
+                pro.set('cus',cus.get('name'));
+                data.push(pro);
+                console.log(data);
+                res.jsonp({"data":data});
+            });
+        });
+    },function(error){
+        console.log(error);
+    });
+});
+//更新客户产品资料
+router.put('/cusproduct/edit/:id',function(req,res){
+    var arr=req.body;
+    var id=req.params.id;
+    var product = AV.Object.createWithoutData('CustomerProduct', id);
+    product.set('name',arr['data['+id+'][name]']);
+    product.set('unit',arr['data['+id+'][unit]']);
+    var type=AV.Object.createWithoutData('Assortment', arr['data['+id+'][assort]']);
+    product.set('type',type);
+    product.set('stockDays',arr['data['+id+'][stockDays]']*1);
+    product.set('spec',arr['data['+id+'][spec]']);
+    product.set('cue',arr['data['+id+'][cue]']*1);
+    product.set('price',arr['data['+id+'][price]']*1);
+    product.set('warning',arr['data['+id+'][warning]']*1);
+    product.set('sku',arr['data['+id+'][sku]']);
+    product.set('isDel',false);
+    product.save().then(function(pro){
+        var data=[];
+        pro.set('DT_RowId',pro.id);
+        pro.set('typeId',pro.get('type').id);
+        pro.set('price',pro.get('price'));
+        pro.set('spec',pro.get('spec')?pro.get('spec'):"");
+        type.fetch().then(function(){
+            pro.set('type',type.get('name'));
+            data.push(pro);
+            res.jsonp({"data":data});
+        });
+    });
+});
+//删除客户产品
+router.delete('/cusproduct/remove/:id',function(req,res){
+    var id=req.params.id;
+    var customer = AV.Object.createWithoutData('CustomerProduct', id);
+    customer.set('isDel',true);
+    customer.save().then(function(){
+        res.jsonp({"data":[]});
+    });
+});
 //客户员工
 router.get('/employee',function(req,res){
     var query=new AV.Query('Employee');
