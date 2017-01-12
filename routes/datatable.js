@@ -429,7 +429,6 @@ var Product = AV.Object.extend('CustomerProduct');
 router.post('/cusproduct/add',function(req,res){
     var arr=req.body;
     var product=new Product();
-    console.log(arr);
     product.set('cusProductPrice',arr['data[0][cusProductPrice]']*1);
     let proobj=AV.Object.createWithoutData('Product', arr['data[0][productId]']);
     product.set('product',proobj);
@@ -441,13 +440,12 @@ router.post('/cusproduct/add',function(req,res){
         pro.set('DT_RowId',pro.id);
         pro.set('cusId',pro.get('cusId').id);
         pro.set('productId',pro.get('product').id);
-        pro.set('sku',pro.get('product').get('sku'));
         proobj.fetch().then(function(){
             pro.set('product',proobj.get('name'));
+            pro.set('sku',proobj.get('sku'));
             cus.fetch().then(function(){
                 pro.set('cus',cus.get('name'));
                 data.push(pro);
-                console.log(data);
                 res.jsonp({"data":data});
             });
         });
@@ -457,31 +455,31 @@ router.post('/cusproduct/add',function(req,res){
 });
 //更新客户产品资料
 router.put('/cusproduct/edit/:id',function(req,res){
-    var arr=req.body;
-    var id=req.params.id;
-    var product = AV.Object.createWithoutData('CustomerProduct', id);
-    product.set('name',arr['data['+id+'][name]']);
-    product.set('unit',arr['data['+id+'][unit]']);
-    var type=AV.Object.createWithoutData('Assortment', arr['data['+id+'][assort]']);
-    product.set('type',type);
-    product.set('stockDays',arr['data['+id+'][stockDays]']*1);
-    product.set('spec',arr['data['+id+'][spec]']);
-    product.set('cue',arr['data['+id+'][cue]']*1);
-    product.set('price',arr['data['+id+'][price]']*1);
-    product.set('warning',arr['data['+id+'][warning]']*1);
-    product.set('sku',arr['data['+id+'][sku]']);
+    let arr=req.body;
+    let id=req.params.id;
+    var product=new Product();
+    product.set('cusProductPrice',arr['data['+id+'][cusProductPrice]']*1);
+    let proobj=AV.Object.createWithoutData('Product', arr['data['+id+'][productId]']);
+    product.set('product',proobj);
+    let cus=AV.Object.createWithoutData('Customer', arr['data['+id+'][cusId]']);
+    product.set('cusId',cus);
     product.set('isDel',false);
     product.save().then(function(pro){
         var data=[];
         pro.set('DT_RowId',pro.id);
-        pro.set('typeId',pro.get('type').id);
-        pro.set('price',pro.get('price'));
-        pro.set('spec',pro.get('spec')?pro.get('spec'):"");
-        type.fetch().then(function(){
-            pro.set('type',type.get('name'));
-            data.push(pro);
-            res.jsonp({"data":data});
+        pro.set('cusId',pro.get('cusId').id);
+        pro.set('productId',pro.get('product').id);
+        proobj.fetch().then(function(){
+            pro.set('product',proobj.get('name'));
+            pro.set('sku',proobj.get('sku'));
+            cus.fetch().then(function(){
+                pro.set('cus',cus.get('name'));
+                data.push(pro);
+                res.jsonp({"data":data});
+            });
         });
+    },function(error){
+        console.log(error);
     });
 });
 //删除客户产品
@@ -500,6 +498,7 @@ router.get('/employee',function(req,res){
     var jsondata=[];
     query.find().then(function(results){
         async.map(results,function(result,callback1){
+            result.set('DT_RowId',result.id);
             result.set('isDel',result.get('isDel')?"停用":"启用");
             result.set('sex',result.get('sex')?"男":"女");
             result.set('cusId',result.get('cusId').get('name'));
@@ -519,13 +518,78 @@ router.get('/employee',function(req,res){
                 jsondata.push(result);
                 callback1(null,results);
             });
-            //callback1(null,result);
         },function(err,data){
             res.jsonp({"data":jsondata});
         });
     });
 });
-
+//增加员工
+var Employee = AV.Object.extend('CustomerProduct');
+router.post('/cusproduct/add',function(req,res){
+    var arr=req.body;
+    var product=new Product();
+    product.set('cusProductPrice',arr['data[0][cusProductPrice]']*1);
+    let proobj=AV.Object.createWithoutData('Product', arr['data[0][productId]']);
+    product.set('product',proobj);
+    let cus=AV.Object.createWithoutData('Customer', arr['data[0][cusId]']);
+    product.set('cusId',cus);
+    product.set('isDel',false);
+    product.save().then(function(pro){
+        var data=[];
+        pro.set('DT_RowId',pro.id);
+        pro.set('cusId',pro.get('cusId').id);
+        pro.set('productId',pro.get('product').id);
+        proobj.fetch().then(function(){
+            pro.set('product',proobj.get('name'));
+            pro.set('sku',proobj.get('sku'));
+            cus.fetch().then(function(){
+                pro.set('cus',cus.get('name'));
+                data.push(pro);
+                res.jsonp({"data":data});
+            });
+        });
+    },function(error){
+        console.log(error);
+    });
+});
+//更新员工
+router.put('/cusproduct/edit/:id',function(req,res){
+    let arr=req.body;
+    let id=req.params.id;
+    var product=new Product();
+    product.set('cusProductPrice',arr['data['+id+'][cusProductPrice]']*1);
+    let proobj=AV.Object.createWithoutData('Product', arr['data['+id+'][productId]']);
+    product.set('product',proobj);
+    let cus=AV.Object.createWithoutData('Customer', arr['data['+id+'][cusId]']);
+    product.set('cusId',cus);
+    product.set('isDel',false);
+    product.save().then(function(pro){
+        var data=[];
+        pro.set('DT_RowId',pro.id);
+        pro.set('cusId',pro.get('cusId').id);
+        pro.set('productId',pro.get('product').id);
+        proobj.fetch().then(function(){
+            pro.set('product',proobj.get('name'));
+            pro.set('sku',proobj.get('sku'));
+            cus.fetch().then(function(){
+                pro.set('cus',cus.get('name'));
+                data.push(pro);
+                res.jsonp({"data":data});
+            });
+        });
+    },function(error){
+        console.log(error);
+    });
+});
+//删除员工
+router.delete('/cusproduct/remove/:id',function(req,res){
+    var id=req.params.id;
+    var customer = AV.Object.createWithoutData('CustomerProduct', id);
+    customer.set('isDel',true);
+    customer.save().then(function(){
+        res.jsonp({"data":[]});
+    });
+});
 //员工权限
 router.get('/empPower',function(req,res){
     var query=new AV.Query('EmployeePower');
