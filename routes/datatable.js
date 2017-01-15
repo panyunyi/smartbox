@@ -684,7 +684,6 @@ router.get('/pasrecord',function(req,res){
                 jsondata.push(onetake);
                 callback1(null,onetake);
             },function(error,results){
-                console.log(error);;
                 return callback(null,results);
             });
         });
@@ -718,7 +717,6 @@ router.get('/pasrecord',function(req,res){
                 jsondata.push(oneborrow);
                 callback1(null,oneborrow);
             },function(error,results){
-                console.log(error);
                 return callback(null,results);
             });
         });
