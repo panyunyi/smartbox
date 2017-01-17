@@ -20,7 +20,7 @@ router.get('/admincard', function(req, res) {
             		box.fetch().then(function(data){
                         var boxdata={};
                         boxdata['id']=data.id;
-                        boxdata['name']=data.get('deviceId');
+                        boxdata['name']=data.get('machine');
                         arrboxes.push(boxdata);
             			callback2(null,boxdata);
             		});
@@ -41,7 +41,7 @@ router.get('/admincard', function(req, res) {
         query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback1){
-                result.set('label',result.get('deviceId'));
+                result.set('label',result.get('machine'));
                 result.set('value',result.id);
                 callback1(null,result);
             },function(err,data){
@@ -75,7 +75,7 @@ router.post('/admincard/add',function(req,res){
         boxdata['id']=arr['data[0][box]['+i+'][id]'];
         var boxObj=AV.Object.createWithoutData('BoxInfo', arr['data[0][box]['+i+'][id]']);
         boxObj.fetch().then(function(){
-            boxdata['name']=boxObj.get('deviceId');
+            boxdata['name']=boxObj.get('machine');
             boxarr.push(boxdata);
             callback(null,boxdata);
         });
@@ -104,7 +104,7 @@ router.put('/admincard/edit/:id',function(req,res){
         boxdata['id']=arr['data['+id+'][box]['+i+'][id]'];
         var boxObj=AV.Object.createWithoutData('BoxInfo', arr['data['+id+'][box]['+i+'][id]']);
         boxObj.fetch().then(function(){
-            boxdata['name']=boxObj.get('deviceId');
+            boxdata['name']=boxObj.get('machine');
             boxarr.push(boxdata);
             callback(null,boxdata);
         });
@@ -600,7 +600,7 @@ router.get('/empPower',function(req,res){
     query.find().then(function(results){
         results.forEach(function(result){
             result.set('cus',result.get('boxId').get('cusId').get('name'));
-            result.set('boxId',result.get('boxId').get('deviceId'));
+            result.set('machine',result.get('boxId').get('machine'));
             result.set('product',result.get('product').get('name'));
             var unit="";
             if(result.get('unit')=="month"){
@@ -641,7 +641,7 @@ router.get('/passtock',function(req,res){
     query.find().then(function(results){
         results.forEach(function(result){
             result.set('cus',result.get('boxId').get('cusId').get('name'));
-            result.set('boxId',result.get('boxId').get('deviceId'));
+            result.set('machine',result.get('boxId').get('machine'));
             result.set('type',result.get('flag')?"格子柜":"售货机");
             result.set('sku',result.get('product').get('sku')?result.get('product').get('sku'):"");
             result.set('product',result.get('product').get('name'));
@@ -667,7 +667,7 @@ router.get('/pasrecord',function(req,res){
         takeoutQuery.include('card.emp');
         takeoutQuery.find().then(function(takeouts){
             async.map(takeouts,function(takeout,callback1){
-                var deviceId=takeout.get('box').get('deviceId');
+                var machine=takeout.get('box').get('machine');
                 var card=takeout.get('card').get('card');
                 var sku=takeout.get('product').get('sku')?takeout.get('product').get('sku'):"";
                 var product=takeout.get('product').get('name');
@@ -678,7 +678,7 @@ router.get('/pasrecord',function(req,res){
                 var emp=takeout.get('card').get('emp').get('name');
                 var empNo=takeout.get('card').get('emp').get('empNo');
                 var onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
-                "cus":cus,"deviceId":deviceId,"passage":passage,"count":-1,
+                "cus":cus,"machine":machine,"passage":passage,"count":-1,
                 "product":product,"sku":sku,"unit":unit,"employee":emp,
                 "empNo":empNo,"empCard":card};
                 jsondata.push(onetake);
@@ -699,7 +699,7 @@ router.get('/pasrecord',function(req,res){
         borrowQuery.include('card.emp');
         borrowQuery.find().then(function(borrows){
             async.map(borrows,function(borrow,callback1){
-                var deviceId=borrow.get('box').get('deviceId');
+                var machine=borrow.get('box').get('machine');
                 var card=borrow.get('card').get('card');
                 var sku=borrow.get('product').get('sku')?borrow.get('product').get('sku'):"";
                 var product=borrow.get('product').get('name');
@@ -711,7 +711,7 @@ router.get('/pasrecord',function(req,res){
                 var empNo=borrow.get('card').get('emp').get('empNo');
                 var flag=borrow.get('borrow');
                 var oneborrow={"time":time,"type":flag?"借":"还",
-                "objectId":borrow.get('id'),"cus":cus,"deviceId":deviceId,
+                "objectId":borrow.get('id'),"cus":cus,"machine":machine,
                 "passage":passage,"sku":sku,"product":product,"count":flag?-1:+1,
                 "unit":unit,"employee":emp,"empNo":empNo,"empCard":card};
                 jsondata.push(oneborrow);
@@ -748,7 +748,7 @@ router.get('/supply',function(req,res){
             result.set('time',new moment(result.get('time')).format('YYYY-MM-DD HH:mm:ss'));
             result.set('sku',result.get('passage').get('product').get('sku')?result.get('passage').get('product').get('sku'):"");
             result.set('cus',result.get('box').get('cusId').get('name'));
-            result.set('deviceId',result.get('box').get('deviceId'));
+            result.set('machine',result.get('box').get('machine'));
             result.set('card',result.get('card').get('card'));
             result.set('passage',result.get('passage').get('flag')?
             result.get('passage').get('flag')+result.get('passage').get('seqNo'):result.get('passage').get('seqNo'));
