@@ -20,9 +20,9 @@
                                 <thead>
                                     <tr>
                                         <th>序号</th>
+                                        <th>批次号</th>
                                         <th>客户名称</th>
                                         <th>售货机编号</th>
-                                        <th>补货卡号</th>
                                         <th>补货产品</th>
                                         <th>产品编码</th>
                                         <th>数量</th>
@@ -67,9 +67,9 @@
        "ajax": '../api/json/supply',
        "columns": [
             {"data":null},
+            {"data":"number"},
             { "data": "cus" },
             { "data": "machine" },
-            { "data": "card" },
             { "data": "product" },
             { "data": "sku" },
             { "data": "count" },

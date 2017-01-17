@@ -744,12 +744,13 @@ router.get('/supply',function(req,res){
     query.include('box.cusId');
     query.find().then(function(results){
         results.forEach(function(result){
+            result.set('number',new moment(result.get('createdAt')).unix());
             result.set('product',result.get('passage').get('product').get('name'));
             result.set('time',new moment(result.get('time')).format('YYYY-MM-DD HH:mm:ss'));
             result.set('sku',result.get('passage').get('product').get('sku')?result.get('passage').get('product').get('sku'):"");
             result.set('cus',result.get('box').get('cusId').get('name'));
             result.set('machine',result.get('box').get('machine'));
-            result.set('card',result.get('card').get('card'));
+            //result.set('card',result.get('card').get('card'));
             result.set('passage',result.get('passage').get('flag')?
             result.get('passage').get('flag')+result.get('passage').get('seqNo'):result.get('passage').get('seqNo'));
         });
