@@ -23,10 +23,7 @@
                                         <th>客户名称</th>
                                         <th>联系人</th>
                                         <th>联系人电话</th>
-                                        <th>省</th>
-                                        <th>市</th>
-                                        <th>区</th>
-                                        <th>地址</th>
+                                        <th>客户地址</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -125,10 +122,7 @@ $(document).ready(function() {
             { "data": "name" },
             { "data": "connecter" },
             { "data": "connectPhone" },
-            { "data": "province" },
-            { "data": "city" },
-            { "data": "area" },
-            { "data": "address" }
+            { "data": "province" }
         ],
         select:true,
         buttons: [
@@ -137,9 +131,10 @@ $(document).ready(function() {
     { extend: "remove", editor: editor }
     ] ,
         "columnDefs": [{
-            "searchable": false,
-            "orderable": false,
-            "targets": 0
+        "render": function(data, type, row) {
+            return data + row.city + row.area+row.address;
+        },
+        "targets": 4
         }],
         "order": [[1, 'asc']],
         "language": {
