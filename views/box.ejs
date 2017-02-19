@@ -86,6 +86,10 @@
                 "url": "../vendor/zh_CN.txt"
             }
         });
+        $('#table tbody').on('click', 'tr', function () {
+            var data = t.row( this ).data();
+            console.log(data);
+        } );
         t.on('order.dt search.dt',function() {
                     t.column(0, {
                         search: 'applied',
