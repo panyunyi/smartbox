@@ -73,30 +73,40 @@
                 ajax: {
                     create: {
                         type: 'POST',
-                        url:  '../api/json/admincard/add'
+                        url:  '../api/json/employee/add'
                     },
                     edit: {
                         type: 'PUT',
-                        url:  '../api/json/admincard/edit/_id_'
+                        url:  '../api/json/employee/edit/_id_'
                     },
                     remove: {
                         type: 'DELETE',
-                        url:  '../api/json/admincard/remove/_id_'
+                        url:  '../api/json/employee/remove/_id_'
                     }
                 },
                 table: "#table",
                 fields: [
-                    { label: '卡号', name: 'card' },
-                    { label: '售货机',  name: 'box[].id' ,type:'checkbox' }
+                    { label: '客户',  name: 'cusId' ,type:'select' },
+                    { label: '工号',  name: 'empNo' },
+                    { label: '姓名',  name: 'name' },
+                    { label: '性别',  name: 'sex' ,type:'radio',options:[
+                        { label: "男", value: 1},
+                        { label: "女",  value: 0 }
+                    ], },
+                    { label: '部门',  name: 'dept' },
+                    { label: '职务',  name: 'job' },
+                    { label: '电话',  name: 'phone' },
+                    { label: '卡号',  name: 'card' },
+                    { label: '备注',  name: 'notice' }
                 ],i18n: {
                         create: {
                             button: "新增",
-                            title:  "新建管理卡",
+                            title:  "新建员工",
                             submit: "创建"
                         },
                         edit: {
                             button: "编辑",
-                            title:  "管理卡修改",
+                            title:  "员工信息修改",
                             submit: "更新"
                         },
                         remove: {
@@ -105,7 +115,7 @@
                             submit: "删除",
                             confirm: {
                                 _: "确定要删除 %d 条吗?",
-                                1: "确定要删除这张管理卡吗?"
+                                1: "确定要删除这条员工信息吗?"
                             }
                         }
                     }

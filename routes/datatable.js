@@ -362,8 +362,6 @@ router.delete('/category/remove/:id',function(req,res){
 //客户产品管理
 router.get('/customerProduct',function(req,res){
     var resdata={};
-    var cus={};
-    var pro={};
     function promise1(callback1){
         var query=new AV.Query('CustomerProduct');
         query.equalTo('isDel',false);
@@ -493,53 +491,76 @@ router.delete('/cusproduct/remove/:id',function(req,res){
 });
 //客户员工
 router.get('/employee',function(req,res){
-    var query=new AV.Query('Employee');
-    query.include('cusId');
-    var jsondata=[];
-    query.find().then(function(results){
-        async.map(results,function(result,callback1){
-            result.set('DT_RowId',result.id);
-            result.set('isDel',result.get('isDel')?"停用":"启用");
-            result.set('sex',result.get('sex')?"男":"女");
-            result.set('cusId',result.get('cusId').get('name'));
-            result.set('job',result.get('job')?result.get('job'):"");
-            result.set('phone',result.get('phone')?result.get('phone'):"");
-            result.set('notice',result.get('notice')?result.get('notice'):"");
-            result.set('dept',result.get('dept')?result.get('dept'):"");
-            async.map(result.get('card'),function(cardId,callback2){
-                var card=AV.Object.createWithoutData('EmployeeCard',cardId);
-                card.fetch().then(function(one){
-                    if(!one.get('isDel')){
-                        callback2(null,one.get('card'));
-                    }
+    var resdata={};
+    function promise1(callback){
+        let query=new AV.Query('Employee');
+        query.include('cusId');
+        query.find().then(function(results){
+            async.map(results,function(result,callback1){
+                result.set('DT_RowId',result.id);
+                result.set('isDel',result.get('isDel')?"停用":"启用");
+                result.set('sex',result.get('sex')?"男":"女");
+                result.set('cusId',result.get('cusId').get('name'));
+                result.set('job',result.get('job')?result.get('job'):"");
+                result.set('phone',result.get('phone')?result.get('phone'):"");
+                result.set('notice',result.get('notice')?result.get('notice'):"");
+                result.set('dept',result.get('dept')?result.get('dept'):"");
+                let cardQuery=new AV.Query('EmployeeCard');
+                cardQuery.equalTo('isDel',false);
+                cardQuery.equalTo('emp',result);
+                cardQuery.find().then(function(cards){
+                    let arr=[];
+                    cards.forEach(function(card){
+                        arr.push(card.get('card'));
+                    });
+                    result.set('card',arr);
+                    callback1(null,result);
                 });
-            },function(err,cards){
-                result.set('card',cards);
-                jsondata.push(result);
-                callback1(null,results);
+            },function(err,data){
+                resdata["data"]=data;
+                callback(null,data);
             });
-        },function(err,data){
-            res.jsonp({"data":jsondata});
         });
+    }
+    function promise2(callback1){
+        var query=new AV.Query('Customer');
+        query.equalTo('isDel',false);
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('label',result.get('name'));
+                result.set('value',result.id);
+                callback(null,result);
+            },function(err,data){
+                callback1(null,data);
+            });
+        });
+    }
+    async.parallel([
+        function (callback){
+            promise1(callback);
+        },
+        function (callback){
+            promise2(callback);
+        }],function(err,results){
+            resdata["options"]={"cusId":results[1]};
+            res.jsonp(resdata);
     });
 });
 //增加员工
-var Employee = AV.Object.extend('CustomerProduct');
-router.post('/cusproduct/add',function(req,res){
+var Employee = AV.Object.extend('Employee');
+router.post('/employee/add',function(req,res){
     var arr=req.body;
-    var product=new Product();
-    product.set('cusProductPrice',arr['data[0][cusProductPrice]']*1);
-    let proobj=AV.Object.createWithoutData('Product', arr['data[0][productId]']);
-    product.set('product',proobj);
+    var employee=new Employee();
+    employee.set('empNo',arr['data[0][empNo]']);
     let cus=AV.Object.createWithoutData('Customer', arr['data[0][cusId]']);
-    product.set('cusId',cus);
-    product.set('isDel',false);
-    product.save().then(function(pro){
+    employee.set('cusId',cus);
+    employee.set('isDel',false);
+    employee.save().then(function(emp){
         var data=[];
-        pro.set('DT_RowId',pro.id);
-        pro.set('cusId',pro.get('cusId').id);
-        pro.set('productId',pro.get('product').id);
-        proobj.fetch().then(function(){
+        emp.set('DT_RowId',pro.id);
+        emp.set('cusId',pro.get('cusId').id);
+        emp.set('productId',pro.get('product').id);
+        emp.fetch().then(function(){
             pro.set('product',proobj.get('name'));
             pro.set('sku',proobj.get('sku'));
             cus.fetch().then(function(){
@@ -553,7 +574,7 @@ router.post('/cusproduct/add',function(req,res){
     });
 });
 //更新员工
-router.put('/cusproduct/edit/:id',function(req,res){
+router.put('/employee/edit/:id',function(req,res){
     let arr=req.body;
     let id=req.params.id;
     var product=new Product();
@@ -582,9 +603,9 @@ router.put('/cusproduct/edit/:id',function(req,res){
     });
 });
 //删除员工
-router.delete('/cusproduct/remove/:id',function(req,res){
+router.delete('/employee/remove/:id',function(req,res){
     var id=req.params.id;
-    var customer = AV.Object.createWithoutData('CustomerProduct', id);
+    var customer = AV.Object.createWithoutData('Employee', id);
     customer.set('isDel',true);
     customer.save().then(function(){
         res.jsonp({"data":[]});
