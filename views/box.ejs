@@ -57,14 +57,73 @@
 
     <!-- Custom Theme JavaScript -->
     <script src="../dist/js/sb-admin-2.js"></script>
+    <script src="../dist/js/semantic.min.js"></script>
     <script src="../dist/js/jquery.dataTables.min.js"></script>
     <script src="../dist/js/dataTables.semanticui.min.js"></script>
-    <script src="../dist/js/semantic.min.js"></script>
+    <script src="../dist/js/dataTables.buttons.min.js"></script>
+    <script src="../dist/js/buttons.semanticui.min.js"></script>
+    <script src="../dist/js/dataTables.select.min.js"></script>
+    <script src="../dist/js/dataTables.editor.min.js"></script>
+    <script src="../dist/js/editor.semanticui.min.js"></script>
     <script>
-        var t= $('#table').DataTable( {
+    var editor;
+    $(document).ready(function() {
+            editor = new $.fn.dataTable.Editor( {
+            ajax: {
+                create: {
+                    type: 'POST',
+                    url:  '../api/json/box/add'
+                },
+                edit: {
+                    type: 'PUT',
+                    url:  '../api/json/box/edit/_id_'
+                },
+                remove: {
+                    type: 'DELETE',
+                    url:  '../api/json/box/remove/_id_'
+                }
+            },
+            table: "#table",
+            fields: [
+                { label: '售货机编号',  name: 'machine' },
+                { label: '设备号',  name: 'deviceId' },
+                { label: '客户',  name: 'cusId' ,type:'select' },
+                { label: '售货机型号',  name: 'model' },
+                { label: '售货机类型',  name: 'type',type:'radio',options:[
+                    { label: "螺纹柜", value: 1},
+                    { label: "格子柜",  value: 0 }
+                ], },
+                { label: '安装地址',  name: 'address' },
+                { label: '紧急联系人',  name: 'connecter' },
+                { label: '紧急联系人电话',  name: 'conPhone' },
+                { label: '状态',  name: 'state' }
+            ],i18n: {
+                    create: {
+                        button: "新增",
+                        title:  "新建售货机",
+                        submit: "创建"
+                    },
+                    edit: {
+                        button: "编辑",
+                        title:  "售货机信息修改",
+                        submit: "更新"
+                    },
+                    remove: {
+                        button: "删除",
+                        title:  "删除",
+                        submit: "删除",
+                        confirm: {
+                            _: "确定要删除 %d 条吗?",
+                            1: "确定要删除这条售货机信息吗?"
+                        }
+                    }
+                }
+        } );
+        var table= $('#table').DataTable( {
             "processing": true,
             stateSave: true,
            "ajax": '../api/json/box',
+           "dom": '<"top"Brf>t<"bottom"ilp>',
            "columns": [
                 {"data":null},
                 { "data": "machine" },
@@ -76,6 +135,12 @@
                 { "data": "state" },
                 { "data": "isLive" }
             ],
+            select:true,
+            buttons: [
+            { extend: "create", editor: editor },
+            { extend: "edit",  editor: editor },
+            { extend: "remove", editor: editor }
+            ] ,
             "columnDefs": [{
                 "searchable": false,
                 "orderable": false,
@@ -87,17 +152,18 @@
             }
         });
         $('#table tbody').on('click', 'tr', function () {
-            var data = t.row( this ).data();
+            var data = table.row( this ).data();
             console.log(data);
         } );
-        t.on('order.dt search.dt',function() {
-                    t.column(0, {
+        table.on('order.dt search.dt',function() {
+                    table.column(0, {
                         search: 'applied',
                         order: 'applied'
                     }).nodes().each(function(cell, i) {
                         cell.innerHTML = i + 1;
                     });
                 }).draw();
+        });
     </script>
 </body>
 
