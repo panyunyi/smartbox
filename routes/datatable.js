@@ -700,12 +700,14 @@ router.post('/box/add',function(req,res){
     box.set('connecter',arr['data[0][connecter]']);
     box.set('conPhone',arr['data[0][conPhone]']);
     box.set('state',arr['data[0][state]']);
+    box.set('isLive',false);
     box.set('isDel',false);
     box.save().then(function(b){
         var data=[];
         b.set('DT_RowId',cus.id);
         cus.fetch().then(function(c){
             b.set('cusId',c.get('name'));
+            b.set('isLive',b.get('isLive')?"在线":"未联机");
             data.push(b);
             res.jsonp({"data":data});
         },function(err){
