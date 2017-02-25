@@ -697,6 +697,7 @@ router.post('/box/add',function(req,res){
     box.set('model',arr['data[0][model]']);
     box.set('type',arr['data[0][issend]']*1?"螺纹柜":"格子柜");
     box.set('issend',arr['data[0][issend]']*1);
+    box.set('child',arr['data[0][child]']*1);
     box.set('connecter',arr['data[0][connecter]']);
     box.set('conPhone',arr['data[0][conPhone]']);
     box.set('state',arr['data[0][state]']?arr['data[0][state]']:"可用");
@@ -731,6 +732,7 @@ router.put('/box/edit/:id',function(req,res){
     box.set('model',arr['data['+id+'][model]']);
     box.set('type',arr['data['+id+'][issend]']*1?"螺纹柜":"格子柜");
     box.set('issend',arr['data['+id+'][issend]']*1);
+    box.set('child',arr['data['+id+'][child]']*1);
     box.set('connecter',arr['data['+id+'][connecter]']);
     box.set('conPhone',arr['data['+id+'][conPhone]']);
     box.set('state',arr['data['+id+'][state]']?arr['data['+id+'][state]']:"可用");

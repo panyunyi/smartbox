@@ -91,9 +91,10 @@
                 { label: '客户',  name: 'cusId' ,type:'select' },
                 { label: '售货机型号',  name: 'model' },
                 { label: '售货机类型',  name: 'issend',type:'radio',options:[
+                    { label: "格子柜",  value: 0 },
                     { label: "螺纹柜", value: 1},
-                    { label: "格子柜",  value: 0 }
-                ], },
+                ], def: 1},
+                { label: '附属柜序号',  name: 'child' },
                 { label: '安装地址',  name: 'address' },
                 { label: '紧急联系人',  name: 'connecter' },
                 { label: '紧急联系人电话',  name: 'conPhone' },
@@ -119,6 +120,11 @@
                         }
                     }
                 }
+        } );
+        editor.dependent( 'issend', function ( val ) {
+            return val === 1 ?
+                { hide: ['child'] } :
+                { show: ['child'] };
         } );
         var table= $('#table').DataTable( {
             "processing": true,
