@@ -499,7 +499,7 @@ router.get('/employee',function(req,res){
             async.map(results,function(result,callback1){
                 result.set('DT_RowId',result.id);
                 result.set('isDel',result.get('isDel')?"停用":"启用");
-                result.set('sex',result.get('sex')?"男":"女");
+                result.set('sex',result.get('sex'));
                 result.set('cusId',result.get('cusId').get('name'));
                 result.set('job',result.get('job')?result.get('job'):"");
                 result.set('phone',result.get('phone')?result.get('phone'):"");
@@ -564,7 +564,7 @@ router.post('/employee/add',function(req,res){
     employee.save().then(function(emp){
         var data=[];
         emp.set('DT_RowId',emp.id);
-        emp.set('sex',emp.get('sex')?"男":"女")
+        emp.set('sex',emp.get('sex'))
         emp.set('card',"");
         cus.fetch().then(function(c){
             emp.set('cusId',c.get('name'));
@@ -593,7 +593,7 @@ router.put('/employee/edit/:id',function(req,res){
     employee.save().then(function(emp){
         var data=[];
         emp.set('DT_RowId',emp.id);
-        emp.set('sex',emp.get('sex')?"男":"女")
+        emp.set('sex',emp.get('sex'))
         emp.set('card',"");
         cus.fetch().then(function(c){
             emp.set('cusId',c.get('name'));
@@ -650,7 +650,7 @@ router.get('/box',function(req,res){
         query.find().then(function(results){
             async.map(results,function(result,callback){
                 result.set('cusId',result.get('cusId').get('name'));
-                result.set('isLive',result.get('isLive')?"联机":"未联机");
+                result.set('DT_RowId',result.id);
                 callback(null,result);
             },function(err,data){
                 resdata["data"]=data;
@@ -695,19 +695,18 @@ router.post('/box/add',function(req,res){
     let version=AV.Object.createWithoutData('Update','585cd8dc61ff4b00688dc4e4');
     box.set('version',version);
     box.set('model',arr['data[0][model]']);
-    box.set('type',arr['data[0][type]']*1?"螺纹":"格子");
-    box.set('issend',arr['data[0][type]']*1);
+    box.set('type',arr['data[0][issend]']*1?"螺纹柜":"格子柜");
+    box.set('issend',arr['data[0][issend]']*1);
     box.set('connecter',arr['data[0][connecter]']);
     box.set('conPhone',arr['data[0][conPhone]']);
-    box.set('state',arr['data[0][state]']);
+    box.set('state',arr['data[0][state]']?arr['data[0][state]']:"可用");
     box.set('isLive',false);
     box.set('isDel',false);
     box.save().then(function(b){
         var data=[];
-        b.set('DT_RowId',cus.id);
+        b.set('DT_RowId',b.id);
         cus.fetch().then(function(c){
             b.set('cusId',c.get('name'));
-            b.set('isLive',b.get('isLive')?"在线":"未联机");
             data.push(b);
             res.jsonp({"data":data});
         },function(err){
@@ -721,19 +720,34 @@ router.post('/box/add',function(req,res){
 router.put('/box/edit/:id',function(req,res){
     var arr=req.body;
     var id=req.params.id;
-    var customer = AV.Object.createWithoutData('Customer', id);
-    customer.set('name',arr['data['+id+'][name]']);
-    customer.set('connecter',arr['data['+id+'][connecter]']);
-    customer.set('connectPhone',arr['data['+id+'][connectPhone]']);
-    customer.set('province',arr['data['+id+'][province]']);
-    customer.set('city',arr['data['+id+'][city]']);
-    customer.set('area',arr['data['+id+'][area]']);
-    customer.set('address',arr['data['+id+'][address]']);
-    customer.save().then(function(cus){
+    var box = AV.Object.createWithoutData('BoxInfo', id);
+    box.set('address',arr['data['+id+'][address]']);
+    box.set('machine',arr['data['+id+'][machine]']);
+    box.set('deviceId',arr['data['+id+'][deviceId]']);
+    let cus=AV.Object.createWithoutData('Customer', arr['data['+id+'][cusId]']);
+    box.set('cusId',cus);
+    let version=AV.Object.createWithoutData('Update','585cd8dc61ff4b00688dc4e4');
+    box.set('version',version);
+    box.set('model',arr['data['+id+'][model]']);
+    box.set('type',arr['data['+id+'][issend]']*1?"螺纹柜":"格子柜");
+    box.set('issend',arr['data['+id+'][issend]']*1);
+    box.set('connecter',arr['data['+id+'][connecter]']);
+    box.set('conPhone',arr['data['+id+'][conPhone]']);
+    box.set('state',arr['data['+id+'][state]']?arr['data['+id+'][state]']:"可用");
+    box.set('isLive',false);
+    box.set('isDel',false);
+    box.save().then(function(b){
         var data=[];
-        cus.set('DT_RowId',cus.id);
-        data.push(cus);
-        res.jsonp({"data":data});
+        b.set('DT_RowId',b.id);
+        cus.fetch().then(function(c){
+            b.set('cusId',c.get('name'));
+            data.push(b);
+            res.jsonp({"data":data});
+        },function(err){
+            confirm(err);
+        });
+    },function(err){
+        console.log(err);
     });
 });
 //删除售货机

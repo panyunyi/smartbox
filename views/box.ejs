@@ -22,6 +22,7 @@
                                             <th>售货机编号</th>
                                             <th>客户名称</th>
                                             <th>售货机型号</th>
+                                            <th>售货机类型</th>
                                             <th>安装地址</th>
                                             <th>紧急联系人</th>
                                             <th>紧急联系人电话</th>
@@ -89,7 +90,7 @@
                 { label: '设备号',  name: 'deviceId' },
                 { label: '客户',  name: 'cusId' ,type:'select' },
                 { label: '售货机型号',  name: 'model' },
-                { label: '售货机类型',  name: 'type',type:'radio',options:[
+                { label: '售货机类型',  name: 'issend',type:'radio',options:[
                     { label: "螺纹柜", value: 1},
                     { label: "格子柜",  value: 0 }
                 ], },
@@ -129,11 +130,12 @@
                 { "data": "machine" },
                 { "data": "cusId" },
                 { "data": "model" },
+                { "data": "issend",render:function(data){return data?"螺纹柜":"格子柜"} },
                 { "data": "address" },
                 { "data": "connecter" },
                 { "data": "conPhone" },
                 { "data": "state" },
-                { "data": "isLive" }
+                { "data": "isLive",render:function(data){return data?"联机":"未联机"} }
             ],
             select:true,
             buttons: [
