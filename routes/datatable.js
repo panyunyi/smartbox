@@ -306,9 +306,9 @@ router.put('/product/edit/:id',function(req,res){
 //删除产品
 router.delete('/product/remove/:id',function(req,res){
     var id=req.params.id;
-    var customer = AV.Object.createWithoutData('Product', id);
-    customer.set('isDel',true);
-    customer.save().then(function(){
+    var product = AV.Object.createWithoutData('Product', id);
+    product.set('isDel',true);
+    product.save().then(function(){
         res.jsonp({"data":[]});
     });
 });
@@ -483,9 +483,9 @@ router.put('/cusproduct/edit/:id',function(req,res){
 //删除客户产品
 router.delete('/cusproduct/remove/:id',function(req,res){
     var id=req.params.id;
-    var customer = AV.Object.createWithoutData('CustomerProduct', id);
-    customer.set('isDel',true);
-    customer.save().then(function(){
+    var cusproduct = AV.Object.createWithoutData('CustomerProduct', id);
+    cusproduct.set('isDel',true);
+    cusproduct.save().then(function(){
         res.jsonp({"data":[]});
     });
 });
@@ -607,9 +607,9 @@ router.put('/employee/edit/:id',function(req,res){
 //删除员工
 router.delete('/employee/remove/:id',function(req,res){
     var id=req.params.id;
-    var customer = AV.Object.createWithoutData('Employee', id);
-    customer.set('isDel',true);
-    customer.save().then(function(){
+    var employee = AV.Object.createWithoutData('Employee', id);
+    employee.set('isDel',true);
+    employee.save().then(function(){
         res.jsonp({"data":[]});
     });
 });
@@ -711,7 +711,7 @@ router.post('/box/add',function(req,res){
             data.push(b);
             res.jsonp({"data":data});
         },function(err){
-            confirm(err);
+            console.log(err);
         });
     },function(err){
         console.log(err);
@@ -746,7 +746,7 @@ router.put('/box/edit/:id',function(req,res){
             data.push(b);
             res.jsonp({"data":data});
         },function(err){
-            confirm(err);
+            console.log(err);
         });
     },function(err){
         console.log(err);
@@ -755,13 +755,146 @@ router.put('/box/edit/:id',function(req,res){
 //删除售货机
 router.delete('/box/remove/:id',function(req,res){
     var id=req.params.id;
-    var customer = AV.Object.createWithoutData('BoxInfo', id);
-    customer.set('isDel',true);
-    customer.save().then(function(){
+    var box = AV.Object.createWithoutData('BoxInfo', id);
+    box.set('isDel',true);
+    box.save().then(function(){
         res.jsonp({"data":[]});
     });
 });
-//售货机货道库存
+//货道配置
+router.get('/passage/:id',function(req,res){
+    let resdata={};
+    function promise1(callback1) {
+        let id=req.params.id;
+        let box=AV.Object.createWithoutData('BoxInfo', id);
+        let query=new AV.Query('Passage')
+        query.include('boxId');
+        query.include('product');
+        query.equalTo('boxId',box);
+        query.ascending('seqNo');
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('DT_RowId',result.id);
+                result.set('machine',result.get('boxId').get('machine'));
+                result.set('boxId',result.get('boxId').id);
+                result.set('type',result.get('flag')?"格子柜":"螺纹柜");
+                result.set('sku',result.get('product').get('sku')?result.get('product').get('sku'):"");
+                result.set('productId',result.get('product').id);
+                result.set('product',result.get('product').get('name'));
+                result.set('seqNo',result.get('flag')?result.get('flag')+result.get('seqNo'):result.get('seqNo'));
+                callback(null,result);
+            },function(err,data){
+                resdata["data"]=data;
+                callback1(null,data);
+            });
+        });
+    }
+    function promise2(callback1){
+        let query=new AV.Query('Product');
+        query.equalTo('isDel',false);
+        query.ascending('sku');
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('label',result.get('sku')+" "+result.get('name'));
+                result.set('value',result.id);
+                callback(null,result);
+            },function(err,data){
+                callback1(null,data);
+            });
+        });
+    }
+    async.parallel([
+        function (callback){
+            promise1(callback);
+        },
+        function (callback){
+            promise2(callback);
+        }],function(err,results){
+            resdata["options"]={"productId":results[1]};
+            res.jsonp(resdata);
+    });
+});
+//增加货道
+var Passage = AV.Object.extend('Passage');
+router.post('/passage/add',function(req,res){
+    let arr=req.body;
+    let passage=new Passage();
+    passage.set('capacity',arr['data[0][capacity]']*1);
+    let product=AV.Object.createWithoutData('Product', arr['data[0][productId]']);
+    passage.set('product',product);
+    passage.set('row',arr['data[0][seqNo]'].substr(0,1)*1);
+    passage.set('col',arr['data[0][seqNo]'].substr(1)*1);
+    passage.set('state',arr['data[0][state]']*1?true:false);
+    passage.set('seqNo',arr['data[0][seqNo]']);
+    passage.set('borrowState',false);
+    passage.set('stock',0);
+    passage.set('isSend',arr['data[0][isSend]']*1?true:false);
+    let box=AV.Object.createWithoutData('BoxInfo', arr['data[0][boxId]']);
+    passage.set('boxId',box);
+    passage.set('isDel',false);
+    box.fetch().then(function(b){
+        passage.save().then(function(p){
+            let data=[];
+            p.set('DT_RowId',p.id);
+            p.set('machine',b.get('machine'));
+            p.set('boxId',b.id);
+            p.set('type',p.get('flag')?"格子柜":"螺纹柜");
+            product.fetch().then(function(pro){
+                p.set('productId',pro.id);
+                p.set('product',pro.get('name'));
+                p.set('sku',pro.get('sku'));
+                data.push(p);
+                res.jsonp({"data":data});
+            })
+        },function(err){
+            console.log(err);
+        });
+    });
+});
+//更新货道'+id+'
+router.put('/passage/edit/:id',function(req,res){
+    var arr=req.body;
+    var id=req.params.id;
+    console.log('%j',arr);
+    var passage = AV.Object.createWithoutData('Passage', id);
+    passage.set('capacity',arr['data['+id+'][capacity]']*1);
+    let product=AV.Object.createWithoutData('Product', arr['data['+id+'][productId]']);
+    passage.set('product',product);
+    passage.set('row',arr['data['+id+'][seqNo]'].substr(0,1)*1);
+    passage.set('col',arr['data['+id+'][seqNo]'].substr(1)*1);
+    passage.set('state',arr['data['+id+'][state]']*1?true:false);
+    passage.set('seqNo',arr['data['+id+'][seqNo]']);
+    passage.set('isSend',arr['data['+id+'][isSend]']*1?true:false);
+    let boxQuery=new AV.Query('BoxInfo');
+    boxQuery.get(arr['data['+id+'][boxId]']).then(function(b){
+        passage.set('flag',b.get('issend')?"":"1");
+        passage.save().then(function(p){
+            let data=[];
+            p.set('DT_RowId',p.id);
+            p.set('type',p.get('flag')?"格子柜":"螺纹柜");
+            p.set('machine',b.get('machine'));
+            product.fetch().then(function(pro){
+                p.set('productId',pro.id);
+                p.set('product',pro.get('name'));
+                p.set('sku',pro.get('sku'));
+                data.push(p);
+                res.jsonp({"data":data});
+            });
+        },function(err){
+            console.log(err);
+        });
+    });
+});
+//删除货道
+router.delete('/passage/remove/:id',function(req,res){
+    var id=req.params.id;
+    var passage = AV.Object.createWithoutData('Passage', id);
+    passage.set('isDel',true);
+    passage.save().then(function(){
+        res.jsonp({"data":[]});
+    });
+});
+//货道库存
 router.get('/passtock',function(req,res){
     var query=new AV.Query('Passage');
     query.equalTo('isDel',false);
@@ -772,7 +905,7 @@ router.get('/passtock',function(req,res){
         results.forEach(function(result){
             result.set('cus',result.get('boxId').get('cusId').get('name'));
             result.set('machine',result.get('boxId').get('machine'));
-            result.set('type',result.get('flag')?"格子柜":"售货机");
+            result.set('type',result.get('flag')?"格子柜":"螺纹柜");
             result.set('sku',result.get('product').get('sku')?result.get('product').get('sku'):"");
             result.set('product',result.get('product').get('name'));
             result.set('seqNo',result.get('flag')?result.get('flag')+result.get('seqNo'):result.get('seqNo'));
@@ -781,7 +914,7 @@ router.get('/passtock',function(req,res){
     });
 });
 
-//售货机交易记录
+//交易记录
 router.get('/pasrecord',function(req,res){
     var takeoutQuery=new AV.Query('TakeOut');
     var borrowQuery=new AV.Query('Borrow');

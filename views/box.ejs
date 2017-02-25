@@ -38,6 +38,69 @@
                         <!-- /.panel -->
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            售货机货道详细
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <!-- Nav tabs -->
+                            <ul class="nav nav-tabs">
+                                <li class="active"><a href="#passage" data-toggle="tab">货道设置</a>
+                                </li>
+                                <li><a href="#boxproduct" data-toggle="tab">售货机产品</a>
+                                </li>
+                            </ul>
+
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+                                <div class="tab-pane fade in active" id="passage">
+                                    <div class="panel-body1">
+                                    <table id="table1" class="ui celled table" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>序号</th>
+                                                <th>售货机编号</th>
+                                                <th>货道编号</th>
+                                                <th>货道类型</th>
+                                                <th>货道容量</th>
+                                                <th>产品编号</th>
+                                                <th>产品名称</th>
+                                                <th>销售类型</th>
+                                                <th>状态</th>
+                                                <th>行</th>
+                                                <th>列</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="boxproduct">
+                                    <div class="panel-body1">
+                                    <table id="table2" class="ui celled table" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>序号</th>
+                                                <th>售货机编号</th>
+                                                <th>产品编号</th>
+                                                <th>产品名称</th>
+                                                <th>产品补货提示点</th>
+                                                <th>产品库存警戒值</th>
+                                                <th>备货天数</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                    <!-- /.panel -->
+                </div>
+                </div>
                 <!-- /.row -->
             </div>
             <!-- /.container-fluid -->
@@ -68,6 +131,7 @@
     <script src="../dist/js/editor.semanticui.min.js"></script>
     <script>
     var editor;
+    var editor1;
     $(document).ready(function() {
             editor = new $.fn.dataTable.Editor( {
             ajax: {
@@ -161,7 +225,12 @@
         });
         $('#table tbody').on('click', 'tr', function () {
             var data = table.row( this ).data();
-            console.log(data);
+            table1.ajax.url('../api/json/passage/'+data.DT_RowId).load();
+            editor1.add( {
+                type:  "hidden",
+                name:  "boxId",
+                def:   data.DT_RowId
+            } );
         } );
         table.on('order.dt search.dt',function() {
                     table.column(0, {
@@ -171,7 +240,99 @@
                         cell.innerHTML = i + 1;
                     });
                 }).draw();
+        editor1 = new $.fn.dataTable.Editor( {
+            ajax: {
+                create: {
+                    type: 'POST',
+                    url:  '../api/json/passage/add'
+                },
+                edit: {
+                    type: 'PUT',
+                    url:  '../api/json/passage/edit/_id_'
+                },
+                remove: {
+                    type: 'DELETE',
+                    url:  '../api/json/passage/remove/_id_'
+                }
+            },
+            table: "#table1",
+            fields: [
+                { label: '货道编号',  name: 'seqNo' },
+                { label: '容量',  name: 'capacity' },
+                { label: '产品',  name: 'productId',type :'select'},
+                { label: '销售类型',  name: 'isSend',type:'radio',options:[
+                    { label: "寄售",  value: 1 },
+                    { label: "借还", value: 0},
+                ], def: 1},
+                { label: '状态',  name: 'state',type:'radio',options:[
+                    { label: "可用",  value: 1 },
+                    { label: "不可用", value: 0},
+                ], def: 1}
+            ],i18n: {
+                    create: {
+                        button: "新增",
+                        title:  "新建货道",
+                        submit: "创建"
+                    },
+                    edit: {
+                        button: "编辑",
+                        title:  "货道配置修改",
+                        submit: "更新"
+                    },
+                    remove: {
+                        button: "删除",
+                        title:  "删除",
+                        submit: "删除",
+                        confirm: {
+                            _: "确定要删除 %d 条吗?",
+                            1: "确定要删除这条货道配置吗?"
+                        }
+                    }
+                }
+        } );
+        var table1= $('#table1').DataTable( {
+            "processing": true,
+            stateSave: true,
+           "ajax": '',
+           "dom": '<"top"Brf>t<"bottom"ilp>',
+           "columns": [
+                {"data":null},
+                { "data": "machine" },
+                { "data": "seqNo"},
+                { "data": "type" },
+                { "data": "capacity" },
+                { "data": "sku" },
+                { "data": "product" },
+                { "data": "isSend",render:function(data){return data?"寄售":"借还"}},
+                { "data": "state",render:function(data){return data?"可用":"不可用"}},
+                { "data": "row"},
+                { "data": "col"}
+            ],
+            select:true,
+            buttons: [
+            { extend: "create", editor: editor1 },
+            { extend: "edit",  editor: editor1 },
+            { extend: "remove", editor: editor1 }
+            ] ,
+            "columnDefs": [{
+                "searchable": false,
+                "orderable": false,
+                "targets": 0
+            }],
+            "order": [[1, 'asc']],
+            "language": {
+                "url": "../vendor/zh_CN.txt"
+            }
         });
+        table1.on('order.dt search.dt',function() {
+                    table1.column(0, {
+                        search: 'applied',
+                        order: 'applied'
+                    }).nodes().each(function(cell, i) {
+                        cell.innerHTML = i + 1;
+                    });
+                }).draw();
+    });
     </script>
 </body>
 
