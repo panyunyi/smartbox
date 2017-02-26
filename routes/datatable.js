@@ -495,6 +495,7 @@ router.get('/employee',function(req,res){
     function promise1(callback){
         let query=new AV.Query('Employee');
         query.include('cusId');
+        query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback1){
                 result.set('DT_RowId',result.id);
@@ -771,6 +772,7 @@ router.get('/passage/:id',function(req,res){
         query.include('boxId');
         query.include('product');
         query.equalTo('boxId',box);
+        query.equalTo('isDel',false);
         query.ascending('seqNo');
         query.find().then(function(results){
             async.map(results,function(result,callback){
@@ -855,7 +857,6 @@ router.post('/passage/add',function(req,res){
 router.put('/passage/edit/:id',function(req,res){
     var arr=req.body;
     var id=req.params.id;
-    console.log('%j',arr);
     var passage = AV.Object.createWithoutData('Passage', id);
     passage.set('capacity',arr['data['+id+'][capacity]']*1);
     let product=AV.Object.createWithoutData('Product', arr['data['+id+'][productId]']);
@@ -892,6 +893,61 @@ router.delete('/passage/remove/:id',function(req,res){
     passage.set('isDel',true);
     passage.save().then(function(){
         res.jsonp({"data":[]});
+    });
+});
+//售货机产品
+router.get('/boxProduct/:id',function(req,res){
+    let id=req.params.id;
+    let query=new AV.Query('BoxProduct');
+    let box=AV.Object.createWithoutData('BoxInfo', id);
+    query.equalTo('isDel',false);
+    query.equalTo('boxId',box);
+    query.include('boxId');
+    query.include('productId');
+    query.find().then(function(results){
+        async.map(results,function(result,callback1){
+            result.set('DT_RowId',result.id);
+            result.set('machine',result.get('boxId').get('machine'));
+            result.set('product',result.get('productId').get('name'));
+            result.set('sku',result.get('productId').get('sku'));
+            result.set('productId',result.get('productId').id);
+            callback1(null,result);
+        },function(err,data){
+            res.jsonp({"data":data});
+        });
+    });
+});
+//售货机产品补货提示、警戒值、备货天数修改
+router.put('/boxProduct/edit/:id',function(req,res){
+    let id=req.params.id;
+    let arr=req.body;
+    let boxProduct=AV.Object.createWithoutData('BoxProduct',id);
+    let cue=arr['data['+id+'][cue]'];
+    let warning=arr['data['+id+'][warning]'];
+    let stockDays=arr['data['+id+'][stockDays]'];
+    if(typeof(cue)!="undefined"){
+        boxProduct.set('cue',cue*1);
+    }
+    if(typeof(warning)!="undefined"){
+        boxProduct.set('warning',warning*1);
+    }
+    if(typeof(stockDays)!="undefined"){
+        boxProduct.set('stockDays',stockDays*1);
+    }
+    boxProduct.save().then(function(){
+        let query=new AV.Query('BoxProduct');
+        query.include('boxId');
+        query.include('productId');
+        query.equalTo('objectId',id);
+        query.first().then(function(data){
+            data.set('machine',data.get('boxId').get('machine'));
+            data.set('DT_RowId',data.id);
+            data.set('product',data.get('productId').get('name'));
+            data.set('sku',data.get('productId').get('sku'));
+            let result=[];
+            result.push(data);
+            res.jsonp({"data":result});
+        });
     });
 });
 //货道库存

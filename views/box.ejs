@@ -132,6 +132,7 @@
     <script>
     var editor;
     var editor1;
+    var editor2;
     $(document).ready(function() {
             editor = new $.fn.dataTable.Editor( {
             ajax: {
@@ -226,6 +227,7 @@
         $('#table tbody').on('click', 'tr', function () {
             var data = table.row( this ).data();
             table1.ajax.url('../api/json/passage/'+data.DT_RowId).load();
+            table2.ajax.url('../api/json/boxProduct/'+data.DT_RowId).load();
             editor1.add( {
                 type:  "hidden",
                 name:  "boxId",
@@ -326,6 +328,66 @@
         });
         table1.on('order.dt search.dt',function() {
                     table1.column(0, {
+                        search: 'applied',
+                        order: 'applied'
+                    }).nodes().each(function(cell, i) {
+                        cell.innerHTML = i + 1;
+                    });
+                }).draw();
+        editor2 = new $.fn.dataTable.Editor( {
+            ajax:{
+                edit: {
+                    type: 'PUT',
+                    url:  '../api/json/boxProduct/edit/_id_'
+                }
+            },
+            table: "#table2",
+            fields: [
+                { label: '补货提示点',  name: 'cue' },
+                { label: '补货警戒值',  name: 'warning' },
+                { label: '备货天数',  name: 'stockDays'}
+            ]
+        } );
+        $('#table2').on( 'click', 'tbody td:not(:first-child)', function (e) {
+           editor2.inline( this, {
+               onBlur: 'submit'
+           } );
+       } );
+        var table2= $('#table2').DataTable( {
+            "processing": true,
+            stateSave: true,
+           "ajax": '',
+           "dom": '<"top"rf>t<"bottom"ilp>',
+           "columns": [
+                {"data":null},
+                { "data": "machine" },
+                { "data": "sku"},
+                { "data": "product" },
+                { "data": "cue" },
+                { "data": "warning" },
+                { "data": "stockDays" }
+            ],
+            select: {
+                style:    'os',
+                selector: 'td:first-child'
+            },
+            buttons: [
+                { extend: "create", editor: editor2 },
+                { extend: "edit",   editor: editor2 },
+                { extend: "remove", editor: editor2 }
+            ],
+            "columnDefs": [{
+                "searchable": false,
+                "orderable": false,
+                "targets": 0
+            }],
+            "order": [[1, 'asc']],
+            "language": {
+                "url": "../vendor/zh_CN.txt"
+            }
+        });
+        table2.on('order.dt search.dt',function() {
+                    table2.column(0, {
                         search: 'applied',
                         order: 'applied'
                     }).nodes().each(function(cell, i) {
