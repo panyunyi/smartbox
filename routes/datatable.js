@@ -984,6 +984,7 @@ router.get('/pasrecord',function(req,res){
         takeoutQuery.include('card');
         takeoutQuery.include('box.cusId');
         takeoutQuery.include('card.emp');
+        takeoutQuery.descending('createdAt');
         takeoutQuery.find().then(function(takeouts){
             async.map(takeouts,function(takeout,callback1){
                 var machine=takeout.get('box').get('machine');
@@ -1016,6 +1017,7 @@ router.get('/pasrecord',function(req,res){
         borrowQuery.include('card');
         borrowQuery.include('box.cusId');
         borrowQuery.include('card.emp');
+        borrowQuery.descending('createdAt');
         borrowQuery.find().then(function(borrows){
             async.map(borrows,function(borrow,callback1){
                 var machine=borrow.get('box').get('machine');
@@ -1047,7 +1049,7 @@ router.get('/pasrecord',function(req,res){
         function (callback){
             promise2(callback);
         }],function(err,results){
-        res.jsonp({"data":jsondata});
+            res.jsonp({"data":jsondata});
     });
 });
 
