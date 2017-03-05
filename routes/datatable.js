@@ -1098,8 +1098,16 @@ router.get('/storehouse',function(req,res){
 
 });
 
-//数据报表
-router.get('/charts',function(req,res){
-
+//数据报表-用量汇总报告1
+router.get('/summaryCustomer/:date',function(req,res){
+    let arr=req.params.date.split(' - ');
+    res.jsonp({});
+});
+//数据报表-用量汇总报告2
+router.get('/summaryBox/:date',function(req,res){
+    console.log(req.params.date);
+    let arr=req.params.date.split(' - ');
+    console.log(arr);
+    res.jsonp({});
 });
 module.exports = router;

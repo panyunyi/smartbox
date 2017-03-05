@@ -130,9 +130,9 @@ router.get('/warehouse', function(req, res) {
     }
 });
 
-router.get('/flot', function(req, res) {
+router.get('/summary', function(req, res) {
     if(req.currentUser){
-    	res.render('flot');
+    	res.render('summary');
     }else{
     	res.redirect('../login');
     }

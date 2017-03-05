@@ -3,7 +3,7 @@
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-lg-12">
-                        <h1 class="page-header">售货机交易记录</h1>
+                        <h1 class="page-header">用量汇总报告</h1>
                     </div>
                     <!-- /.col-lg-12 -->
                 </div>
@@ -11,24 +11,26 @@
                     <div class="col-lg-12">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                售货机交易记录数据表
+                                用量汇总报告
                             </div>
                             <!-- /.panel-heading -->
                             <div class="panel-body">
-                                <table id="table" class="ui celled table" cellspacing="0" width="100%">
+                                <div id="top"></div>
+                                <table id="table1" class="ui celled table" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
-                                            <th>序号</th>
-                                            <th>时间</th>
-                                            <th>单据类型</th>
-                                            <th>客户名称</th>
+                                            <th style="padding-right:25px">公司名称</th>
+                                            <th>使用数量</th>
+                                            <th>总价</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                                <table id="table2" class="ui celled table" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
                                             <th>售货机编号</th>
-                                            <th>货道编号</th>
-                                            <th>产品编号</th>
-                                            <th>产品名称</th>
-                                            <th>数量</th>
-                                            <th>领用人</th>
-                                            <th>卡号</th>
+                                            <th>使用数量</th>
+                                            <th>总价</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -66,30 +68,16 @@
     <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
     <script>
-        var t= $('#table').DataTable( {
+        var t1= $('#table1').DataTable( {
             "processing": true,
             stateSave: true,
             "searching":false,
-            "serverSide": true,
-            "dom": '<"#top"r>t<"bottom"ilp>',
-           "ajax": {"url":'../api/json/pasrecord',
-               "data": function ( d ) {
-                       //添加额外的参数传给服务器
-                       d.extra_search = $('#reportrange span').html();
-                   }
-            },
+            "dom": '<r>t<"bottom"ilp>',
+           "ajax": "",
            "columns": [
-                {"data":null},
-                { "data": "time" },
-                { "data": "type" },
-                { "data": "cus" },
-                { "data": "machine" },
-                { "data": "passage" },
-                { "data": "sku" },
-                { "data": "product" },
+                {"data":"name"},
                 { "data": "count" },
-                { "data": "employee" },
-                { "data": "empCard" }
+                { "data": "total" }
             ],
             "columnDefs": [{
                 "searchable": false,
@@ -100,17 +88,31 @@
             "language": {
                 "url": "../vendor/zh_CN.txt"
             },
-            initComplete:initComplete
         });
-        //initComplete();
-        t.on('order.dt search.dt',function() {
-                    t.column(0, {
-                        search: 'applied',
-                        order: 'applied'
-                    }).nodes().each(function(cell, i) {
-                        cell.innerHTML = i + 1;
-                    });
-                }).draw();
+        var t2= $('#table2').DataTable( {
+            "processing": true,
+            stateSave: true,
+            "searching":false,
+            "dom": '<r>t<"bottom"ilp>',
+           "ajax": "",
+           "columns": [
+                {"data":"name"},
+                { "data": "count" },
+                { "data": "total" }
+            ],
+            "columnDefs": [{
+                "searchable": false,
+                "orderable": false,
+                "targets": 0
+            }],
+            "order": [[1, 'desc']],
+            "language": {
+                "url": "../vendor/zh_CN.txt"
+            },
+        });
+
+        initComplete();
+
         function initComplete(){
 
             var dataPlugin =
@@ -120,7 +122,7 @@
                    '<b class="caret"></b></div> ';
             $('#top').append(dataPlugin);
             //时间插件
-            $('#reportrange span').html(moment().subtract(1,'hours').format('YYYY-MM-DD HH:mm:ss') + ' - ' + moment().format('YYYY-MM-DD HH:mm:ss'));
+            $('#reportrange span').html(moment().subtract(1,'hours').format('YYYY-MM-DD') + ' - ' + moment().format('YYYY-MM-DD'));
 
             $('#reportrange').daterangepicker(
                    {
@@ -133,7 +135,7 @@
                        }, //起止时间的最大间隔
                        showDropdowns : true,
                        showWeekNumbers : false, //是否显示第几周
-                       timePicker : true, //是否显示小时和分钟
+                       timePicker : false, //是否显示小时和分钟
                        timePickerIncrement : 60, //时间的增量，单位为分钟
                        timePicker12Hour : false, //是否使用12小时制来显示时间
                        ranges : {
@@ -162,7 +164,7 @@
                        }
                    }, function(start, end, label) {//格式化日期显示框
 
-                       $('#reportrange span').html(start.format('YYYY-MM-DD HH:mm:ss') + ' - ' + end.format('YYYY-MM-DD HH:mm:ss'));
+                       $('#reportrange span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                    });
 
             //设置日期菜单被选项  --开始--
@@ -194,22 +196,13 @@
             //选择时间后触发重新加载的方法
             $("#reportrange").on('apply.daterangepicker',function(){
                //当选择时间后，出发dt的重新加载数据的方法
-               t.ajax.reload();
-               //获取dt请求参数
-               var args = t.ajax.params();
-               console.log("额外传到后台的参数值extra_search为："+args.extra_search);
+               var date=$('#reportrange span').html();
+               t1.ajax.url('../api/json/summaryCustomer/'+date).load();
+               t2.ajax.url('../api/json/summaryBox/'+date).load();
+               console.log(date);
             });
 
-            function getParam(url) {
-               var data = decodeURI(url).split("?")[1];
-               var param = {};
-               var strs = data.split("&");
 
-               for(var i = 0; i<strs.length; i++){
-                   param[strs[i].split("=")[0]] = strs[i].split("=")[1];
-               }
-               return param;
-            }
    }
     </script>
 </body>
