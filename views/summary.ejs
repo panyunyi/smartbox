@@ -73,7 +73,8 @@
             stateSave: true,
             "searching":false,
             "dom": '<r>t<"bottom"ilp>',
-           "ajax": "",
+           "ajax": {url:'../api/json/summary/'+moment().format('YYYY-MM-DD'),
+                   dataSrc:'cus'},
            "columns": [
                 {"data":"name"},
                 { "data": "count" },
@@ -94,7 +95,8 @@
             stateSave: true,
             "searching":false,
             "dom": '<r>t<"bottom"ilp>',
-           "ajax": "",
+           "ajax": {url:'../api/json/summary/'+moment().format('YYYY-MM-DD'),
+                   dataSrc:'box'},
            "columns": [
                 {"data":"name"},
                 { "data": "count" },

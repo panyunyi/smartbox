@@ -1097,17 +1097,101 @@ router.get('/checkrecord',function(req,res){
 router.get('/storehouse',function(req,res){
 
 });
-
-//数据报表-用量汇总报告1
-router.get('/summaryCustomer/:date',function(req,res){
-    let arr=req.params.date.split(' - ');
-    res.jsonp({});
+router.get('/test',function(req,res){
+    let query=new AV.Query('TakeOut');
+    query.equalTo('isDel',false);
+    query.equalTo('result',true);
+    let start=new moment().startOf('days').format('YYYY-MM-DD HH:mm:ss');
+    let end=new moment().endOf('days').format('YYYY-MM-DD HH:mm:ss');
+    query.greaterThanOrEqualTo('time',new Date(start));
+    query.lessThan('time',new Date(end));
+    query.find().then(function(results){
+        res.jsonp(results);
+    });
 });
-//数据报表-用量汇总报告2
-router.get('/summaryBox/:date',function(req,res){
-    console.log(req.params.date);
-    let arr=req.params.date.split(' - ');
-    console.log(arr);
-    res.jsonp({});
+//数据报表-用量汇总报告
+router.get('/summary/:date',function(req,res){
+    let resdata={};
+    function getCustomer(callback){
+        let cusQuery=new AV.Query('Customer');
+        cusQuery.equalTo('isDel',false);
+        cusQuery.find().then(function(results){
+            callback(null,results);
+        });
+    }
+    function getTakeout(customers,callback){
+        let arr=req.params.date.split(' - ');
+        let start,end;
+        let query=new AV.Query('TakeOut');
+        query.equalTo('isDel',false);
+        query.equalTo('result',true);
+        start=new moment(arr[0]).startOf('days').format('YYYY-MM-DD HH:mm:ss');
+        if(arr.length==1){
+            end=new moment(arr[0]).endOf('days').format('YYYY-MM-DD HH:mm:ss');
+        }else{
+            end=new moment(arr[1]).endOf('days').format('YYYY-MM-DD HH:mm:ss');
+        }
+        query.greaterThanOrEqualTo('time',new Date(start));
+        query.lessThan('time',new Date(end));
+        let cusArr=[];
+        let boxArr=[];
+        async.map(customers,function(cus,callback1){
+            let cusTakeout={};
+            let count=0;
+            let total=0;
+            cusTakeout['name']=cus.get('name');
+            let boxQuery=new AV.Query('BoxInfo');
+            boxQuery.equalTo('isDel',false);
+            boxQuery.equalTo('cusId',cus);
+            boxQuery.find().then(function(boxes){
+                async.map(boxes,function(box,callback2){
+                    let boxTakeout={};
+                    let boxTotal=0;
+                    boxTakeout['name']=box.get('machine');
+                    query.equalTo('box',box);
+                    query.find().then(function(takeouts){
+                        boxTakeout['count']=takeouts.length;
+                        count+=takeouts.length;
+                        async.map(takeouts,function(takeout,callback3) {
+                            let cusProQuery=new AV.Query('CustomerProduct');
+                            cusProQuery.equalTo('isDel',false);
+                            cusProQuery.equalTo('cusId',cus);
+                            cusProQuery.equalTo('product',takeout.get('product'));
+                            cusProQuery.first().then(function(cusproduct){
+                                if(typeof(cusproduct)!="undefined"){
+                                    boxTotal+=cusproduct.get('cusProductPrice');
+                                }
+                                callback3(null,cusproduct);
+                            });
+                        },function(err,takeoutdata){
+                            boxTakeout['total']=boxTotal;
+                            total+=boxTotal;
+                            boxArr.push(boxTakeout);
+                            callback2(null,takeoutdata);
+                        });
+                    });
+                },function(err,boxdata){
+                    cusTakeout['total']=total;
+                    cusTakeout['count']=count;
+                    cusArr.push(cusTakeout);
+                    callback1(null,boxdata);
+                });
+            });
+        },function(err,cusdata){
+            resdata['box']=boxArr;
+            resdata['cus']=cusArr;
+            callback(null,cusdata);
+        });
+    }
+    async.waterfall([
+        function (callback){
+            getCustomer(callback);
+        },
+        function(customers,callback){
+            getTakeout(customers,callback);
+        }
+    ],function(err,results){
+        res.jsonp(resdata);
+    });
 });
 module.exports = router;
