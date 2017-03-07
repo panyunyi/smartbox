@@ -1191,7 +1191,7 @@ router.get('/summary/:date',function(req,res){
             getTakeout(customers,callback);
         }
     ],function(err,results){
-        res.jsonp(resdata);
+        return res.jsonp(resdata);
     });
 });
 module.exports = router;

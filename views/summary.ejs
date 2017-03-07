@@ -68,10 +68,12 @@
     <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
     <script>
+
         var t1= $('#table1').DataTable( {
             "processing": true,
             stateSave: true,
             "searching":false,
+            destroy:true,
             "dom": '<r>t<"bottom"ilp>',
            "ajax": {url:'../api/json/summary/'+moment().format('YYYY-MM-DD'),
                    dataSrc:'cus'},
@@ -94,6 +96,7 @@
             "processing": true,
             stateSave: true,
             "searching":false,
+            destroy:true,
             "dom": '<r>t<"bottom"ilp>',
            "ajax": {url:'../api/json/summary/'+moment().format('YYYY-MM-DD'),
                    dataSrc:'box'},
@@ -199,12 +202,53 @@
             $("#reportrange").on('apply.daterangepicker',function(){
                //当选择时间后，出发dt的重新加载数据的方法
                var date=$('#reportrange span').html();
-               t1.ajax.url('../api/json/summaryCustomer/'+date).load();
-               t2.ajax.url('../api/json/summaryBox/'+date).load();
-               console.log(date);
+               $.getJSON('../api/json/summary/'+date,function(data){
+                    var t1= $('#table1').DataTable( {
+                      "processing": true,
+                      stateSave: true,
+                      "searching":false,
+                      destroy:true,
+                      "dom": '<r>t<"bottom"ilp>',
+                     "data":data.cus,
+                     "columns": [
+                          {"data":"name"},
+                          { "data": "count" },
+                          { "data": "total" }
+                      ],
+                      "columnDefs": [{
+                          "searchable": false,
+                          "orderable": false,
+                          "targets": 0
+                      }],
+                      "order": [[1, 'desc']],
+                      "language": {
+                          "url": "../vendor/zh_CN.txt"
+                      },
+                  });
+                  var t2= $('#table2').DataTable( {
+                      "processing": true,
+                      stateSave: true,
+                      "searching":false,
+                      destroy:true,
+                      "dom": '<r>t<"bottom"ilp>',
+                     "data":data.box,
+                     "columns": [
+                          {"data":"name"},
+                          { "data": "count" },
+                          { "data": "total" }
+                      ],
+                      "columnDefs": [{
+                          "searchable": false,
+                          "orderable": false,
+                          "targets": 0
+                      }],
+                      "order": [[1, 'desc']],
+                      "language": {
+                          "url": "../vendor/zh_CN.txt"
+                      },
+                  });
+               });
             });
-
-
    }
     </script>
 </body>
