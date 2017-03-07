@@ -1119,10 +1119,18 @@ router.get('/summary/:date',function(req,res){
             callback(null,results);
         });
     }
-    function getTakeout(customers,callback){
+    function getBox(customers,callback){
+        let boxQuery=new AV.Query('BoxInfo');
+        boxQuery.equalTo('isDel',false);
+        boxQuery.find().then(function(results){
+            callback(null,customers,results);
+        });
+    }
+    function getTakeout(customers,boxes,callback){
         let arr=req.params.date.split(' - ');
         let start,end;
         let query=new AV.Query('TakeOut');
+        let boxArr=[];
         query.equalTo('isDel',false);
         query.equalTo('result',true);
         start=new moment(arr[0]).startOf('days').format('YYYY-MM-DD HH:mm:ss');
@@ -1133,62 +1141,46 @@ router.get('/summary/:date',function(req,res){
         }
         query.greaterThanOrEqualTo('time',new Date(start));
         query.lessThan('time',new Date(end));
-        let cusArr=[];
-        let boxArr=[];
-        async.map(customers,function(cus,callback1){
-            let cusTakeout={};
-            let count=0;
-            let total=0;
-            cusTakeout['name']=cus.get('name');
-            let boxQuery=new AV.Query('BoxInfo');
-            boxQuery.equalTo('isDel',false);
-            boxQuery.equalTo('cusId',cus);
-            boxQuery.find().then(function(boxes){
-                async.map(boxes,function(box,callback2){
-                    let boxTakeout={};
-                    let boxTotal=0;
-                    boxTakeout['name']=box.get('machine');
-                    query.equalTo('box',box);
-                    query.find().then(function(takeouts){
-                        boxTakeout['count']=takeouts.length;
-                        count+=takeouts.length;
-                        async.map(takeouts,function(takeout,callback3) {
-                            let cusProQuery=new AV.Query('CustomerProduct');
-                            cusProQuery.equalTo('isDel',false);
-                            cusProQuery.equalTo('cusId',cus);
-                            cusProQuery.equalTo('product',takeout.get('product'));
-                            cusProQuery.first().then(function(cusproduct){
-                                if(typeof(cusproduct)!="undefined"){
-                                    boxTotal+=cusproduct.get('cusProductPrice');
-                                }
-                                callback3(null,cusproduct);
-                            });
-                        },function(err,takeoutdata){
-                            boxTakeout['total']=boxTotal;
-                            total+=boxTotal;
-                            boxArr.push(boxTakeout);
-                            callback2(null,takeoutdata);
+        query.find().then(function(takes){
+            async.map(boxes,function(box,callback1){
+                let boxData={};
+                boxData['name']=box.get('machine');
+                boxData['count']=0;
+                boxData['total']=0;
+                async.map(takes,function(take,callback2){
+                    if(take.get('box').id==box.id){
+                        boxData['count']+=1;
+                        let priceQuery=new AV.Query('CustomerProduct');
+                        priceQuery.equalTo('isDel',false);
+                        priceQuery.equalTo('product',take.get('product'));
+                        priceQuery.equalTo('cusId',box.get('cusId'));
+                        priceQuery.first().then(function(price){
+                            if(typeof(price)!="undefined"){
+                                boxData['total']+=price.get('cusProductPrice');
+                            }
+                            callback2(null,take);//速度变慢
                         });
-                    });
-                },function(err,boxdata){
-                    cusTakeout['total']=total;
-                    cusTakeout['count']=count;
-                    cusArr.push(cusTakeout);
-                    callback1(null,boxdata);
+                    }
+                },function(err,takeres){
+                    boxArr.push(boxData);
+                    callback1(null,takeres);
                 });
+            },function(err,boxres){
+                resdata['box']=boxArr;
+                callback(null,boxres);
             });
-        },function(err,cusdata){
-            resdata['box']=boxArr;
-            resdata['cus']=cusArr;
-            callback(null,cusdata);
         });
+
     }
     async.waterfall([
         function (callback){
             getCustomer(callback);
         },
         function(customers,callback){
-            getTakeout(customers,callback);
+            getBox(customers,callback);
+        },
+        function(customers,boxes,callback){
+            getTakeout(customers,boxes,callback);
         }
     ],function(err,results){
         return res.jsonp(resdata);
