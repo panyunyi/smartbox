@@ -779,7 +779,7 @@ router.get('/passage/:id',function(req,res){
                 result.set('DT_RowId',result.id);
                 result.set('machine',result.get('boxId').get('machine'));
                 result.set('boxId',result.get('boxId').id);
-                result.set('type',result.get('flag')?"格子柜":"螺纹柜");
+                result.set('type',result.get('type')?result.get('type'):"");
                 result.set('sku',result.get('product').get('sku')?result.get('product').get('sku'):"");
                 result.set('productId',result.get('product').id);
                 result.set('product',result.get('product').get('name'));
@@ -818,6 +818,7 @@ router.get('/passage/:id',function(req,res){
 });
 //增加货道
 var Passage = AV.Object.extend('Passage');
+var BoxProduct=AV.Object.extend('BoxProduct');
 router.post('/passage/add',function(req,res){
     let arr=req.body;
     let passage=new Passage();
@@ -834,23 +835,64 @@ router.post('/passage/add',function(req,res){
     let box=AV.Object.createWithoutData('BoxInfo', arr['data[0][boxId]']);
     passage.set('boxId',box);
     passage.set('isDel',false);
-    box.fetch().then(function(b){
-        passage.save().then(function(p){
-            let data=[];
-            p.set('DT_RowId',p.id);
-            p.set('machine',b.get('machine'));
-            p.set('boxId',b.id);
-            p.set('type',p.get('flag')?"格子柜":"螺纹柜");
-            product.fetch().then(function(pro){
-                p.set('productId',pro.id);
-                p.set('product',pro.get('name'));
-                p.set('sku',pro.get('sku'));
-                data.push(p);
-                res.jsonp({"data":data});
-            })
-        },function(err){
-            console.log(err);
+    function promise1(callback){
+        let boxProductQuery=new AV.Query('BoxProduct');
+        boxProductQuery.equalTo('isDel',false);
+        boxProductQuery.equalTo('boxId',box);
+        boxProductQuery.equalTo('productId',product);
+        boxProductQuery.count().then(function(count){
+            if(count==0){
+                let boxpro=new BoxProduct();
+                boxpro.set('isDel',false);
+                boxpro.set('boxId',box);
+                boxpro.set('productId',product);
+                boxpro.set('stockDays',0);
+                boxpro.set('warning',0);
+                boxpro.set('cue',0);
+                boxpro.save().then(function(data){
+                    callback(null,data);
+                });
+            }else{
+                callback(null,0);
+            }
         });
+    }
+    function promise2(callback){
+        box.fetch().then(function(b){
+            let cusProQuery=new AV.Query('CustomerProduct');
+            cusProQuery.equalTo('isDel',false);
+            cusProQuery.equalTo('product',product);
+            cusProQuery.equalTo('cusId',b.get('cusId'));
+            cusProQuery.first().then(function(cuspro){
+                passage.set('customerProduct',cuspro);
+                passage.save().then(function(p){
+                    let data=[];
+                    p.set('DT_RowId',p.id);
+                    p.set('machine',b.get('machine'));
+                    p.set('boxId',b.id);
+                    p.set('type',p.get('flag')?"格子柜":"螺纹柜");
+                    product.fetch().then(function(pro){
+                        p.set('productId',pro.id);
+                        p.set('product',pro.get('name'));
+                        p.set('sku',pro.get('sku'));
+                        data.push(p);
+                        callback(null,data);
+                    });
+                },function(err){
+                    console.log(err);
+                });
+            });
+        });
+    }
+    async.parallel([
+        function(callback){
+            promise1(callback);
+        },
+        function (callback) {
+            promise2(callback);
+        }
+    ],function(err,results){
+        res.jsonp({"data":results[1]});
     });
 });
 //更新货道'+id+'
@@ -868,21 +910,62 @@ router.put('/passage/edit/:id',function(req,res){
     passage.set('isSend',arr['data['+id+'][isSend]']*1?true:false);
     let boxQuery=new AV.Query('BoxInfo');
     boxQuery.get(arr['data['+id+'][boxId]']).then(function(b){
-        passage.set('flag',b.get('issend')?"":"1");
-        passage.save().then(function(p){
-            let data=[];
-            p.set('DT_RowId',p.id);
-            p.set('type',p.get('flag')?"格子柜":"螺纹柜");
-            p.set('machine',b.get('machine'));
-            product.fetch().then(function(pro){
-                p.set('productId',pro.id);
-                p.set('product',pro.get('name'));
-                p.set('sku',pro.get('sku'));
-                data.push(p);
-                res.jsonp({"data":data});
+        function promise1(callback){
+            let boxProductQuery=new AV.Query('BoxProduct');
+            boxProductQuery.equalTo('isDel',false);
+            boxProductQuery.equalTo('boxId',b);
+            boxProductQuery.equalTo('productId',product);
+            boxProductQuery.count().then(function(count){
+                if(count==0){
+                    let boxpro=new BoxProduct();
+                    boxpro.set('isDel',false);
+                    boxpro.set('boxId',b);
+                    boxpro.set('productId',product);
+                    boxpro.set('stockDays',0);
+                    boxpro.set('warning',0);
+                    boxpro.set('cue',0);
+                    boxpro.save().then(function(data){
+                        callback(null,data);
+                    });
+                }else{
+                    callback(null,0);
+                }
             });
-        },function(err){
-            console.log(err);
+        }
+        function promise2(callback){
+            let cusProQuery=new AV.Query('CustomerProduct');
+            cusProQuery.equalTo('isDel',false);
+            cusProQuery.equalTo('product',product);
+            cusProQuery.equalTo('cusId',b.get('cusId'));
+            cusProQuery.first().then(function(cuspro){
+                passage.set('flag',b.get('issend')?"":"1");
+                passage.set('customerProduct',cuspro);
+                passage.save().then(function(p){
+                    let data=[];
+                    p.set('DT_RowId',p.id);
+                    p.set('type',p.get('flag')?"格子柜":"螺纹柜");
+                    p.set('machine',b.get('machine'));
+                    product.fetch().then(function(pro){
+                        p.set('productId',pro.id);
+                        p.set('product',pro.get('name'));
+                        p.set('sku',pro.get('sku'));
+                        data.push(p);
+                        callback(null,data);
+                    });
+                },function(err){
+                    console.log(err);
+                });
+            });
+        }
+        async.parallel([
+            function(callback){
+                promise1(callback);
+            },
+            function(callback){
+                promise2(callback);
+            }
+        ],function(err,results){
+            res.jsonp({"data":results[1]});
         });
     });
 });
@@ -1126,7 +1209,14 @@ router.get('/summary/:date',function(req,res){
             callback(null,customers,results);
         });
     }
-    function getTakeout(customers,boxes,callback){
+    function getCusProduct(customers,boxes,callback){
+        let cusProQuery=new AV.Query('CustomerProduct');
+        cusProQuery.equalTo('isDel',false);
+        cusProQuery.find().then(function(results){
+            callback(null,customers,boxes,results);
+        });
+    }
+    function getTakeout(customers,boxes,cuspros,callback){
         let arr=req.params.date.split(' - ');
         let start,end;
         let query=new AV.Query('TakeOut');
@@ -1150,23 +1240,26 @@ router.get('/summary/:date',function(req,res){
                 async.map(takes,function(take,callback2){
                     if(take.get('box').id==box.id){
                         boxData['count']+=1;
-                        let priceQuery=new AV.Query('CustomerProduct');
-                        priceQuery.equalTo('isDel',false);
-                        priceQuery.equalTo('product',take.get('product'));
-                        priceQuery.equalTo('cusId',box.get('cusId'));
-                        priceQuery.first().then(function(price){
-                            if(typeof(price)!="undefined"){
-                                boxData['total']+=price.get('cusProductPrice');
+                        cuspros.forEach(function(cuspro){
+                            if(cuspro.get('product').id==take.get('product').id&&
+                                cuspro.get('cusId').id==box.get('cusId').id){
+                                boxData['total']+=cuspro.get('cusProductPrice');
                             }
-                            callback2(null,take);//速度变慢
                         });
+                        callback2(null,take);
                     }
                 },function(err,takeres){
-                    boxArr.push(boxData);
+                    if(boxData['count']>0){
+                        boxArr.push(boxData);
+                    }
+                    customers.forEach(function(cus){
+
+                    });
                     callback1(null,takeres);
                 });
             },function(err,boxres){
                 resdata['box']=boxArr;
+
                 callback(null,boxres);
             });
         });
@@ -1180,7 +1273,10 @@ router.get('/summary/:date',function(req,res){
             getBox(customers,callback);
         },
         function(customers,boxes,callback){
-            getTakeout(customers,boxes,callback);
+            getCusProduct(customers,boxes,callback);
+        },
+        function(customers,boxes,cuspros,callback){
+            getTakeout(customers,boxes,cuspros,callback);
         }
     ],function(err,results){
         return res.jsonp(resdata);
