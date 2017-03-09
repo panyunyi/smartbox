@@ -40,14 +40,7 @@
                         </div>
                         <!-- /.panel -->
                     </div>
-                    <div class="am-modal am-modal-loading am-modal-no-btn" tabindex="-1" id="myModal">
-                      <div class="am-modal-dialog">
-                        <div class="am-modal-hd">正在载入...</div>
-                        <div class="am-modal-bd">
-                          <span class="am-icon-spinner am-icon-spin"></span>
-                        </div>
-                      </div>
-                    </div>
+                   
                 </div>
                 <!-- /.row -->
 
@@ -55,7 +48,6 @@
             <!-- /.container-fluid -->
         </div>
         <!-- /#page-wrapper -->
-
     </div>
     <!-- /#wrapper -->
 
@@ -211,8 +203,10 @@
             $("#reportrange").on('apply.daterangepicker',function(){
                //当选择时间后，出发dt的重新加载数据的方法
                var date=$('#reportrange span').html();
-               $('#myModal').modal('toggle');
+               $('#table1_processing').css("z-index",100);
+               $('#table1_processing').css('display','block'); 
                $.getJSON('../api/json/summary/'+date,function(data){
+                    $('#table1_processing').css("display","none");
                     var t1= $('#table1').DataTable( {
                       "processing": true,
                       stateSave: true,

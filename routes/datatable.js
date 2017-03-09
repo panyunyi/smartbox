@@ -1221,6 +1221,7 @@ router.get('/summary/:date',function(req,res){
         let start,end;
         let query=new AV.Query('TakeOut');
         let boxArr=[];
+        let cusArr=[];
         query.equalTo('isDel',false);
         query.equalTo('result',true);
         start=new moment(arr[0]).startOf('days').format('YYYY-MM-DD HH:mm:ss');
@@ -1231,12 +1232,19 @@ router.get('/summary/:date',function(req,res){
         }
         query.greaterThanOrEqualTo('time',new Date(start));
         query.lessThan('time',new Date(end));
+        query.count().then(function(count){
+            let num=Math.ceil(count/1000);
+            for(let i=0;i<num;i++){
+
+            }
+        });
         query.find().then(function(takes){
             async.map(boxes,function(box,callback1){
                 let boxData={};
                 boxData['name']=box.get('machine');
                 boxData['count']=0;
                 boxData['total']=0;
+                boxData['cus']=box.get('cusId').id;
                 async.map(takes,function(take,callback2){
                     if(take.get('box').id==box.id){
                         boxData['count']+=1;
@@ -1252,15 +1260,31 @@ router.get('/summary/:date',function(req,res){
                     if(boxData['count']>0){
                         boxArr.push(boxData);
                     }
-                    customers.forEach(function(cus){
-
-                    });
                     callback1(null,takeres);
                 });
             },function(err,boxres){
                 resdata['box']=boxArr;
-
-                callback(null,boxres);
+                async.map(customers,function(cus,callback3){
+                    let cusData={};
+                    cusData['name']=cus.get('name');
+                    cusData['count']=0;
+                    cusData['total']=0;
+                    async.map(boxArr,function(ba,callback4){
+                        if(cus.id==ba['cus']){
+                            cusData['count']+=ba['count'];
+                            cusData['total']+=ba['total'];
+                            cusArr.push(cusData);
+                            callback4(null,1);
+                        }else{
+                            callback4(null,0);
+                        }
+                    },function(err,bares){
+                        callback3(null,cus);
+                    });
+                },function(err,cusres){
+                    resdata['cus']=cusArr;
+                    callback(null,boxres);
+                });
             });
         });
 
