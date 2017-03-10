@@ -1232,61 +1232,84 @@ router.get('/summary/:date',function(req,res){
         }
         query.greaterThanOrEqualTo('time',new Date(start));
         query.lessThan('time',new Date(end));
+        query.limit(1000);
+        query.include('product');
         query.count().then(function(count){
             let num=Math.ceil(count/1000);
-            for(let i=0;i<num;i++){
-
-            }
-        });
-        query.find().then(function(takes){
-            async.map(boxes,function(box,callback1){
-                let boxData={};
-                boxData['name']=box.get('machine');
-                boxData['count']=0;
-                boxData['total']=0;
-                boxData['cus']=box.get('cusId').id;
-                async.map(takes,function(take,callback2){
-                    if(take.get('box').id==box.id){
-                        boxData['count']+=1;
-                        cuspros.forEach(function(cuspro){
-                            if(cuspro.get('product').id==take.get('product').id&&
-                                cuspro.get('cusId').id==box.get('cusId').id){
-                                boxData['total']+=cuspro.get('cusProductPrice');
-                            }
-                        });
-                        callback2(null,take);
+            let takes=[];
+            async.times(num,function(n,callback5){
+                query.skip(1000*n);
+                query.find().then(function(results){
+                    if(n==0){
+                        takes=results;
+                    }else {
+                        takes.concat(results);
                     }
-                },function(err,takeres){
-                    if(boxData['count']>0){
-                        boxArr.push(boxData);
-                    }
-                    callback1(null,takeres);
+                    callback5(null,n);
                 });
-            },function(err,boxres){
-                resdata['box']=boxArr;
-                async.map(customers,function(cus,callback3){
-                    let cusData={};
-                    cusData['name']=cus.get('name');
-                    cusData['count']=0;
-                    cusData['total']=0;
-                    async.map(boxArr,function(ba,callback4){
-                        if(cus.id==ba['cus']){
-                            cusData['count']+=ba['count'];
-                            cusData['total']+=ba['total'];
-                            cusArr.push(cusData);
-                            callback4(null,1);
-                        }else{
-                            callback4(null,0);
+            },function(err,takesres){
+                async.map(boxes,function(box,callback1){
+                    let boxList=[];
+                    let boxData={};
+                    boxData['name']=box.get('machine');
+                    boxData['count']=0;
+                    boxData['total']=0;
+                    boxData['cus']=box.get('cusId').id;
+                    async.map(takes,function(take,callback2){
+                        if(take.get('box').id==box.id){
+                            boxData['count']+=1;
+                            boxList.push({'sku':take.get('product').get('sku'),
+                            'name':take.get('product').get('name')});
+                            cuspros.forEach(function(cuspro){
+                                if(cuspro.get('product').id==take.get('product').id&&
+                                    cuspro.get('cusId').id==box.get('cusId').id){
+                                    boxData['total']+=cuspro.get('cusProductPrice');
+                                }
+                            });
+                            callback2(null,take);
                         }
-                    },function(err,bares){
-                        callback3(null,cus);
+                    },function(err,takeres){
+                        if(boxData['count']>0){
+                            boxData['list']=boxList;
+                            boxArr.push(boxData);
+                        }
+                        callback1(null,takeres);
                     });
-                },function(err,cusres){
-                    resdata['cus']=cusArr;
-                    callback(null,boxres);
+                },function(err,boxres){
+                    resdata['box']=boxArr;
+                    async.map(customers,function(cus,callback3){
+                        let cusList=[];
+                        let cusData={};
+                        cusData['name']=cus.get('name');
+                        cusData['count']=0;
+                        cusData['total']=0;
+                        async.map(boxArr,function(ba,callback4){
+                            if(cus.id==ba['cus']){
+                                let i=0;
+                                cusData['count']+=ba['count'];
+                                cusData['total']+=ba['total'];
+                                cusArr.push(cusData);
+                                if(i==0){
+                                    cusList=ba['list'];
+                                }else{
+                                    cusList.concat(ba['list']);
+                                }
+                                callback4(null,1);
+                            }else{
+                                callback4(null,0);
+                            }
+                        },function(err,bares){
+                            cusData['list']=cusList;
+                            callback3(null,cus);
+                        });
+                    },function(err,cusres){
+                        resdata['cus']=cusArr;
+                        callback(null,boxres);
+                    });
                 });
             });
         });
+
 
     }
     async.waterfall([
