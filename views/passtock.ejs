@@ -77,9 +77,10 @@
                 { "data": "capacity" }
             ],
             "columnDefs": [{
-                "searchable": false,
-                "orderable": false,
-                "targets": 0
+            "render": function(data, type, row) {
+                return row.child+data;
+            },
+            "targets": 6
             }],
             "order": [[1, 'asc']],
             "language": {
