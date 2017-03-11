@@ -765,6 +765,7 @@ router.delete('/box/remove/:id',function(req,res){
 //货道配置
 router.get('/passage/:id',function(req,res){
     let resdata={};
+    let arr=['A','B','C','D','E','F','G','H','I','J','L'];
     function promise1(callback1) {
         let id=req.params.id;
         let box=AV.Object.createWithoutData('BoxInfo', id);
@@ -783,7 +784,9 @@ router.get('/passage/:id',function(req,res){
                 result.set('sku',result.get('product').get('sku')?result.get('product').get('sku'):"");
                 result.set('productId',result.get('product').id);
                 result.set('product',result.get('product').get('name'));
-                result.set('seqNo',result.get('flag')?result.get('flag')+result.get('seqNo'):result.get('seqNo'));
+                result.set('seqNo',result.get('seqNo'));
+                result.set('child',result.get('flag')?arr[result.get('flag')*1-1]:"");
+                result.set('childId',result.get('flag')*1);
                 callback(null,result);
             },function(err,data){
                 resdata["data"]=data;
@@ -805,14 +808,34 @@ router.get('/passage/:id',function(req,res){
             });
         });
     }
+    function promise3(callback1){
+        let id=req.params.id;
+        let box=AV.Object.createWithoutData('BoxInfo', id);
+        box.fetch().then(function(result){
+            let count=result.get('child');
+            async.timesSeries(count,function(i,callback){
+                let child={};
+                child['label']=arr[i];
+                child['value']=i+1;
+                callback(null,child);
+            },function(err,data){
+                data.splice(0,0,{'label':'无','value':0});
+                callback1(null,data);
+            });
+        });
+    }
     async.parallel([
         function (callback){
             promise1(callback);
         },
         function (callback){
             promise2(callback);
+        },
+        function (callback){
+            promise3(callback);
         }],function(err,results){
-            resdata["options"]={"productId":results[1]};
+            resdata["options"]=Object.assign({"productId":results[1]},
+            {"childId":results[2]});
             res.jsonp(resdata);
     });
 });
@@ -820,6 +843,7 @@ router.get('/passage/:id',function(req,res){
 var Passage = AV.Object.extend('Passage');
 var BoxProduct=AV.Object.extend('BoxProduct');
 router.post('/passage/add',function(req,res){
+    let flag=['A','B','C','D','E','F','G','H','I','J','L'];
     let arr=req.body;
     let passage=new Passage();
     passage.set('capacity',arr['data[0][capacity]']*1);
@@ -832,6 +856,8 @@ router.post('/passage/add',function(req,res){
     passage.set('borrowState',false);
     passage.set('stock',0);
     passage.set('isSend',arr['data[0][isSend]']*1?true:false);
+    passage.set('flag',arr['data[0][childId]']>0?arr['data[0][childId]']:"");
+    passage.set('type',arr['data[0][childId]']>0?"格子柜":"螺纹柜");
     let box=AV.Object.createWithoutData('BoxInfo', arr['data[0][boxId]']);
     passage.set('boxId',box);
     passage.set('isDel',false);
@@ -870,7 +896,9 @@ router.post('/passage/add',function(req,res){
                     p.set('DT_RowId',p.id);
                     p.set('machine',b.get('machine'));
                     p.set('boxId',b.id);
-                    p.set('type',p.get('flag')?"格子柜":"螺纹柜");
+                    p.set('type',p.get('type')?p.get('type'):"");
+                    p.set('child',p.get('flag')?flag[p.get('flag')*1-1]:"");
+                    p.set('childId',p.get('flag')*1);
                     product.fetch().then(function(pro){
                         p.set('productId',pro.id);
                         p.set('product',pro.get('name'));
@@ -897,6 +925,7 @@ router.post('/passage/add',function(req,res){
 });
 //更新货道'+id+'
 router.put('/passage/edit/:id',function(req,res){
+    let flag=['A','B','C','D','E','F','G','H','I','J','L'];
     var arr=req.body;
     var id=req.params.id;
     var passage = AV.Object.createWithoutData('Passage', id);
@@ -908,6 +937,8 @@ router.put('/passage/edit/:id',function(req,res){
     passage.set('state',arr['data['+id+'][state]']*1?true:false);
     passage.set('seqNo',arr['data['+id+'][seqNo]']);
     passage.set('isSend',arr['data['+id+'][isSend]']*1?true:false);
+    passage.set('flag',arr['data['+id+'][childId]']>0?arr['data['+id+'][childId]']:"");
+    passage.set('type',arr['data['+id+'][childId]']>0?"格子柜":"螺纹柜");
     let boxQuery=new AV.Query('BoxInfo');
     boxQuery.get(arr['data['+id+'][boxId]']).then(function(b){
         function promise1(callback){
@@ -938,13 +969,14 @@ router.put('/passage/edit/:id',function(req,res){
             cusProQuery.equalTo('product',product);
             cusProQuery.equalTo('cusId',b.get('cusId'));
             cusProQuery.first().then(function(cuspro){
-                passage.set('flag',b.get('issend')?"":"1");
                 passage.set('customerProduct',cuspro);
                 passage.save().then(function(p){
                     let data=[];
                     p.set('DT_RowId',p.id);
-                    p.set('type',p.get('flag')?"格子柜":"螺纹柜");
                     p.set('machine',b.get('machine'));
+                    p.set('child',p.get('flag')?flag[p.get('flag')*1-1]:"");
+                    p.set('childId',p.get('flag')*1);
+                    p.set('type',p.get('type')?p.get('type'):"");
                     product.fetch().then(function(pro){
                         p.set('productId',pro.id);
                         p.set('product',pro.get('name'));

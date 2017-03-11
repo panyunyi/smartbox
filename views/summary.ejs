@@ -40,7 +40,7 @@
                         </div>
                         <!-- /.panel -->
                     </div>
-                   
+
                 </div>
                 <!-- /.row -->
 
@@ -204,16 +204,17 @@
                //当选择时间后，出发dt的重新加载数据的方法
                var date=$('#reportrange span').html();
                $('#table1_processing').css("z-index",100);
-               $('#table1_processing').css('display','block'); 
+               $('#table1_processing').css('display','block');
                $.getJSON('../api/json/summary/'+date,function(data){
                     $('#table1_processing').css("display","none");
-                    var t1= $('#table1').DataTable( {
+                    t1= $('#table1').DataTable( {
                       "processing": true,
                       stateSave: true,
                       "searching":false,
                       destroy:true,
                       "dom": '<r>t<"bottom"ilp>',
                      "data":data.cus,
+                     select:true,
                      "columns": [
                           {"data":"name"},
                           { "data": "count" },
@@ -229,13 +230,14 @@
                           "url": "../vendor/zh_CN.txt"
                       },
                   });
-                  var t2= $('#table2').DataTable( {
+                  t2= $('#table2').DataTable( {
                       "processing": true,
                       stateSave: true,
                       "searching":false,
                       destroy:true,
                       "dom": '<r>t<"bottom"ilp>',
                      "data":data.box,
+                     select:true,
                      "columns": [
                           {"data":"name"},
                           { "data": "count" },
@@ -254,6 +256,16 @@
                });
             });
    }
+   $('#table1 tbody').on('click', 'tr', function () {
+       var data = t1.row( this ).data();
+       console.log(data);
+
+   } );
+   $('#table2 tbody').on('click', 'tr', function () {
+       var data = t2.row( this ).data();
+       console.log(data);
+
+   } );
     </script>
 </body>
 
