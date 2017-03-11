@@ -1173,6 +1173,7 @@ router.get('/pasrecord',function(req,res){
 
 //补货业务
 router.get('/supply',function(req,res){
+    let arr=['A','B','C','D','E','F','G','H','I','J','L'];
     var query=new AV.Query('Supply');
     query.equalTo('isDel',false);
     query.greaterThan('count',0);
@@ -1190,8 +1191,8 @@ router.get('/supply',function(req,res){
             result.set('cus',result.get('box').get('cusId').get('name'));
             result.set('machine',result.get('box').get('machine'));
             //result.set('card',result.get('card').get('card'));
-            result.set('passage',result.get('passage').get('flag')?
-            result.get('passage').get('flag')+result.get('passage').get('seqNo'):result.get('passage').get('seqNo'));
+            result.set('passage',result.get('passage').get('flag')*1>0?
+            arr[result.get('passage').get('flag')*1-1]+result.get('passage').get('seqNo'):result.get('passage').get('seqNo'));
         });
         res.jsonp({"data":results});
     });
