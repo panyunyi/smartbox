@@ -74,6 +74,14 @@ router.get('/cusemp', function(req, res) {
     }
 });
 
+router.get('/empCard', function(req, res) {
+    if(req.currentUser){
+    	res.render('empcard');
+    }else{
+    	res.redirect('../login');
+    }
+});
+
 router.get('/cusproduct', function(req, res) {
     if(req.currentUser){
     	res.render('cusproduct');

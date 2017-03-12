@@ -489,6 +489,99 @@ router.delete('/cusproduct/remove/:id',function(req,res){
         res.jsonp({"data":[]});
     });
 });
+//员工卡
+router.get('/empCard',function(req,res){
+    let resdata={};
+    function promise1(callback){
+        let query=new AV.Query('EmployeeCard');
+        query.equalTo('isDel',false);
+        query.equalTo('emp',null);
+        query.include('cusId');
+        query.find().then(function(results){
+            results.forEach(function(result){
+                result.set('DT_RowId',result.id);
+                result.set('cus',result.get('cusId').get('name'));
+                result.set('cusId',result.get('cusId').id);
+            });
+            callback(null,results);
+        });
+    }
+    function promise2(callback1){
+        let query=new AV.Query('Customer');
+        query.equalTo('isDel',false);
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('label',result.get('name'));
+                result.set('value',result.id);
+                callback(null,result);
+            },function(err,data){
+                callback1(null,data);
+            });
+        });
+    }
+    async.parallel([
+        function (callback){
+            promise1(callback);
+        },
+        function (callback){
+            promise2(callback);
+        }],function(err,results){
+            resdata["data"]=results[0];
+            resdata["options"]={"cusId":results[1]};
+            res.jsonp(resdata);
+    });
+});
+//增加员工卡
+var EmpCard = AV.Object.extend('EmployeeCard');
+router.post('/empCard/add',function(req,res){
+    var arr=req.body;
+    var employee=new EmpCard();
+    employee.set('card',arr['data[0][card]']);
+    let cus=AV.Object.createWithoutData('Customer', arr['data[0][cusId]']);
+    employee.set('cusId',cus);
+    employee.set('isDel',false);
+    employee.save().then(function(emp){
+        var data=[];
+        emp.set('DT_RowId',emp.id);
+        cus.fetch().then(function(c){
+            emp.set('cus',c.get('name'));
+            data.push(emp);
+            res.jsonp({"data":data});
+        });
+    },function(error){
+        console.log(error);
+    });
+});
+//更新员工卡'+id+'
+router.put('/empCard/edit/:id',function(req,res){
+    let arr=req.body;
+    let id=req.params.id;
+    let employee = AV.Object.createWithoutData('EmployeeCard', id);
+    employee.set('card',arr['data['+id+'][card]']);
+    let cus=AV.Object.createWithoutData('Customer', arr['data['+id+'][cusId]']);
+    employee.set('cusId',cus);
+    employee.set('isDel',false);
+    employee.save().then(function(emp){
+        var data=[];
+        emp.set('DT_RowId',emp.id);
+        cus.fetch().then(function(c){
+            emp.set('cus',c.get('name'));
+            data.push(emp);
+            res.jsonp({"data":data});
+        });
+    },function(error){
+        console.log(error);
+    });
+});
+//删除员工卡
+router.delete('/empCard/remove/:id',function(req,res){
+    var id=req.params.id;
+    var employee = AV.Object.createWithoutData('EmployeeCard', id);
+    employee.set('isDel',true);
+    employee.save().then(function(){
+        res.jsonp({"data":[]});
+    });
+});
 //客户员工
 router.get('/employee',function(req,res){
     var resdata={};
