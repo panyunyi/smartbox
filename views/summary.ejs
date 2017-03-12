@@ -43,7 +43,35 @@
 
                 </div>
                 <!-- /.row -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                详细报告
+                            </div>
+                            <!-- /.panel-heading -->
+                            <div class="panel-body">
+                                <div id="top"></div>
+                                <table id="table3" class="ui celled table" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th>售货机编号</th>
+                                            <th>产品编号</th>
+                                            <th>产品名称</th>
+                                            <th>使用数量</th>
+                                            <th>总价</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            <!-- /.table-responsive -->
+                            </div>
+                            <!-- /.panel-body -->
+                        </div>
+                        <!-- /.panel -->
+                    </div>
 
+                </div>
+                <!-- /.row -->
             </div>
             <!-- /.container-fluid -->
         </div>
@@ -65,9 +93,19 @@
     <script src="../dist/js/jquery.dataTables.min.js"></script>
     <script src="../dist/js/dataTables.semanticui.min.js"></script>
     <script src="../dist/js/semantic.min.js"></script>
+    <script src="../dist/js/dataTables.buttons.min.js"></script>
+    <script src="../dist/js/buttons.semanticui.min.js"></script>
+    <script src="../dist/js/dataTables.select.min.js"></script>
+    <script src="../dist/js/dataTables.editor.min.js"></script>
+    <script src="../dist/js/editor.semanticui.min.js"></script>
     <script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
     <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
+    <script src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js"></script>
+    <script src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js" charset="utf-8"></script>
+    <script src="//cdn.datatables.net/buttons/1.2.4/js/buttons.html5.min.js" charset="utf-8"></script>
+    <script src="//cdn.datatables.net/buttons/1.2.4/js/buttons.print.min.js" charset="utf-8"></script>
     <script>
 
         var t1= $('#table1').DataTable( {
@@ -202,6 +240,7 @@
             //选择时间后触发重新加载的方法
             $("#reportrange").on('apply.daterangepicker',function(){
                //当选择时间后，出发dt的重新加载数据的方法
+               $('#table3 tbody').html("");
                var date=$('#reportrange span').html();
                $('#table1_processing').css("z-index",100);
                $('#table1_processing').css('display','block');
@@ -212,9 +251,21 @@
                       stateSave: true,
                       "searching":false,
                       destroy:true,
-                      "dom": '<r>t<"bottom"ilp>',
+                      "dom": '<"top"Br>t<"bottom"ilp>',
                      "data":data.cus,
-                     select:true,
+                     buttons: [
+                       {
+                           extend: 'collection',
+                           text: '导出',
+                           buttons: [
+                               'copy',
+                               'excel',
+                               'csv',
+                               'pdf',
+                               'print'
+                           ]
+                       }
+                   ],
                      "columns": [
                           {"data":"name"},
                           { "data": "count" },
@@ -228,16 +279,15 @@
                       "order": [[1, 'desc']],
                       "language": {
                           "url": "../vendor/zh_CN.txt"
-                      },
+                      }
                   });
                   t2= $('#table2').DataTable( {
                       "processing": true,
                       stateSave: true,
                       "searching":false,
                       destroy:true,
-                      "dom": '<r>t<"bottom"ilp>',
+                      "dom": '<"top"Br>t<"bottom"ilp>',
                      "data":data.box,
-                     select:true,
                      "columns": [
                           {"data":"name"},
                           { "data": "count" },
@@ -252,20 +302,137 @@
                       "language": {
                           "url": "../vendor/zh_CN.txt"
                       },
+                      buttons: [
+                        {
+                            extend: 'collection',
+                            text: '导出',
+                            buttons: [
+                                'copy',
+                                'excel',
+                                'csv',
+                                'pdf',
+                                'print'
+                            ]
+                        }
+                    ]
                   });
                });
             });
    }
    $('#table1 tbody').on('click', 'tr', function () {
-       var data = t1.row( this ).data();
-       console.log(data);
-
+       var data = t2.row( this ).data();
+       var list=data.list;
+       var data2= duplicate(list,data.name);
+        var t3= $('#table3').DataTable( {
+          "processing": true,
+          stateSave: true,
+          "searching":false,
+          destroy:true,
+          "dom": '<"top"Br>t<"bottom"ilp>',
+         "data":data2,
+         select:true,
+         "columns": [
+              {"data":"box"},
+              {"data":"sku"},
+              {"data":"name"},
+              { "data": "number" },
+              { "data": "price" }
+          ],
+          "columnDefs": [{
+              "searchable": false,
+              "orderable": false,
+              "targets": 0
+          }],
+          "order": [[1, 'desc']],
+          "language": {
+              "url": "../vendor/zh_CN.txt"
+          },
+          buttons: [
+            {
+                extend: 'collection',
+                text: '导出',
+                buttons: [
+                    'copy',
+                    'excel',
+                    'csv',
+                    'pdf',
+                    'print'
+                ]
+            }
+        ]
+      });
    } );
    $('#table2 tbody').on('click', 'tr', function () {
-       var data = t2.row( this ).data();
-       console.log(data);
-
+        var data = t2.row( this ).data();
+        var list=data.list;
+        var data2= duplicate(list,data.name);
+        var t3= $('#table3').DataTable( {
+          "processing": true,
+          stateSave: true,
+          "searching":false,
+          destroy:true,
+          "dom": '<"top"Br>t<"bottom"ilp>',
+         "data":data2,
+         select:true,
+         "columns": [
+              {"data":"box"},
+              {"data":"sku"},
+              {"data":"name"},
+              { "data": "number" },
+              { "data": "price" }
+          ],
+          "columnDefs": [{
+              "searchable": false,
+              "orderable": false,
+              "targets": 0
+          }],
+          "order": [[1, 'desc']],
+          "language": {
+              "url": "../vendor/zh_CN.txt"
+          },
+          buttons: [
+            {
+                extend: 'collection',
+                text: '导出',
+                buttons: [
+                    'copy',
+                    'excel',
+                    'csv',
+                    'pdf',
+                    'print'
+                ]
+            }
+        ]
+      });
    } );
+
+   function duplicate(list,box){
+        var list2 = [];
+        var listMap = {};
+        for (var i = 0, len = list.length, id, name, key, pirce, sku; i < len; i++) {
+            id = list[i].id;
+            sku = list[i].sku;
+            name = list[i].name;
+            price= list[i].price;
+            key = id + '-' + name + '-' +price + '-' + sku; // key为id和name的组合，值为number
+            if (!!listMap[key]) {
+                listMap[key]++;
+            } else {
+                listMap[key] = 1;
+            }
+        }
+        for (var item in listMap) {
+            list2.push({
+                box: box,
+                id: item.split('-')[0],
+                name: item.split('-')[1],
+                price: item.split('-')[2]*1*listMap[item],
+                sku: item.split('-')[3],
+                number: listMap[item]
+            })
+        }
+        return list2;
+   }
     </script>
 </body>
 

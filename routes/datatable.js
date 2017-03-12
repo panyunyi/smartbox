@@ -1294,12 +1294,13 @@ router.get('/summary/:date',function(req,res){
                     async.map(takes,function(take,callback2){
                         if(take.get('box').id==box.id){
                             boxData['count']+=1;
-                            boxList.push({'sku':take.get('product').get('sku'),
-                            'name':take.get('product').get('name')});
                             cuspros.forEach(function(cuspro){
                                 if(cuspro.get('product').id==take.get('product').id&&
                                     cuspro.get('cusId').id==box.get('cusId').id){
                                     boxData['total']+=cuspro.get('cusProductPrice');
+                                    boxList.push({'sku':take.get('product').get('sku'),
+                                    'name':take.get('product').get('name'),'id':
+                                    take.get('product').id,'price':cuspro.get('cusProductPrice')});
                                 }
                             });
                             callback2(null,take);
