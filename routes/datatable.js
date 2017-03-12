@@ -595,7 +595,6 @@ router.put('/employee/edit/:id',function(req,res){
         var data=[];
         emp.set('DT_RowId',emp.id);
         emp.set('sex',emp.get('sex'))
-        emp.set('card',"");
         cus.fetch().then(function(c){
             emp.set('cusId',c.get('name'));
             data.push(emp);
@@ -616,31 +615,182 @@ router.delete('/employee/remove/:id',function(req,res){
 });
 //员工权限
 router.get('/empPower',function(req,res){
-    var query=new AV.Query('EmployeePower');
-    query.include('boxId');
-    query.include('boxId.cusId');
-    query.include('product');
-    query.equalTo('isDel',false);
-    query.find().then(function(results){
-        results.forEach(function(result){
-            result.set('cus',result.get('boxId').get('cusId').get('name'));
-            result.set('machine',result.get('boxId').get('machine'));
-            result.set('product',result.get('product').get('name'));
-            var unit="";
-            if(result.get('unit')=="month"){
-                unit="月";
-            }else if(result.get('unit')=="day"){
-                unit="日";
-            }else if(result.get('unit')=="year"){
-                unit="年";
-            }
-            result.set('unit',unit);
-            result.set('begin',new moment(result.get('begin')).format('L'));
+    let resdata={};
+    function promise1(callback1){
+        let query=new AV.Query('EmployeePower');
+        query.include('boxId');
+        query.include('boxId.cusId');
+        query.include('product');
+        query.equalTo('isDel',false);
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('DT_RowId',result.id);
+                result.set('productId',result.get('product').id);
+                result.set('machineId',result.get('boxId').id);
+                result.set('cus',result.get('boxId').get('cusId').get('name'));
+                result.set('machine',result.get('boxId').get('machine'));
+                result.set('product',result.get('product').get('name'));
+                let unit="";
+                if(result.get('unit')=="month"){
+                    unit="月";
+                }else if(result.get('unit')=="day"){
+                    unit="日";
+                }else if(result.get('unit')=="year"){
+                    unit="年";
+                }
+                result.set('unit',unit);
+                result.set('begin',new moment(result.get('begin')).format('YYYY-MM-DD'));
+                result.set('dept',result.get('dept')?result.get('dept'):"");
+                callback(null,result);
+            },function(err,data){
+                resdata['data']=data;
+                callback1(null,data);
+            });
         });
-        res.jsonp({"data":results});
+    }
+    function promise2(callback1){
+        let query=new AV.Query('BoxInfo');
+        query.equalTo('isDel',false);
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('label',result.get('machine'));
+                result.set('value',result.id);
+                callback(null,result);
+            },function(err,data){
+                callback1(null,data);
+            });
+        });
+    }
+    function promise3(callback1){
+        let query=new AV.Query('Product');
+        query.equalTo('isDel',false);
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('label',result.get('name'));
+                result.set('value',result.id);
+                callback(null,result);
+            },function(err,data){
+                callback1(null,data);
+            });
+        });
+    }
+    async.parallel([
+        function (callback){
+            promise1(callback);
+        },
+        function (callback){
+            promise2(callback);
+        },
+        function (callback){
+            promise3(callback);
+        }],function(err,results){
+            resdata["options"]=Object.assign({"machineId":results[1]},{"productId":results[2]});
+            res.jsonp(resdata);
     });
 });
-
+//新增权限
+var EmpPower = AV.Object.extend('EmployeePower');
+router.post('/empPower/add',function(req,res){
+    let arr=req.body;
+    let power=new EmpPower();
+    power.set('unit',arr['data[0][unit]']);
+    power.set('begin',new Date(arr['data[0][begin]']));
+    power.set('count',arr['data[0][count]']*1);
+    power.set('period',arr['data[0][period]']*1);
+    power.set('dept',arr['data[0][dept]']);
+    let box=AV.Object.createWithoutData('BoxInfo', arr['data[0][machineId]']);
+    let product=AV.Object.createWithoutData('Product', arr['data[0][productId]']);
+    power.set('boxId',box);
+    power.set('product',product);
+    power.set('isDel',false);
+    power.save().then(function(emp){
+        let data=[];
+        emp.set('DT_RowId',emp.id);
+        let unit="";
+        if(emp.get('unit')=="month"){
+            unit="月";
+        }else if(emp.get('unit')=="day"){
+            unit="日";
+        }else if(emp.get('unit')=="year"){
+            unit="年";
+        }
+        emp.set('unit',unit);
+        emp.set('begin',new moment(emp.get('begin')).format('YYYY-MM-DD'));
+        emp.set('dept',emp.get('dept')?emp.get('dept'):"");
+        box.fetch().then(function(b){
+            emp.set('machine',b.get('machine'));
+            emp.set('machineId',b.id);
+            let cusQuery=new AV.Query('Customer');
+            cusQuery.get(b.get('cusId').id).then(function(cus){
+                emp.set('cus',cus.get('name'));
+                product.fetch().then(function(p){
+                    emp.set('productId',p.id);
+                    emp.set('product',p.get('name'));
+                    data.push(emp);
+                    res.jsonp({"data":data});
+                });
+            });
+        });
+    },function(error){
+        console.log(error);
+    });
+});
+//更新员工'+id+'
+router.put('/empPower/edit/:id',function(req,res){
+    let arr=req.body;
+    let id=req.params.id;
+    let power = AV.Object.createWithoutData('EmployeePower', id);
+    power.set('unit',arr['data['+id+'][unit]']);
+    power.set('begin',new Date(arr['data['+id+'][begin]']));
+    power.set('count',arr['data['+id+'][count]']*1);
+    power.set('period',arr['data['+id+'][period]']*1);
+    power.set('dept',arr['data['+id+'][dept]']);
+    let box=AV.Object.createWithoutData('BoxInfo', arr['data['+id+'][machineId]']);
+    let product=AV.Object.createWithoutData('Product', arr['data['+id+'][productId]']);
+    power.set('boxId',box);
+    power.set('product',product);
+    power.set('isDel',false);
+    power.save().then(function(emp){
+        let data=[];
+        emp.set('DT_RowId',emp.id);
+        let unit="";
+        if(emp.get('unit')=="month"){
+            unit="月";
+        }else if(emp.get('unit')=="day"){
+            unit="日";
+        }else if(emp.get('unit')=="year"){
+            unit="年";
+        }
+        emp.set('unit',unit);
+        emp.set('begin',new moment(emp.get('begin')).format('YYYY-MM-DD'));
+        emp.set('dept',emp.get('dept')?emp.get('dept'):"");
+        box.fetch().then(function(b){
+            emp.set('machine',b.get('machine'));
+            emp.set('machineId',b.id);
+            let cusQuery=new AV.Query('Customer');
+            cusQuery.get(b.get('cusId').id).then(function(cus){
+                emp.set('cus',cus.get('name'));
+                product.fetch().then(function(p){
+                    emp.set('productId',p.id);
+                    emp.set('product',p.get('name'));
+                    data.push(emp);
+                    res.jsonp({"data":data});
+                });
+            });
+        });
+    },function(error){
+        console.log(error);
+    });
+});
+//删除权限
+router.delete('/empPower/remove/:id',function(req,res){
+    var id=req.params.id;
+    var employee = AV.Object.createWithoutData('EmployeePower', id);
+    employee.set('isDel',true);
+    employee.save().then(function(){
+        res.jsonp({"data":[]});
+    });
+});
 //售货机管理
 router.get('/box',function(req,res){
     var resdata={};

@@ -11,7 +11,7 @@
                     <div class="col-lg-12">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                员工权限数据表
+                                员工权限配置表
                             </div>
                             <!-- /.panel-heading -->
                             <div class="panel-body">
@@ -26,6 +26,7 @@
                                             <th>周期单位</th>
                                             <th>起始时间</th>
                                             <th>期间领料数</th>
+                                            <th>部门</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -59,10 +60,74 @@
     <script src="../dist/js/jquery.dataTables.min.js"></script>
     <script src="../dist/js/dataTables.semanticui.min.js"></script>
     <script src="../dist/js/semantic.min.js"></script>
+    <script src="../dist/js/jquery.dataTables.min.js"></script>
+    <script src="../dist/js/dataTables.semanticui.min.js"></script>
+    <script src="../dist/js/dataTables.buttons.min.js"></script>
+    <script src="../dist/js/buttons.semanticui.min.js"></script>
+    <script src="../dist/js/dataTables.select.min.js"></script>
+    <script src="../dist/js/dataTables.editor.min.js"></script>
+    <script src="../dist/js/editor.semanticui.min.js"></script>
     <script>
+        var editor;
+        $(document).ready(function() {
+                editor = new $.fn.dataTable.Editor( {
+                ajax: {
+                    create: {
+                        type: 'POST',
+                        url:  '../api/json/empPower/add'
+                    },
+                    edit: {
+                        type: 'PUT',
+                        url:  '../api/json/empPower/edit/_id_'
+                    },
+                    remove: {
+                        type: 'DELETE',
+                        url:  '../api/json/empPower/remove/_id_'
+                    }
+                },
+                table: "#table",
+                fields: [
+                    { label: '售货机',  name: 'machineId' ,type:'select' },
+                    { label: '产品名称',  name: 'productId',type:'select' },
+                    { label: '领料周期',  name: 'period' },
+                    { label: '周期单位',  name: 'unit' ,type:'select',options:[
+                        { label: "月", value: 'month'},
+                        { label: "日",  value: 'day' },
+                        { label: "年",  value: 'year' }
+                    ], },
+                    { label: '起始时间',  name: 'begin',type:'datetime' },
+                    { label: '期间领料数',  name: 'count' },
+                    { label: '部门',  name: 'dept' }
+                ],i18n: {
+                        create: {
+                            button: "新增",
+                            title:  "新建权限",
+                            submit: "创建"
+                        },
+                        edit: {
+                            button: "编辑",
+                            title:  "权限配置",
+                            submit: "更新"
+                        },
+                        remove: {
+                            button: "删除",
+                            title:  "删除",
+                            submit: "删除",
+                            confirm: {
+                                _: "确定要删除 %d 条吗?",
+                                1: "确定要删除这条权限配置吗?"
+                            }
+                        },
+                        datetime: {
+                            months:   [ '一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月' ],
+                            weekdays: [ '周日', '周一', '周二', '周三', '周四', '周五', '周六' ]
+                        }
+                    }
+            } );
         var t= $('#table').DataTable( {
             "processing": true,
             stateSave: true,
+            "dom": '<"top"Brf>t<"bottom"ilp>',
            "ajax": '../api/json/empPower',
            "columns": [
                 {"data":null},
@@ -72,7 +137,14 @@
                 { "data": "period" },
                 { "data": "unit" },
                 { "data": "begin" },
-                { "data": "count" }
+                { "data": "count" },
+                { "data": "dept" }
+            ],
+            select:true,
+            buttons: [
+            { extend: "create", editor: editor },
+            { extend: "edit",  editor: editor },
+            { extend: "remove", editor: editor }
             ],
             "columnDefs": [{
                 "searchable": false,
@@ -92,6 +164,7 @@
                         cell.innerHTML = i + 1;
                     });
                 }).draw();
+    });
     </script>
 </body>
 
