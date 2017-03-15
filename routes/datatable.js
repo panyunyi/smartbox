@@ -671,9 +671,9 @@ router.post('/employee/add',function(req,res){
 });
 //更新员工'+id+'
 router.put('/employee/edit/:id',function(req,res){
-    var arr=req.body;
+    let arr=req.body;
     let id=req.params.id;
-    var employee = AV.Object.createWithoutData('Employee', id);
+    let employee = AV.Object.createWithoutData('Employee', id);
     employee.set('empNo',arr['data['+id+'][empNo]']);
     employee.set('name',arr['data['+id+'][name]']);
     employee.set('sex',arr['data['+id+'][sex]']*1);
@@ -685,13 +685,23 @@ router.put('/employee/edit/:id',function(req,res){
     employee.set('cusId',cus);
     employee.set('isDel',false);
     employee.save().then(function(emp){
-        var data=[];
+        let data=[];
         emp.set('DT_RowId',emp.id);
         emp.set('sex',emp.get('sex'))
-        cus.fetch().then(function(c){
-            emp.set('cusId',c.get('name'));
-            data.push(emp);
-            res.jsonp({"data":data});
+        let cardQuery=new AV.Query('EmployeeCard');
+        cardQuery.equalTo('isDel',false);
+        cardQuery.equalTo('emp',emp);
+        cardQuery.find().then(function(cards){
+            let cardarr=[];
+            cards.forEach(function(card){
+                cardarr.push(card.get('card'));
+            });
+            emp.set('card',cardarr);
+            cus.fetch().then(function(c){
+                emp.set('cusId',c.get('name'));
+                data.push(emp);
+                res.jsonp({"data":data});
+            });
         });
     },function(error){
         console.log(error);
@@ -702,8 +712,21 @@ router.delete('/employee/remove/:id',function(req,res){
     var id=req.params.id;
     var employee = AV.Object.createWithoutData('Employee', id);
     employee.set('isDel',true);
-    employee.save().then(function(){
-        res.jsonp({"data":[]});
+    employee.save().then(function(emp){
+        let cardQuery=new AV.Query('EmployeeCard');
+        cardQuery.equalTo('isDel',false);
+        cardQuery.equalTo('emp',emp);
+        cardQuery.find().then(function(cards){
+            cards.map(function(card){
+                card.set('emp',null);
+            });
+            return AV.Object.saveAll(cards);
+        }).then(function(cards){
+            res.jsonp({"data":[]});
+        },function(err){
+            console.log(err);
+        });
+        //res.jsonp({"data":[]});
     });
 });
 //员工权限
