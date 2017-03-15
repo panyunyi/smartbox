@@ -450,3 +450,10 @@ table.dataTable thead .sorting:after {
 .panel-body1{
     margin-top: 10px;
 }
+td.details-control {
+    background: url('/resources/details_open.png') no-repeat center center;
+    cursor: pointer;
+}
+tr.shown td.details-control {
+    background: url('/resources/details_close.png') no-repeat center center;
+}

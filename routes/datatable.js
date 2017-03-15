@@ -599,16 +599,38 @@ router.get('/employee',function(req,res){
                 result.set('phone',result.get('phone')?result.get('phone'):"");
                 result.set('notice',result.get('notice')?result.get('notice'):"");
                 result.set('dept',result.get('dept')?result.get('dept'):"");
-                let cardQuery=new AV.Query('EmployeeCard');
-                cardQuery.equalTo('isDel',false);
-                cardQuery.equalTo('emp',result);
-                cardQuery.find().then(function(cards){
-                    let arr=[];
-                    cards.forEach(function(card){
-                        arr.push(card.get('card'));
+                function cardPromise(callback2){
+                    let cardQuery=new AV.Query('EmployeeCard');
+                    cardQuery.equalTo('isDel',false);
+                    cardQuery.equalTo('emp',result);
+                    cardQuery.find().then(function(cards){
+                        let arr=[];
+                        cards.forEach(function(card){
+                            arr.push(card.get('card'));
+                        });
+                        result.set('card',arr);
+                        callback2(null,arr);
                     });
-                    result.set('card',arr);
-                    callback1(null,result);
+                }
+                function powerPromise(callback2){
+                    let arr=[];
+                    result.get('power').forEach(function(power){
+                        let powerObj=AV.Object.createWithoutData('EmployeePower',power);
+                        powerObj.fetch(function(){
+                            arr.push(powerObj.get('dept'));
+                        });
+                    });
+                    result.set('power',arr);
+                    callback2(null,arr);
+                }
+                async.parallel([
+                    function (callback){
+                        cardPromise(callback);
+                    },
+                    function (callback){
+                        powerPromise(callback);
+                    }],function(err,results){
+                        callback1(null,result);
                 });
             },function(err,data){
                 resdata["data"]=data;

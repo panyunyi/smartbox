@@ -18,6 +18,7 @@
                                 <table id="table" class="ui celled table" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
+                                            <th></th>
                                             <th>序号</th>
                                             <th>客户名称</th>
                                             <th>工号</th>
@@ -26,12 +27,12 @@
                                             <th>部门</th>
                                             <th>职务</th>
                                             <th>电话</th>
-                                            <th>卡号</th>
                                             <th>备注</th>
                                         </tr>
                                     </thead>
                                 </table>
                             <!-- /.table-responsive -->
+
                             </div>
                             <!-- /.panel-body -->
                         </div>
@@ -66,7 +67,24 @@
     <script src="../dist/js/dataTables.select.min.js"></script>
     <script src="../dist/js/dataTables.editor.min.js"></script>
     <script src="../dist/js/editor.semanticui.min.js"></script>
+    <script src="../dist/js/dataTables.responsive.min.js"></script>
+    <script src="../dist/js/responsive.semanticui.min.js"></script>
     <script>
+        function format ( d ) {
+        // `d` is the original data object for the row
+            return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+                '<tr id="'+d.DT_RowId+'">'+
+                    '<td>卡号:</td>'+
+                    '<td>'+d.card+'</td>'+
+                    '<td><button value='+d.DT_RowId+' class="btn btn-primary btn-sm" onclick="openModal(1)">配置卡</button></td>'+
+                '</tr>'+
+                '<tr id="'+d.DT_RowId+'">'+
+                    '<td>权限:</td>'+
+                    '<td>'+d.power+'</td>'+
+                    '<td><button value='+d.DT_RowId+' class="btn btn-primary btn-sm" onclick="openModal(2)">配置权限</button></td>'+
+                '</tr>'+
+            '</table>';
+        }
         var editor;
         $(document).ready(function() {
                 editor = new $.fn.dataTable.Editor( {
@@ -125,6 +143,12 @@
                "ajax": '../api/json/employee',
                "dom": '<"top"Brf>t<"bottom"ilp>',
                "columns": [
+                   {
+                    "class":          'details-control',
+                    "orderable":      false,
+                    "data":           null,
+                    "defaultContent": ''
+                    },
                     {"data":null},
                     { "data": "cusId" },
                     { "data": "empNo" },
@@ -133,7 +157,6 @@
                     { "data": "dept" },
                     { "data": "job" },
                     { "data": "phone" },
-                    { "data": "card" },
                     { "data": "notice" }
                 ],
                 select:true,
@@ -147,21 +170,97 @@
                     "orderable": false,
                     "targets": 0
                 }],
-                "order": [[1, 'asc']],
+                "order": [[2, 'asc']],
                 "language": {
                     "url": "../vendor/zh_CN.txt"
                 }
             });
             table.on('order.dt search.dt',function() {
-                        table.column(0, {
+                        table.column(1, {
                             search: 'applied',
                             order: 'applied'
                         }).nodes().each(function(cell, i) {
                             cell.innerHTML = i + 1;
                         });
                     }).draw();
+            $('#table tbody').on('click', 'td.details-control', function () {
+                var tr = $(this).closest('tr');
+                var row = table.row( tr );
+                if ( row.child.isShown() ) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                }
+                else {
+                    // Open this row
+                    row.child( format(row.data()) ).show();
+                    tr.addClass('shown');
+                }
+            } );
         });
+        function closeModal(){
+            $('#myModal').removeClass('visible');
+            $('#myModal').removeClass('active');
+            $('#myModal').addClass('hidden');
+
+        }
+        function openModal(title){
+            $('#myModal').addClass('active');
+            $('#myModal').addClass('visible');
+            $('#myModal').removeClass('hidden');
+            if(title==1){
+                $('#myModalLabel').html("添加/删除卡");
+                $('#myModalHeading').html("已拥有卡");
+                $('#myModalSelectLable').html("选择卡号");
+            }else if(title==2){
+                $('#myModalLabel').html("添加/删除权限");
+                $('#myModalHeading').html("已拥有权限");
+                $('#myModalSelectLable').html("选择权限");
+            }
+        }
     </script>
+    <div class="ui dimmer modals page transition hidden" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="margin-top:100px">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" onclick="closeModal()">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel"></h4>
+                </div>
+                <div class="modal-body" id="myModalBody">
+                    <div class="form-group">
+                        <label id="myModalSelectLable"></label>
+                        <select multiple class="form-control" id="myModalSelect">
+                            <option>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>4</option>
+                            <option>5</option>
+                        </select>
+                        <button type="button" style="margin-top:5px" class="btn btn-default btn-sm" id="addCard">添加</button>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading" id="myModalHeading">
+
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <div class="alert alert-success alert-dismissable">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit.
+                            </div>
+                        </div>
+                        <!-- .panel-body -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="closeModal()">关闭</button>
+                    <button type="button" class="btn btn-primary" >保存</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
 </body>
 
 </html>
