@@ -489,6 +489,42 @@ router.delete('/cusproduct/remove/:id',function(req,res){
         res.jsonp({"data":[]});
     });
 });
+//员工卡列表
+router.get('/cardlist/:id',function(req,res){
+    let id=req.params.id;
+    let resdata={};
+    let empObj=AV.Object.createWithoutData('Employee', id);
+    function promise1(callback){
+        empObj.fetch().then(function(){
+            let query=new AV.Query('EmployeeCard');
+            query.equalTo('isDel',false);
+            query.equalTo('emp',null);
+            query.equalTo('cusId',empObj.get('cusId'));
+            query.find().then(function(result){
+                callback(null,result);
+            });
+        });
+    }
+    function promise2(callback){
+        let cardQuery=new AV.Query('EmployeeCard');
+        cardQuery.equalTo('isDel',false);
+        cardQuery.equalTo('emp',empObj);
+        cardQuery.find().then(function(result){
+            callback(null,result);
+        });
+    }
+    async.parallel([
+        function (callback){
+            promise1(callback);
+        },
+        function (callback){
+            promise2(callback);
+        }],function(err,results){
+            resdata["card"]=results[0];
+            resdata["have"]=results[1];
+            res.jsonp(resdata);
+    });
+});
 //员工卡
 router.get('/empCard',function(req,res){
     let resdata={};
@@ -614,14 +650,16 @@ router.get('/employee',function(req,res){
                 }
                 function powerPromise(callback2){
                     let arr=[];
-                    result.get('power').forEach(function(power){
+                    async.map(result.get('power'),function(power,callback3){
                         let powerObj=AV.Object.createWithoutData('EmployeePower',power);
                         powerObj.fetch(function(){
                             arr.push(powerObj.get('dept'));
+                            callback3(null,powerObj.get('dept'));
                         });
+                    },function(err,results){
+                        result.set('power',arr);
+                        callback2(null,arr);
                     });
-                    result.set('power',arr);
-                    callback2(null,arr);
                 }
                 async.parallel([
                     function (callback){
@@ -639,11 +677,38 @@ router.get('/employee',function(req,res){
         });
     }
     function promise2(callback1){
-        var query=new AV.Query('Customer');
+        let query=new AV.Query('Customer');
         query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback){
                 result.set('label',result.get('name'));
+                result.set('value',result.id);
+                callback(null,result);
+            },function(err,data){
+                callback1(null,data);
+            });
+        });
+    }
+    function promise3(callback1) {
+        let query=new AV.Query('EmployeeCard');
+        query.equalTo('isDel',false);
+        query.equalTo('emp',null);
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('label',result.get('card'));
+                result.set('value',result.id);
+                callback(null,result);
+            },function(err,data){
+                callback1(null,data);
+            });
+        });
+    }
+    function promise4(callback1){
+        let query=new AV.Query('EmployeePower');
+        query.equalTo('isDel',false);
+        query.find().then(function(results){
+            async.map(results,function(result,callback){
+                result.set('label',result.get('dept'));
                 result.set('value',result.id);
                 callback(null,result);
             },function(err,data){
@@ -657,8 +722,16 @@ router.get('/employee',function(req,res){
         },
         function (callback){
             promise2(callback);
+        },
+        function (callback){
+            promise3(callback);
+        },
+        function (callback){
+            promise4(callback);
         }],function(err,results){
-            resdata["options"]={"cusId":results[1]};
+            resdata["options"]=Object.assign({"cusId":results[1]},
+            {"card":results[2]},{"power":results[3]});
+            //resdata["options"]={"cusId":results[1]};
             res.jsonp(resdata);
     });
 });
@@ -674,11 +747,21 @@ router.post('/employee/add',function(req,res){
     employee.set('phone',arr['data[0][phone]']);
     employee.set('dept',arr['data[0][dept]']);
     employee.set('notice',arr['data[0][notice]']);
+    let empcard=AV.Object.createWithoutData('EmployeeCard', arr['data[0][card]']);
+    let cardarr=[];
+    cardarr.push(empcard.id);
+    employee.set('card',cardarr);
+    let emppower=AV.Object.createWithoutData('EmployeePower', arr['data[0][power]']);
+    let powerarr=[];
+    powerarr.push(emppower.id);
+    employee.set('power',powerarr);
     let cus=AV.Object.createWithoutData('Customer', arr['data[0][cusId]']);
     employee.set('cusId',cus);
     employee.set('isDel',false);
     employee.save().then(function(emp){
         var data=[];
+        empcard.set('emp',emp);
+        empcard.save();
         emp.set('DT_RowId',emp.id);
         emp.set('sex',emp.get('sex'))
         emp.set('card',"");
@@ -703,11 +786,21 @@ router.put('/employee/edit/:id',function(req,res){
     employee.set('phone',arr['data['+id+'][phone]']);
     employee.set('dept',arr['data['+id+'][dept]']);
     employee.set('notice',arr['data['+id+'][notice]']);
+    let empcard=AV.Object.createWithoutData('EmployeeCard', arr['data['+id+'][card]']);
+    let cardarr=[];
+    cardarr.push(empcard.id);
+    employee.set('card',cardarr);
+    let emppower=AV.Object.createWithoutData('EmployeePower', arr['data['+id+'][power]']);
+    let powerarr=[];
+    powerarr.push(emppower.id);
+    employee.set('power',powerarr);
     let cus=AV.Object.createWithoutData('Customer', arr['data['+id+'][cusId]']);
     employee.set('cusId',cus);
     employee.set('isDel',false);
     employee.save().then(function(emp){
         let data=[];
+        empcard.set('emp',emp);
+        empcard.save();
         emp.set('DT_RowId',emp.id);
         emp.set('sex',emp.get('sex'))
         let cardQuery=new AV.Query('EmployeeCard');
@@ -749,6 +842,67 @@ router.delete('/employee/remove/:id',function(req,res){
             console.log(err);
         });
         //res.jsonp({"data":[]});
+    });
+});
+
+//根据员工id获取权限列表
+router.get('/powerlist/:id',function(req,res){
+    let resdata={};
+    let id=req.params.id;
+    let powerarr=[];
+    let havearr=[];
+    function promise1(callback){
+        let empObj=AV.Object.createWithoutData('Employee', id);
+        empObj.fetch().then(function(){
+            let boxQuery=new AV.Query('BoxInfo');
+            boxQuery.equalTo('isDel',false);
+            boxQuery.equalTo('cusId',empObj.get('cusId'));
+            boxQuery.find().then(function(boxes){
+                let empPowerQuery=new AV.Query('EmployeePower');
+                empPowerQuery.equalTo('isDel',false);
+                empPowerQuery.ascending('dept');
+                empPowerQuery.find().then(function(emppowers){
+                    async.map(boxes,function(box,callback1){
+                        async.map(emppowers,function(emppower,callback2){
+                            if(emppower.get('boxId').id==box.id){
+                                powerarr.push({"dept":emppower.get('dept'),
+                                "objectId":emppower.id});
+                                callback2(null,emppower.get('dept'));
+                            }
+                        },function(err,results){
+                            callback1(null,results);
+                        });
+                    },function(err,results){
+                        callback(null,results);
+                    });
+                });
+            });
+        });
+    }
+    function promise2(callback){
+        let empObj=AV.Object.createWithoutData('Employee', id);
+        empObj.fetch().then(function(){
+            async.map(empObj.get('power'),function(powerid,callback1){
+                let powerObj=AV.Object.createWithoutData('EmployeePower', powerid);
+                powerObj.fetch().then(function(){
+                    havearr.push({"dept":powerObj.get('dept'),"objectId":powerObj.id});
+                    callback1(null,powerObj.get('dept'));
+                });
+            },function(err,results){
+                callback(null,results);
+            });
+        });
+    }
+    async.parallel([
+        function (callback){
+            promise1(callback);
+        },
+        function (callback){
+            promise2(callback);
+        }],function(err,results){
+            resdata['power']=powerarr;
+            resdata['have']=havearr;
+            res.jsonp(resdata);
     });
 });
 //员工权限

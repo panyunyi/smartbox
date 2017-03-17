@@ -76,12 +76,12 @@
                 '<tr id="'+d.DT_RowId+'">'+
                     '<td>卡号:</td>'+
                     '<td>'+d.card+'</td>'+
-                    '<td><button value='+d.DT_RowId+' class="btn btn-primary btn-sm" onclick="openModal(1)">配置卡</button></td>'+
+
                 '</tr>'+
                 '<tr id="'+d.DT_RowId+'">'+
                     '<td>权限:</td>'+
                     '<td>'+d.power+'</td>'+
-                    '<td><button value='+d.DT_RowId+' class="btn btn-primary btn-sm" onclick="openModal(2)">配置权限</button></td>'+
+
                 '</tr>'+
             '</table>';
         }
@@ -107,6 +107,8 @@
                     { label: '客户',  name: 'cusId' ,type:'select' },
                     { label: '工号',  name: 'empNo' },
                     { label: '姓名',  name: 'name' },
+                    { label: '卡号',  name: 'card' ,type:'select'},
+                    { label: '权限',  name: 'power' ,type:'select'},
                     { label: '性别',  name: 'sex' ,type:'radio',options:[
                         { label: "女", value: 0},
                         { label: "男",  value: 1 }
@@ -199,27 +201,81 @@
             } );
         });
         function closeModal(){
+            $('#myModal').removeClass('ui');
+            $('#myModal').removeClass('dimmer');
+            $('#myModal').removeClass('modals');
+            $('#myModal').removeClass('page');
+            $('#myModal').removeClass('transition');
             $('#myModal').removeClass('visible');
             $('#myModal').removeClass('active');
             $('#myModal').addClass('hidden');
-
         }
-        function openModal(title){
+        function openModal(title,btn){
+            $("#myModalSelect option").remove();
+            $('#panelBody').html();
+            $('#myModal').addClass('ui');
+            $('#myModal').addClass('dimmer');
+            $('#myModal').addClass('modals');
+            $('#myModal').addClass('page');
+            $('#myModal').addClass('transition');
             $('#myModal').addClass('active');
             $('#myModal').addClass('visible');
             $('#myModal').removeClass('hidden');
             if(title==1){
+                $('#btnSave').val("1-"+btn.value);
                 $('#myModalLabel').html("添加/删除卡");
                 $('#myModalHeading').html("已拥有卡");
                 $('#myModalSelectLable').html("选择卡号");
+                $.getJSON('../api/json/cardlist/'+btn.value,function(data){
+                    var sel= document.getElementById("myModalSelect");
+                    for(var i=0;i<data.card.length;i++){
+                        sel.options.add(new Option(data.card[i].card,data.card[i].objectId));
+                    }
+                    var append="";
+                    for(var i=0;i<data.have.length;i++){
+                        append+='<div class="alert alert-success alert-dismissable"><input type="hidden" value="'+data.have[i].objectId+'"> <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+data.have[i].card+'</div>';
+                    }
+                    $('#panelBody').html(append);
+                });
             }else if(title==2){
+                $('#btnSave').val("2-"+btn.value);
                 $('#myModalLabel').html("添加/删除权限");
                 $('#myModalHeading').html("已拥有权限");
                 $('#myModalSelectLable').html("选择权限");
+                $.getJSON('../api/json/powerlist/'+btn.value,function(data){
+                    var sel= document.getElementById("myModalSelect");
+                    for(var i=0;i<data.power.length;i++){
+                        sel.options.add(new Option(data.power[i].dept,data.power[i].objectId));
+                    }
+                    var append="";
+                    for(var i=0;i<data.have.length;i++){
+                        append+='<div class="alert alert-success alert-dismissable"><input type="hidden" value="'+data.have[i].objectId+'"> <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+data.have[i].dept+'</div>';
+                    }
+                    $('#panelBody').html(append);
+                });
             }
         }
+        function getOption(){
+            var checkText=$("#myModalSelect").find("option:selected").text(); //获取Select选择的text
+            var checkValue=$("#myModalSelect").val(); //获取Select选择的Value
+            if(checkText!=""){
+                $("#myModalSelect option[value='"+checkValue+"']").remove();
+                var checkstr='<div class="alert alert-success alert-dismissable"><input type="hidden" value="'+checkValue+'"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+checkText+'</div>';
+                $('#panelBody').append(checkstr);
+            }
+        }
+        function saveAll(btn){
+            var arr=[];
+            $("#panelBody input").each(function(){
+                arr.push($(this).val());
+            });
+            $.post("../api/json/saveAll",{"flag":btn.value.split('-')[0],"list":arr,
+            "emp":btn.value.split('-')[1]},function(result){
+                console.log(result);
+            });
+        }
     </script>
-    <div class="ui dimmer modals page transition hidden" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="hidden" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog" style="margin-top:100px">
             <div class="modal-content">
                 <div class="modal-header">
@@ -230,23 +286,18 @@
                     <div class="form-group">
                         <label id="myModalSelectLable"></label>
                         <select multiple class="form-control" id="myModalSelect">
-                            <option>1</option>
-                            <option>2</option>
-                            <option>3</option>
-                            <option>4</option>
-                            <option>5</option>
                         </select>
-                        <button type="button" style="margin-top:5px" class="btn btn-default btn-sm" id="addCard">添加</button>
+                        <button type="button" style="margin-top:5px" class="btn btn-default btn-sm" id="btnAdd" onclick="getOption()">添加</button>
                     </div>
                     <div class="panel panel-default">
                         <div class="panel-heading" id="myModalHeading">
 
                         </div>
                         <!-- /.panel-heading -->
-                        <div class="panel-body">
+                        <div class="panel-body" id="panelBody">
                             <div class="alert alert-success alert-dismissable">
                                 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                                Lorem ipsum dolor sit amet, consectetur adipisicing elit.
+                                加载中...
                             </div>
                         </div>
                         <!-- .panel-body -->
@@ -254,7 +305,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal" onclick="closeModal()">关闭</button>
-                    <button type="button" class="btn btn-primary" >保存</button>
+                    <button type="button" id="btnSave" class="btn btn-primary" onclick="saveAll(this)">保存</button>
                 </div>
             </div>
             <!-- /.modal-content -->
