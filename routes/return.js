@@ -11,16 +11,16 @@ var result={
 };
 router.get('/:id/:card/:passage', function(req, res) {
     result['data']={"result":false};
-    var deviceId=req.params.id;
-    var card=req.params.card;
-    var passage=req.params.passage;
-    var todo={"ip":req.headers['x-real-ip'],"api":"还货判断接口","deviceId":deviceId,"msg":"card:"+card+",passage:"+passage};
+    let deviceId=req.params.id;
+    let card=req.params.card;
+    let passage=req.params.passage;
+    let todo={"ip":req.headers['x-real-ip'],"api":"还货判断接口","deviceId":deviceId,"msg":"card:"+card+",passage:"+passage};
     ApiLog.WorkOn(todo);
-    var cardQuery=new AV.Query('EmployeeCard');
+    let cardQuery=new AV.Query('EmployeeCard');
     cardQuery.equalTo('isDel',false);
     cardQuery.equalTo('card',card);
     cardQuery.first().then(function(cardObj){
-    	var boxQuery=new AV.Query('BoxInfo');
+    	let boxQuery=new AV.Query('BoxInfo');
 	    boxQuery.equalTo('deviceId',deviceId);
 	    boxQuery.include('cusId');
 	    boxQuery.first().then(function (box){
@@ -29,8 +29,8 @@ router.get('/:id/:card/:passage', function(req, res) {
                 res.jsonp(result);
                 return;
 	        }
-	        var oneborrow=new Borrow();
-	        var passageQuery=new AV.Query('Passage');
+	        let oneborrow=new Borrow();
+	        let passageQuery=new AV.Query('Passage');
 	        passageQuery.equalTo('isDel',false);
 	        passageQuery.equalTo('boxId',box);
 	        passageQuery.equalTo('flag',passage.substr(0,1));
@@ -53,6 +53,7 @@ router.get('/:id/:card/:passage', function(req, res) {
                 }
                 oneborrow.set('isDel',false);
                 oneborrow.set('box',box);
+                oneborrow.set('emp',cardObj.get('emp'));
                 oneborrow.set('time',new Date());
                 oneborrow.set('card',cardObj);
                 oneborrow.set('result',true);
@@ -80,9 +81,9 @@ router.get('/:id/:card/:passage', function(req, res) {
 router.get('/fail/:id/', function(req, res) {
     result['message']="请求失败";
     result['data']=false;
-    var todo={"ip":req.headers['x-real-ip'],"api":"还货失败回调接口","deviceId":"","msg":"objectId:"+req.params.id};
+    let todo={"ip":req.headers['x-real-ip'],"api":"还货失败回调接口","deviceId":"","msg":"objectId:"+req.params.id};
     ApiLog.WorkOn(todo);
-    var borrow=AV.Object.createWithoutData('Borrow',req.params.id);
+    let borrow=AV.Object.createWithoutData('Borrow',req.params.id);
     borrow.set('result',false);
     borrow.set('borrow',false);
     borrow.save();
@@ -90,7 +91,7 @@ router.get('/fail/:id/', function(req, res) {
         result['message']="";
         result['data']=true;
         res.jsonp(result);
-        var passage=borrow.get('passage');
+        let passage=borrow.get('passage');
         passage.fetch().then(function(){
             if(!passage.get('borrowState')){
                 passage.set('borrowState',true);

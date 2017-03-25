@@ -6,18 +6,17 @@ var async = require('async');
 var Borrow = AV.Object.extend('Borrow');
 
 function doWork(cus,box,deviceId,card,passage,res){
-    var flag=false;
-    var resdata={};
-    var message="无权限";
+    let flag=false;
+    let resdata={};
+    let message="无权限";
     resdata["result"]=flag;
-    var oneborrow=new Borrow();
+    let oneborrow=new Borrow();
 
     function promise1(callback){
-        var cardQuery=new AV.Query('EmployeeCard');
+        let cardQuery=new AV.Query('EmployeeCard');
         cardQuery.equalTo('card',card);
         cardQuery.equalTo('isDel',false);
         cardQuery.equalTo('cusId',cus);
-        cardQuery.include('emp');
         cardQuery.first().then(function(cardObj){
             if (typeof(cardObj) == "undefined") {
                 return callback(null,0,null);
@@ -28,6 +27,7 @@ function doWork(cus,box,deviceId,card,passage,res){
             oneborrow.set('card',cardObj);
             oneborrow.set('result',false);
             oneborrow.set('borrow',true);
+            oneborrow.set('emp',cardObj.get('emp'));
             oneborrow.save();
             return callback(null,1,cardObj.get('emp'));
         },function(error){
@@ -38,7 +38,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         if(arg1==0){
             return callback(null,false,null);
         }
-        var passageQuery=new AV.Query('Passage');
+        let passageQuery=new AV.Query('Passage');
         passageQuery.equalTo('isDel',false);
         passageQuery.equalTo('flag',passage.substr(0,1));
         passageQuery.equalTo('isSend',false);
@@ -61,44 +61,35 @@ function doWork(cus,box,deviceId,card,passage,res){
         if (typeof(arg1) == "undefined"||arg1==false||arg2==null) {
             return callback(null,false);
         }
-        var product=arg1.get('product');
-        var empPower=arg2.get('power');
-        async.mapSeries(empPower,function(emppower,callback1){
-            var powerQuery=new AV.Query('EmployeePower');
-            powerQuery.equalTo('objectId',emppower);
-            powerQuery.equalTo('isDel',false);
-            powerQuery.first().then(function(power){
-                if (typeof(power)!="undefined") {
-                    verifyPower(product,power,callback1,callback);
-                }
-            },function(error){
-                return callback(error);
-            });
-        },function(error,results){
-            return callback(null,flag);
+        let product=arg1.get('product');
+        let powerQuery=new AV.Query('EmployeePower');
+        powerQuery.equalTo('isDel',false);
+        powerQuery.equalTo('product',product);
+        powerQuery.equalTo('emp',arg2);
+        powerQuery.first().then(function(power){
+            if(typeof(power)!="undefined"){
+                verifyPower(arg2,callback);
+            }else {
+                message="无取货权限";
+                return callback(null,false);
+            }
         });
     }
-    function verifyPower(product,power,callback,callback1){
-        if(power.get('boxId').get('id')==box.get('id')&&power.get('product').get('id')==product.get('id')){
-            flag=true;
-            oneborrow.set('result',true);
-            oneborrow.save().then(function(one){
-                message="";
-                resdata["result"]=flag;
-                resdata["objectId"]=one.id;
-                var passage=one.get('passage');
-                passage.set('borrowState',true);
-                passage.increment('stock',-1);
-                passage.set('used',one.get('card').get('emp'));
-                passage.save().then(function(){
-                    callback(null,true);
-                    return callback1(null,true);
-                });
+    function verifyPower(emp,callback){
+        flag=true;
+        oneborrow.set('result',true);
+        oneborrow.save().then(function(one){
+            message="";
+            resdata["result"]=flag;
+            resdata["objectId"]=one.id;
+            let passage=one.get('passage');
+            passage.set('borrowState',true);
+            passage.increment('stock',-1);
+            passage.set('used',emp);
+            passage.save().then(function(){
+                callback(null,true);
             });
-        }else{
-            message="无权限";
-            callback(null,false);
-        }
+        });
     }
     async.waterfall([
         function (callback){
@@ -110,7 +101,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         function (arg1,arg2,callback){
             promise3(arg1,arg2,callback);
         }],function(err,results){
-        var result={
+        let result={
             status:200,
             message:message,
             data:resdata,
@@ -121,17 +112,17 @@ function doWork(cus,box,deviceId,card,passage,res){
 }
 
 router.get('/:id/:card/:passage', function(req, res) {
-    var deviceId=req.params.id;
-    var card=req.params.card;
-    var passage=req.params.passage;
-    var todo={"ip":req.headers['x-real-ip'],"api":"借货判断接口","deviceId":deviceId,"msg":"card:"+card+",passage:"+passage};
+    let deviceId=req.params.id;
+    let card=req.params.card;
+    let passage=req.params.passage;
+    let todo={"ip":req.headers['x-real-ip'],"api":"借货判断接口","deviceId":deviceId,"msg":"card:"+card+",passage:"+passage};
     ApiLog.WorkOn(todo);
-    var boxQuery=new AV.Query('BoxInfo');
+    let boxQuery=new AV.Query('BoxInfo');
     boxQuery.equalTo('deviceId',deviceId);
     boxQuery.include('cusId');
     boxQuery.first().then(function (box){
         if (typeof(box) == "undefined") {
-          var result={
+          let result={
             status:200,
             message:"无此设备号的数据",
             data:{"result":false},
@@ -140,11 +131,11 @@ router.get('/:id/:card/:passage', function(req, res) {
           res.jsonp(result);
           return;
         }
-        var cus=box.get('cusId');
+        let cus=box.get('cusId');
         doWork(cus,box,deviceId,card,passage,res);
     },function (error){
         console.log(error);
-        var result={
+        let result={
           status:200,
           message:"查询出错",
           data:{"result":false},
@@ -155,15 +146,15 @@ router.get('/:id/:card/:passage', function(req, res) {
 });
 
 router.get('/fail/:id', function(req, res) {
-    var result={
+    let result={
       status:200,
       message:"设备号或objectId有误",
       data:false,
       server_time:new Date()
     }
-    var todo={"ip":req.headers['x-real-ip'],"api":"借货失败回调接口","deviceId":"","msg":"objectId:"+req.params.id};
+    let todo={"ip":req.headers['x-real-ip'],"api":"借货失败回调接口","deviceId":"","msg":"objectId:"+req.params.id};
     ApiLog.WorkOn(todo);
-    var borrow=AV.Object.createWithoutData('Borrow',req.params.id);
+    let borrow=AV.Object.createWithoutData('Borrow',req.params.id);
     borrow.set('result',false);
     borrow.set('borrow',true);
     borrow.save();
@@ -171,7 +162,7 @@ router.get('/fail/:id', function(req, res) {
         result['message']="";
         result['data']=true;
         res.jsonp(result);
-        var passage=borrow.get('passage');
+        let passage=borrow.get('passage');
         passage.fetch().then(function(){
             if(passage.get('borrowState')){
                 passage.set('borrowState',false);

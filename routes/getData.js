@@ -5,9 +5,9 @@ var async = require('async');
 var ApiLog=require('./log');
 
 function doWork(cus,box,res,ts){
-    var data={};
+    let data={};
     function promise1(callback){
-      var query = new AV.Query('AdminCard');
+      let query = new AV.Query('AdminCard');
       query.greaterThanOrEqualTo('updatedAt',ts);
       if(ts-new Date(0)==0){
           query.equalTo('isDel',false);
@@ -22,7 +22,7 @@ function doWork(cus,box,res,ts){
         });
     }
     function promise2(callback){
-      var query = new AV.Query('CustomerProduct');
+      let query = new AV.Query('CustomerProduct');
       query.greaterThanOrEqualTo('updatedAt',ts);
       query.include('product');
       query.equalTo('cusId',cus);
@@ -30,82 +30,90 @@ function doWork(cus,box,res,ts){
           query.equalTo('isDel',false);
       }
       query.find().then(function (results) {
-          var arr=[];
-          results.forEach(function(result){
-              var one={"cusProductName":result.get('product').get('name'),"isDel":result.get('isDel'),"productName":result.get('product').get('name'),"objectId":result.get('product').get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
-              arr.push(one);
+          async.map(results,function(result,callback1){
+              let one={"cusProductName":result.get('product').get('name'),
+              "isDel":result.get('isDel'),"productName":result.get('product').get('name'),
+              "objectId":result.get('product').get('id'),"createdAt":result.get('createdAt'),
+              "updatedAt":result.get('updatedAt')};
+              callback1(null,one);
+          },function(err,ones){
+              data["Product"]=ones;
+              return callback(null,results);
           });
-          data["Product"]=arr;
-          return callback(null,results);
         }, function (error) {
           // 异常处理
           return callback(error)
         });
     }
     function promise3(callback){
-        var query = new AV.Query('Employee');
+        let query = new AV.Query('EmployeeCard');
         query.greaterThanOrEqualTo('updatedAt',ts);
         if(new Date(0)==ts){
             query.equalTo('isDel',false);
         }
         query.equalTo('cusId',cus);
         query.find().then(function (results) {
-            var arr=[];
-            async.map(results,function(result,callback2){
-                async.map(result.get('card'),function(card,callback1){
-                      var cardQuery = AV.Object.createWithoutData('EmployeeCard', card);
-                      cardQuery.fetch().then(function () {
-                        callback1(null,cardQuery.get('card'));
-                    });
-                },function(error,cards){
-                  var one={"empNo":result.get('empNo'),"isDel":result.get('isDel'),"card":cards,"power":result.get('power'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
-                  arr.push(one);
-                  callback2(null,one);
-                });
-            },function(error,array){
-              data["Employee"]=array;
-              return callback(null,results);
-          });
-          }, function (error) {
+            async.map(results,function(result,callback1){
+                let one={"card":result.get('card'),"emp":result.get('emp').id,
+                "isDel":result.get('isDel'),"createdAt":result.get('createdAt'),
+                "updatedAt":result.get('updatedAt'),"objectId":result.id};
+                callback1(null,one);
+            },function(err,ones){
+                data["EmpCard"]=ones;
+                return callback(null,results);
+            });
+        }, function (error) {
             // 异常处理
             return callback(error)
-          });
+        });
     }
     function promise4(callback){
-        var query=new AV.Query('EmployeePower');
+        let query=new AV.Query('EmployeePower');
         query.greaterThanOrEqualTo('updatedAt',ts);
         if(new Date(0)==ts){
             query.equalTo('isDel',false);
         }
-        query.equalTo('boxId',box);
+        query.equalTo('cusId',cus);
         query.find().then(function (results) {
-            var arr=[];
-            results.forEach(function(result){
-                var one={"unit":result.get('unit'),"begin":result.get('begin'),"isDel":result.get('isDel'),"product":result.get('product').get('id'),"count":result.get('count'),"period":result.get('period'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
-                arr.push(one);
+            async.map(results,function(result,callback1){
+                let one={"emp":result.get('emp').id,"unit":result.get('unit'),
+                "begin":result.get('begin'),"isDel":result.get('isDel'),
+                "product":result.get('product').id,"count":result.get('count'),
+                "period":result.get('period'),"used":result.get('used'),
+                "createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt'),
+                "objectId":result.id};
+                callback1(null,one);
+            },function(err,ones){
+                data["EmpPower"]=ones;
+                return callback(null,results);
             });
-            data["EmpPower"]=arr;
-            return callback(null,results);
           }, function (error) {
             // 异常处理
             return callback(error)
           });
     }
     function promise5(callback){
-        var query=new AV.Query('Passage');
+        let query=new AV.Query('Passage');
         query.greaterThanOrEqualTo('updatedAt',ts);
         if(new Date(0)==ts){
             query.equalTo('isDel',false);
         }
         query.equalTo('boxId',box);
         query.find().then(function (results) {
-            var arr=[];
-            results.forEach(function(result){
-                var one={"flag":result.get('flag'),"capacity":result.get('capacity'),"isDel":result.get('isDel'),"seqNo":result.get('seqNo'),"used":result.get('used')?result.get('used').get('id'):"","whorlSize":result.get('whorlSize'),"product":result.get('product').get('id'),"borrowState":result.get('borrowState'),"stock":result.get('stock'),"isSend":result.get('isSend'),"objectId":result.get('id'),"createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
-                arr.push(one);
+            async.map(results,function(result,callback1){
+                let one={"flag":result.get('flag'),"capacity":result.get('capacity'),
+                "isDel":result.get('isDel'),"seqNo":result.get('seqNo'),
+                "used":result.get('used')?result.get('used').get('id'):"",
+                "whorlSize":result.get('whorlSize'),"product":result.get('product').get('id'),
+                "borrowState":result.get('borrowState'),"stock":result.get('stock'),
+                "isSend":result.get('isSend'),"objectId":result.get('id'),
+                "createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+                callback1(null,one);
+            },function(err,ones){
+                data["Passage"]=ones;
+                console.log("passage");
+                return callback(null,results);
             });
-            data["Passage"]=arr;
-            return callback(null,results);
           }, function (error) {
             // 异常处理
             return callback(error)
@@ -137,15 +145,15 @@ function doWork(cus,box,res,ts){
     });
 }
 router.get('/:id', function(req, res) {
-    var deviceId=req.params.id;
-    var todo={"ip":req.headers['x-real-ip'],"api":"获取全部基础数据接口","deviceId":deviceId,"msg":""};
+    let deviceId=req.params.id;
+    let todo={"ip":req.headers['x-real-ip'],"api":"获取全部基础数据接口","deviceId":deviceId,"msg":""};
     ApiLog.WorkOn(todo);
-    var boxQuery=new AV.Query('BoxInfo');
+    let boxQuery=new AV.Query('BoxInfo');
     boxQuery.equalTo('deviceId',deviceId);
     boxQuery.include('cusId');
     boxQuery.first().then(function (data){
         if (typeof(data) == "undefined") {
-          var result={
+          let result={
             status:200,
             message:"无此设备号的数据",
             data:{},
@@ -154,11 +162,11 @@ router.get('/:id', function(req, res) {
           res.jsonp(result);
           return;
         }
-        var cus=data.get('cusId');
+        let cus=data.get('cusId');
         doWork(cus,data,res,new Date(0));
     },function (error){
         console.log(error);
-        var result={
+        let result={
           status:200,
           message:"查询失败",
           data:{},
@@ -169,15 +177,15 @@ router.get('/:id', function(req, res) {
 });
 
 router.get('/:id/:stamp', function(req, res) {
-    var deviceId=req.params.id;
-    var todo={"ip":req.headers['x-real-ip'],"api":"同步基础数据接口","deviceId":deviceId,"msg":req.params.stamp};
+    let deviceId=req.params.id;
+    let todo={"ip":req.headers['x-real-ip'],"api":"同步基础数据接口","deviceId":deviceId,"msg":req.params.stamp};
     ApiLog.WorkOn(todo);
-    var boxQuery=new AV.Query('BoxInfo');
+    let boxQuery=new AV.Query('BoxInfo');
     boxQuery.equalTo('deviceId',deviceId);
     boxQuery.include('cusId');
     boxQuery.first().then(function (data){
         if (typeof(data) == "undefined") {
-          var result={
+          let result={
             status:200,
             message:"无此设备号的数据",
             data:{},
@@ -186,11 +194,11 @@ router.get('/:id/:stamp', function(req, res) {
           res.jsonp(result);
           return;
         }
-        var cus=data.get('cusId');
+        let cus=data.get('cusId');
         doWork(cus,data,res,new Date(req.params.stamp*1000));
     },function (error){
         console.log(error);
-        var result={
+        let result={
           status:200,
           message:"查询失败",
           data:{},

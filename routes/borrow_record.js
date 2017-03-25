@@ -11,18 +11,17 @@ var result={
   server_time:new Date()
 };
 function doWork(deviceId,records,res){
-    var objects=[];
     async.mapSeries(records,function(record,callback){
-        var obj = new Borrow();
-        var seqNo=record.passage;
-        var boxQuery=new AV.Query('BoxInfo');
+        let obj = new Borrow();
+        let seqNo=record.passage;
+        let boxQuery=new AV.Query('BoxInfo');
         boxQuery.equalTo('deviceId',deviceId);
         boxQuery.first().then(function(box){
             if(typeof(box)=="undefined"){
                 result['message']="无此设备号";
                 return res.jsonp(result);
             }
-            var passageQuery=new AV.Query('Passage');
+            let passageQuery=new AV.Query('Passage');
             passageQuery.equalTo('boxId',box);
             passageQuery.equalTo('flag',seqNo.substr(0,1));
             passageQuery.equalTo('seqNo',seqNo.substr(1,2));
@@ -31,7 +30,7 @@ function doWork(deviceId,records,res){
                     result['message']="提交的货道号异常";
                     callback(null,record);
                 }
-                var cardQuery=new AV.Query('EmployeeCard');
+                let cardQuery=new AV.Query('EmployeeCard');
                 cardQuery.equalTo('isDel',false);
                 cardQuery.equalTo('card',record.card);
                 cardQuery.first().then(function(card){
@@ -42,13 +41,12 @@ function doWork(deviceId,records,res){
                     obj.set('box', box);
                     obj.set('passage',passage);
                     obj.set('card',card);
+                    obj.set('emp',card.get('emp'));
                     obj.set('borrow',record.borrow);
                     obj.set('product',passage.get('product'));
                     obj.set('time',new Date(record.time));
                     obj.set('result',record.result);
                     obj.set('isDel',false);
-                    objects.push(obj);
-                    callback(null,record);
                     if(record.result){
                       passage.set('borrowState',record.borrow);
                       if(record.borrow){
@@ -60,11 +58,12 @@ function doWork(deviceId,records,res){
                       }
                     }
                     passage.save();
+                    callback(null,obj);
                 });
             });
         });
     },function(error,results){
-        AV.Object.saveAll(objects).then(function (objects) {
+        AV.Object.saveAll(results).then(function (objects) {
             result['message']="";
             result['data']=true;
             res.jsonp(result);
@@ -78,10 +77,10 @@ function doWork(deviceId,records,res){
 }
 
 router.post('/', function(req, res, next) {
-  var deviceId = req.body.deviceId;
-  var todo={"ip":req.headers['x-real-ip'],"api":"借还记录接口","deviceId":deviceId,"msg":JSON.stringify(req.body)};
+  let deviceId = req.body.deviceId;
+  let todo={"ip":req.headers['x-real-ip'],"api":"借还记录接口","deviceId":deviceId,"msg":JSON.stringify(req.body)};
   ApiLog.WorkOn(todo);
-  var records=req.body.record;
+  let records=req.body.record;
   doWork(deviceId,records,res);
 });
 module.exports = router;
