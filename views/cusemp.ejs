@@ -18,11 +18,11 @@
                                 <table id="table" class="ui celled table" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
-                                            <th></th>
                                             <th>序号</th>
                                             <th>客户名称</th>
                                             <th>工号</th>
                                             <th>姓名</th>
+                                            <th>卡号</th>
                                             <th>性别</th>
                                             <th>部门</th>
                                             <th>职务</th>
@@ -40,6 +40,34 @@
                     </div>
                 </div>
                 <!-- /.row -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                权限设置
+                            </div>
+                            <!-- /.panel-heading -->
+                            <div class="panel-body">
+                                <table id="table1" class="ui celled table" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th>序号</th>
+                                            <th>产品编号</th>
+                                            <th>产品名称</th>
+                                            <th>周期单位</th>
+                                            <th>周期间隔</th>
+                                            <th>期间领料数</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            <!-- /.table-responsive -->
+
+                            </div>
+                            <!-- /.panel-body -->
+                        </div>
+                        <!-- /.panel -->
+                    </div>
+                </div>
             </div>
             <!-- /.container-fluid -->
         </div>
@@ -67,25 +95,9 @@
     <script src="../dist/js/dataTables.select.min.js"></script>
     <script src="../dist/js/dataTables.editor.min.js"></script>
     <script src="../dist/js/editor.semanticui.min.js"></script>
-    <script src="../dist/js/dataTables.responsive.min.js"></script>
-    <script src="../dist/js/responsive.semanticui.min.js"></script>
     <script>
-        function format ( d ) {
-        // `d` is the original data object for the row
-            return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
-                '<tr id="'+d.DT_RowId+'">'+
-                    '<td>卡号:</td>'+
-                    '<td>'+d.card+'</td>'+
-
-                '</tr>'+
-                '<tr id="'+d.DT_RowId+'">'+
-                    '<td>权限:</td>'+
-                    '<td>'+d.power+'</td>'+
-
-                '</tr>'+
-            '</table>';
-        }
         var editor;
+        var editor1;
         $(document).ready(function() {
                 editor = new $.fn.dataTable.Editor( {
                 ajax: {
@@ -107,8 +119,7 @@
                     { label: '客户',  name: 'cusId' ,type:'select' },
                     { label: '工号',  name: 'empNo' },
                     { label: '姓名',  name: 'name' },
-                    { label: '卡号',  name: 'card' ,type:'select'},
-                    { label: '权限',  name: 'power' ,type:'select'},
+                    { label: '卡号',  name: 'card' },
                     { label: '性别',  name: 'sex' ,type:'radio',options:[
                         { label: "女", value: 0},
                         { label: "男",  value: 1 }
@@ -145,16 +156,11 @@
                "ajax": '../api/json/employee',
                "dom": '<"top"Brf>t<"bottom"ilp>',
                "columns": [
-                   {
-                    "class":          'details-control',
-                    "orderable":      false,
-                    "data":           null,
-                    "defaultContent": ''
-                    },
                     {"data":null},
-                    { "data": "cusId" },
+                    { "data": "cus" },
                     { "data": "empNo" },
                     { "data": "name" },
+                    { "data": "card"},
                     { "data": "sex" ,render:function(data){return data?"男":"女"}},
                     { "data": "dept" },
                     { "data": "job" },
@@ -178,140 +184,114 @@
                 }
             });
             table.on('order.dt search.dt',function() {
-                        table.column(1, {
+                        table.column(0, {
                             search: 'applied',
                             order: 'applied'
                         }).nodes().each(function(cell, i) {
                             cell.innerHTML = i + 1;
                         });
                     }).draw();
-            $('#table tbody').on('click', 'td.details-control', function () {
-                var tr = $(this).closest('tr');
-                var row = table.row( tr );
-                if ( row.child.isShown() ) {
-                    // This row is already open - close it
-                    row.child.hide();
-                    tr.removeClass('shown');
-                }
-                else {
-                    // Open this row
-                    row.child( format(row.data()) ).show();
-                    tr.addClass('shown');
-                }
-            } );
-        });
-        function closeModal(){
-            $('#myModal').removeClass('ui');
-            $('#myModal').removeClass('dimmer');
-            $('#myModal').removeClass('modals');
-            $('#myModal').removeClass('page');
-            $('#myModal').removeClass('transition');
-            $('#myModal').removeClass('visible');
-            $('#myModal').removeClass('active');
-            $('#myModal').addClass('hidden');
-        }
-        function openModal(title,btn){
-            $("#myModalSelect option").remove();
-            $('#panelBody').html();
-            $('#myModal').addClass('ui');
-            $('#myModal').addClass('dimmer');
-            $('#myModal').addClass('modals');
-            $('#myModal').addClass('page');
-            $('#myModal').addClass('transition');
-            $('#myModal').addClass('active');
-            $('#myModal').addClass('visible');
-            $('#myModal').removeClass('hidden');
-            if(title==1){
-                $('#btnSave').val("1-"+btn.value);
-                $('#myModalLabel').html("添加/删除卡");
-                $('#myModalHeading').html("已拥有卡");
-                $('#myModalSelectLable').html("选择卡号");
-                $.getJSON('../api/json/cardlist/'+btn.value,function(data){
-                    var sel= document.getElementById("myModalSelect");
-                    for(var i=0;i<data.card.length;i++){
-                        sel.options.add(new Option(data.card[i].card,data.card[i].objectId));
-                    }
-                    var append="";
-                    for(var i=0;i<data.have.length;i++){
-                        append+='<div class="alert alert-success alert-dismissable"><input type="hidden" value="'+data.have[i].objectId+'"> <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+data.have[i].card+'</div>';
-                    }
-                    $('#panelBody').html(append);
-                });
-            }else if(title==2){
-                $('#btnSave').val("2-"+btn.value);
-                $('#myModalLabel').html("添加/删除权限");
-                $('#myModalHeading').html("已拥有权限");
-                $('#myModalSelectLable').html("选择权限");
-                $.getJSON('../api/json/powerlist/'+btn.value,function(data){
-                    var sel= document.getElementById("myModalSelect");
-                    for(var i=0;i<data.power.length;i++){
-                        sel.options.add(new Option(data.power[i].dept,data.power[i].objectId));
-                    }
-                    var append="";
-                    for(var i=0;i<data.have.length;i++){
-                        append+='<div class="alert alert-success alert-dismissable"><input type="hidden" value="'+data.have[i].objectId+'"> <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+data.have[i].dept+'</div>';
-                    }
-                    $('#panelBody').html(append);
-                });
-            }
-        }
-        function getOption(){
-            var checkText=$("#myModalSelect").find("option:selected").text(); //获取Select选择的text
-            var checkValue=$("#myModalSelect").val(); //获取Select选择的Value
-            if(checkText!=""){
-                $("#myModalSelect option[value='"+checkValue+"']").remove();
-                var checkstr='<div class="alert alert-success alert-dismissable"><input type="hidden" value="'+checkValue+'"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+checkText+'</div>';
-                $('#panelBody').append(checkstr);
-            }
-        }
-        function saveAll(btn){
-            var arr=[];
-            $("#panelBody input").each(function(){
-                arr.push($(this).val());
-            });
-            $.post("../api/json/saveAll",{"flag":btn.value.split('-')[0],"list":arr,
-            "emp":btn.value.split('-')[1]},function(result){
-                console.log(result);
-            });
-        }
-    </script>
-    <div class="hidden" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog" style="margin-top:100px">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" onclick="closeModal()">&times;</button>
-                    <h4 class="modal-title" id="myModalLabel"></h4>
-                </div>
-                <div class="modal-body" id="myModalBody">
-                    <div class="form-group">
-                        <label id="myModalSelectLable"></label>
-                        <select multiple class="form-control" id="myModalSelect">
-                        </select>
-                        <button type="button" style="margin-top:5px" class="btn btn-default btn-sm" id="btnAdd" onclick="getOption()">添加</button>
-                    </div>
-                    <div class="panel panel-default">
-                        <div class="panel-heading" id="myModalHeading">
 
-                        </div>
-                        <!-- /.panel-heading -->
-                        <div class="panel-body" id="panelBody">
-                            <div class="alert alert-success alert-dismissable">
-                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                                加载中...
-                            </div>
-                        </div>
-                        <!-- .panel-body -->
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="closeModal()">关闭</button>
-                    <button type="button" id="btnSave" class="btn btn-primary" onclick="saveAll(this)">保存</button>
-                </div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div>
+            $('#table tbody').on('click', 'tr', function () {
+                var data = table.row( this ).data();
+                table1.ajax.url('../api/json/empPower/'+data.DT_RowId).load();
+                editor1.add( [{
+                    type:  "hidden",
+                    name:  "emp",
+                    def:   data.DT_RowId
+                },{
+                    type:  "hidden",
+                    name:  "cus",
+                    def:   data.cusId
+                }] );
+            } );
+            editor1 = new $.fn.dataTable.Editor( {
+                ajax: {
+                    create: {
+                        type: 'POST',
+                        url:  '../api/json/empPower/add'
+                    },
+                    edit: {
+                        type: 'PUT',
+                        url:  '../api/json/empPower/edit/_id_'
+                    },
+                    remove: {
+                        type: 'DELETE',
+                        url:  '../api/json/empPower/remove/_id_'
+                    }
+                },
+                table: "#table1",
+                fields: [
+                    { label: '产品',  name: 'productId',type :'select'},
+                    { label: '周期单位',  name: 'unit',type:'select',options:[
+                        { label: "日", value: 'day'},
+                        { label: "周", value: 'week'},
+                        { label: "月", value: 'month'}
+                    ]},
+                    { label: '周期间隔',  name: 'period'},
+                    { label: '期间领料数',  name: 'count'}
+                ],i18n: {
+                        create: {
+                            button: "新增",
+                            title:  "新建权限",
+                            submit: "创建"
+                        },
+                        edit: {
+                            button: "编辑",
+                            title:  "权限修改",
+                            submit: "更新"
+                        },
+                        remove: {
+                            button: "删除",
+                            title:  "删除",
+                            submit: "删除",
+                            confirm: {
+                                _: "确定要删除 %d 条吗?",
+                                1: "确定要删除这条权限配置吗?"
+                            }
+                        }
+                    }
+            } );
+            var table1= $('#table1').DataTable( {
+                "processing": true,
+                stateSave: true,
+               "ajax": '',
+               "dom": '<"top"Brf>t<"bottom"ilp>',
+               "columns": [
+                    {"data":null},
+                    { "data": "sku" },
+                    { "data": "product"},
+                    { "data": "unit" },
+                    { "data": "period" },
+                    { "data": "count" }
+                ],
+                select:true,
+                buttons: [
+                { extend: "create", editor: editor1 },
+                { extend: "edit",  editor: editor1 },
+                { extend: "remove", editor: editor1 }
+                ] ,
+                "columnDefs": [{
+                    "searchable": false,
+                    "orderable": false,
+                    "targets": 0
+                }],
+                "order": [[1, 'asc']],
+                "language": {
+                    "url": "../vendor/zh_CN.txt"
+                }
+            });
+            table1.on('order.dt search.dt',function() {
+                        table1.column(0, {
+                            search: 'applied',
+                            order: 'applied'
+                        }).nodes().each(function(cell, i) {
+                            cell.innerHTML = i + 1;
+                        });
+                    }).draw();
+
+        });
+    </script>
 </body>
 
 </html>

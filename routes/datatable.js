@@ -620,7 +620,7 @@ router.delete('/empCard/remove/:id',function(req,res){
 });
 //客户员工
 router.get('/employee',function(req,res){
-    var resdata={};
+    let resdata={};
     function promise1(callback){
         let query=new AV.Query('Employee');
         query.include('cusId');
@@ -630,45 +630,22 @@ router.get('/employee',function(req,res){
                 result.set('DT_RowId',result.id);
                 result.set('isDel',result.get('isDel')?"停用":"启用");
                 result.set('sex',result.get('sex'));
-                result.set('cusId',result.get('cusId').get('name'));
+                result.set('cus',result.get('cusId').get('name'));
+                result.set('cusId',result.get('cusId').id);
                 result.set('job',result.get('job')?result.get('job'):"");
                 result.set('phone',result.get('phone')?result.get('phone'):"");
                 result.set('notice',result.get('notice')?result.get('notice'):"");
                 result.set('dept',result.get('dept')?result.get('dept'):"");
-                function cardPromise(callback2){
-                    let cardQuery=new AV.Query('EmployeeCard');
-                    cardQuery.equalTo('isDel',false);
-                    cardQuery.equalTo('emp',result);
-                    cardQuery.find().then(function(cards){
-                        let arr=[];
-                        cards.forEach(function(card){
-                            arr.push(card.get('card'));
-                        });
-                        result.set('card',arr);
-                        callback2(null,arr);
-                    });
-                }
-                function powerPromise(callback2){
+                let cardQuery=new AV.Query('EmployeeCard');
+                cardQuery.equalTo('isDel',false);
+                cardQuery.equalTo('emp',result);
+                cardQuery.find().then(function(cards){
                     let arr=[];
-                    async.map(result.get('power'),function(power,callback3){
-                        let powerObj=AV.Object.createWithoutData('EmployeePower',power);
-                        powerObj.fetch(function(){
-                            arr.push(powerObj.get('dept'));
-                            callback3(null,powerObj.get('dept'));
-                        });
-                    },function(err,results){
-                        result.set('power',arr);
-                        callback2(null,arr);
+                    cards.forEach(function(card){
+                        arr.push(card.get('card'));
                     });
-                }
-                async.parallel([
-                    function (callback){
-                        cardPromise(callback);
-                    },
-                    function (callback){
-                        powerPromise(callback);
-                    }],function(err,results){
-                        callback1(null,result);
+                    result.set('card',arr);
+                    callback1(null,result);
                 });
             },function(err,data){
                 resdata["data"]=data;
@@ -689,57 +666,22 @@ router.get('/employee',function(req,res){
             });
         });
     }
-    function promise3(callback1) {
-        let query=new AV.Query('EmployeeCard');
-        query.equalTo('isDel',false);
-        query.equalTo('emp',null);
-        query.find().then(function(results){
-            async.map(results,function(result,callback){
-                result.set('label',result.get('card'));
-                result.set('value',result.id);
-                callback(null,result);
-            },function(err,data){
-                callback1(null,data);
-            });
-        });
-    }
-    function promise4(callback1){
-        let query=new AV.Query('EmployeePower');
-        query.equalTo('isDel',false);
-        query.find().then(function(results){
-            async.map(results,function(result,callback){
-                result.set('label',result.get('dept'));
-                result.set('value',result.id);
-                callback(null,result);
-            },function(err,data){
-                callback1(null,data);
-            });
-        });
-    }
     async.parallel([
         function (callback){
             promise1(callback);
         },
         function (callback){
             promise2(callback);
-        },
-        function (callback){
-            promise3(callback);
-        },
-        function (callback){
-            promise4(callback);
         }],function(err,results){
-            resdata["options"]=Object.assign({"cusId":results[1]},
-            {"card":results[2]},{"power":results[3]});
-            //resdata["options"]={"cusId":results[1]};
+            resdata["options"]=Object.assign({"cusId":results[1]});
             res.jsonp(resdata);
     });
 });
 //增加员工
 var Employee = AV.Object.extend('Employee');
 router.post('/employee/add',function(req,res){
-    var arr=req.body;
-    var employee=new Employee();
+    let arr=req.body;
+    let employee=new Employee();
     employee.set('empNo',arr['data[0][empNo]']);
     employee.set('name',arr['data[0][name]']);
     employee.set('sex',arr['data[0][sex]']*1);
@@ -747,28 +689,46 @@ router.post('/employee/add',function(req,res){
     employee.set('phone',arr['data[0][phone]']);
     employee.set('dept',arr['data[0][dept]']);
     employee.set('notice',arr['data[0][notice]']);
-    let empcard=AV.Object.createWithoutData('EmployeeCard', arr['data[0][card]']);
-    let cardarr=[];
-    cardarr.push(empcard.id);
-    employee.set('card',cardarr);
-    let emppower=AV.Object.createWithoutData('EmployeePower', arr['data[0][power]']);
-    let powerarr=[];
-    powerarr.push(emppower.id);
-    employee.set('power',powerarr);
+    let cards=arr['data[0][card]'].split(',');
     let cus=AV.Object.createWithoutData('Customer', arr['data[0][cusId]']);
     employee.set('cusId',cus);
     employee.set('isDel',false);
     employee.save().then(function(emp){
-        var data=[];
-        empcard.set('emp',emp);
-        empcard.save();
-        emp.set('DT_RowId',emp.id);
-        emp.set('sex',emp.get('sex'))
-        emp.set('card',"");
-        cus.fetch().then(function(c){
-            emp.set('cusId',c.get('name'));
-            data.push(emp);
-            res.jsonp({"data":data});
+        let data=[];
+        let cardArr=[];
+        let errArr=[];
+        async.map(cards,function(card,callback){
+            if(card!==null&&card!==undefined&&card!==''){
+                let cardQuery=new AV.Query('EmployeeCard');
+                cardQuery.equalTo('isDel',false);
+                cardQuery.equalTo('card',card);
+                cardQuery.count().then(function(count){
+                    if(count==0){
+                        let cardObj=new EmpCard();
+                        cardObj.set('cusId',cus);
+                        cardObj.set('card',card);
+                        cardObj.set('emp',emp);
+                        cardObj.save().then(function(ca){
+                            cardArr.push(card);
+                        });
+                    }else {
+                        errArr.push({"name":"card","status":card+"已存在"});
+                    }
+                });
+            }
+            callback(null,card);
+        },function(err,results){
+            emp.set('card',cardArr);
+            emp.set('DT_RowId',emp.id);
+            cus.fetch().then(function(c){
+                emp.set('cusId',c.get('name'));
+                data.push(emp);
+                if(errArr.length>0){
+                    res.jsonp({"data":data,"fieldErrors":errArr});
+                }else {
+                    res.jsonp({"data":data});
+                }
+            });
         });
     },function(error){
         console.log(error);
@@ -786,36 +746,45 @@ router.put('/employee/edit/:id',function(req,res){
     employee.set('phone',arr['data['+id+'][phone]']);
     employee.set('dept',arr['data['+id+'][dept]']);
     employee.set('notice',arr['data['+id+'][notice]']);
-    let empcard=AV.Object.createWithoutData('EmployeeCard', arr['data['+id+'][card]']);
-    let cardarr=[];
-    cardarr.push(empcard.id);
-    employee.set('card',cardarr);
-    let emppower=AV.Object.createWithoutData('EmployeePower', arr['data['+id+'][power]']);
-    let powerarr=[];
-    powerarr.push(emppower.id);
-    employee.set('power',powerarr);
+    let cards=arr['data['+id+'][card]'].split(',');
     let cus=AV.Object.createWithoutData('Customer', arr['data['+id+'][cusId]']);
     employee.set('cusId',cus);
     employee.set('isDel',false);
     employee.save().then(function(emp){
         let data=[];
-        empcard.set('emp',emp);
-        empcard.save();
-        emp.set('DT_RowId',emp.id);
-        emp.set('sex',emp.get('sex'))
-        let cardQuery=new AV.Query('EmployeeCard');
-        cardQuery.equalTo('isDel',false);
-        cardQuery.equalTo('emp',emp);
-        cardQuery.find().then(function(cards){
-            let cardarr=[];
-            cards.forEach(function(card){
-                cardarr.push(card.get('card'));
-            });
-            emp.set('card',cardarr);
+        let cardArr=[];
+        let errArr=[];
+        async.map(cards,function(card,callback){
+            if(card!==null&&card!==undefined&&card!==''){
+                let cardQuery=new AV.Query('EmployeeCard');
+                cardQuery.equalTo('isDel',false);
+                cardQuery.equalTo('card',card);
+                cardQuery.count().then(function(count){
+                    if(count==0){
+                        let cardObj=new EmpCard();
+                        cardObj.set('cusId',cus);
+                        cardObj.set('card',card);
+                        cardObj.set('emp',emp);
+                        cardObj.save().then(function(ca){
+                            cardArr.push(card);
+                        });
+                    }else {
+                        errArr.push({"name":"card","status":card+"已存在"});
+                    }
+                });
+            }
+            callback(null,card);
+        },function(err,results){
+            emp.set('card',cardArr);
+            emp.set('DT_RowId',emp.id);
             cus.fetch().then(function(c){
                 emp.set('cusId',c.get('name'));
                 data.push(emp);
-                res.jsonp({"data":data});
+                if(errArr.length>0){
+                    res.jsonp({"data":data,"fieldErrors":errArr});
+                }else {
+                    res.jsonp({"data":data});
+                }
             });
         });
     },function(error){
@@ -832,16 +801,17 @@ router.delete('/employee/remove/:id',function(req,res){
         cardQuery.equalTo('isDel',false);
         cardQuery.equalTo('emp',emp);
         cardQuery.find().then(function(cards){
-            cards.map(function(card){
-                card.set('emp',null);
+            async.map(cards,function(card,callback){
+                card.set('isDel',true);
+                callback(null,card);
+            },function(err,results){
+                AV.Object.saveAll(cards);
             });
-            return AV.Object.saveAll(cards);
         }).then(function(cards){
             res.jsonp({"data":[]});
         },function(err){
             console.log(err);
         });
-        //res.jsonp({"data":[]});
     });
 });
 
@@ -906,55 +876,37 @@ router.get('/powerlist/:id',function(req,res){
     });
 });
 //员工权限
-router.get('/empPower',function(req,res){
-    let resdata={};
-    function promise1(callback1){
+router.get('/empPower/:id',function(req,res){
+    function promise1(callback){
+        let id=req.params.id;
+        let emp=AV.Object.createWithoutData('EmployeeCard',id);
         let query=new AV.Query('EmployeePower');
-        query.include('boxId');
-        query.include('boxId.cusId');
         query.include('product');
+        query.equalTo('emp',emp);
         query.equalTo('isDel',false);
         query.find().then(function(results){
-            async.map(results,function(result,callback){
+            async.map(results,function(result,callback1){
                 result.set('DT_RowId',result.id);
-                result.set('productId',result.get('product').id);
-                result.set('machineId',result.get('boxId').id);
-                result.set('cus',result.get('boxId').get('cusId').get('name'));
-                result.set('machine',result.get('boxId').get('machine'));
+                result.set('sku',result.get('product').get('sku'));
                 result.set('product',result.get('product').get('name'));
+                result.set('productId',result.get('product').id);
                 let unit="";
                 if(result.get('unit')=="month"){
                     unit="月";
                 }else if(result.get('unit')=="day"){
                     unit="日";
-                }else if(result.get('unit')=="year"){
-                    unit="年";
+                }else if(result.get('unit')=="week"){
+                    unit="周";
                 }
                 result.set('unit',unit);
-                result.set('begin',new moment(result.get('begin')).format('YYYY-MM-DD'));
-                result.set('dept',result.get('dept')?result.get('dept'):"");
-                callback(null,result);
+                callback1(null,result);
             },function(err,data){
-                resdata['data']=data;
-                callback1(null,data);
+                callback(null,data);
             });
         });
     }
     function promise2(callback1){
-        let query=new AV.Query('BoxInfo');
-        query.equalTo('isDel',false);
-        query.find().then(function(results){
-            async.map(results,function(result,callback){
-                result.set('label',result.get('machine'));
-                result.set('value',result.id);
-                callback(null,result);
-            },function(err,data){
-                callback1(null,data);
-            });
-        });
-    }
-    function promise3(callback1){
-        let query=new AV.Query('Product');
+        var query=new AV.Query('Product');
         query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback){
@@ -972,12 +924,8 @@ router.get('/empPower',function(req,res){
         },
         function (callback){
             promise2(callback);
-        },
-        function (callback){
-            promise3(callback);
         }],function(err,results){
-            resdata["options"]=Object.assign({"machineId":results[1]},{"productId":results[2]});
-            res.jsonp(resdata);
+            res.jsonp({"data":results[0],"options":{"productId":results[1]}});
     });
 });
 //新增权限
@@ -986,89 +934,71 @@ router.post('/empPower/add',function(req,res){
     let arr=req.body;
     let power=new EmpPower();
     power.set('unit',arr['data[0][unit]']);
-    power.set('begin',new Date(arr['data[0][begin]']));
     power.set('count',arr['data[0][count]']*1);
     power.set('period',arr['data[0][period]']*1);
-    power.set('dept',arr['data[0][dept]']);
-    let box=AV.Object.createWithoutData('BoxInfo', arr['data[0][machineId]']);
+    let emp=AV.Object.createWithoutData('Employee', arr['data[0][emp]']);
+    let cus=AV.Object.createWithoutData('Customer', arr['data[0][cus]']);
     let product=AV.Object.createWithoutData('Product', arr['data[0][productId]']);
-    power.set('boxId',box);
+    power.set('emp',emp);
+    power.set('cusId',cus);
     power.set('product',product);
     power.set('isDel',false);
-    power.save().then(function(emp){
+    power.save().then(function(emppower){
         let data=[];
-        emp.set('DT_RowId',emp.id);
+        emppower.set('DT_RowId',emppower.id);
         let unit="";
-        if(emp.get('unit')=="month"){
+        if(emppower.get('unit')=="month"){
             unit="月";
-        }else if(emp.get('unit')=="day"){
+        }else if(emppower.get('unit')=="day"){
             unit="日";
-        }else if(emp.get('unit')=="year"){
+        }else if(emppower.get('unit')=="year"){
             unit="年";
         }
-        emp.set('unit',unit);
-        emp.set('begin',new moment(emp.get('begin')).format('YYYY-MM-DD'));
-        emp.set('dept',emp.get('dept')?emp.get('dept'):"");
-        box.fetch().then(function(b){
-            emp.set('machine',b.get('machine'));
-            emp.set('machineId',b.id);
-            let cusQuery=new AV.Query('Customer');
-            cusQuery.get(b.get('cusId').id).then(function(cus){
-                emp.set('cus',cus.get('name'));
-                product.fetch().then(function(p){
-                    emp.set('productId',p.id);
-                    emp.set('product',p.get('name'));
-                    data.push(emp);
-                    res.jsonp({"data":data});
-                });
+        emppower.set('unit',unit);
+        product.fetch().then(function(p){
+            emppower.set('productId',p.id);
+            emppower.set('sku',p.get('sku'));
+            emppower.set('product',p.get('name'));
+            cus.fetch().then(function(c){
+                emppower.set('cus',c.get('name'));
+                emppower.set('cusId',c.id);
+                data.push(emppower);
+                res.jsonp({"data":data});
             });
         });
     },function(error){
         console.log(error);
     });
 });
-//更新员工'+id+'
+//更新员工权限'+id+'
 router.put('/empPower/edit/:id',function(req,res){
     let arr=req.body;
     let id=req.params.id;
     let power = AV.Object.createWithoutData('EmployeePower', id);
     power.set('unit',arr['data['+id+'][unit]']);
-    power.set('begin',new Date(arr['data['+id+'][begin]']));
     power.set('count',arr['data['+id+'][count]']*1);
     power.set('period',arr['data['+id+'][period]']*1);
-    power.set('dept',arr['data['+id+'][dept]']);
-    let box=AV.Object.createWithoutData('BoxInfo', arr['data['+id+'][machineId]']);
     let product=AV.Object.createWithoutData('Product', arr['data['+id+'][productId]']);
-    power.set('boxId',box);
     power.set('product',product);
     power.set('isDel',false);
-    power.save().then(function(emp){
+    power.save().then(function(emppower){
         let data=[];
-        emp.set('DT_RowId',emp.id);
+        emppower.set('DT_RowId',emppower.id);
         let unit="";
-        if(emp.get('unit')=="month"){
+        if(emppower.get('unit')=="month"){
             unit="月";
-        }else if(emp.get('unit')=="day"){
+        }else if(emppower.get('unit')=="day"){
             unit="日";
-        }else if(emp.get('unit')=="year"){
+        }else if(emppower.get('unit')=="year"){
             unit="年";
         }
-        emp.set('unit',unit);
-        emp.set('begin',new moment(emp.get('begin')).format('YYYY-MM-DD'));
-        emp.set('dept',emp.get('dept')?emp.get('dept'):"");
-        box.fetch().then(function(b){
-            emp.set('machine',b.get('machine'));
-            emp.set('machineId',b.id);
-            let cusQuery=new AV.Query('Customer');
-            cusQuery.get(b.get('cusId').id).then(function(cus){
-                emp.set('cus',cus.get('name'));
-                product.fetch().then(function(p){
-                    emp.set('productId',p.id);
-                    emp.set('product',p.get('name'));
-                    data.push(emp);
-                    res.jsonp({"data":data});
-                });
-            });
+        emppower.set('unit',unit);
+        product.fetch().then(function(p){
+            emppower.set('productId',p.id);
+            emppower.set('sku',p.get('sku'));
+            emppower.set('product',p.get('name'));
+            data.push(emppower);
+            res.jsonp({"data":data});
         });
     },function(error){
         console.log(error);
@@ -1658,18 +1588,7 @@ router.get('/checkrecord',function(req,res){
 router.get('/storehouse',function(req,res){
 
 });
-router.get('/test',function(req,res){
-    let query=new AV.Query('TakeOut');
-    query.equalTo('isDel',false);
-    query.equalTo('result',true);
-    let start=new moment().startOf('days').format('YYYY-MM-DD HH:mm:ss');
-    let end=new moment().endOf('days').format('YYYY-MM-DD HH:mm:ss');
-    query.greaterThanOrEqualTo('time',new Date(start));
-    query.lessThan('time',new Date(end));
-    query.find().then(function(results){
-        res.jsonp(results);
-    });
-});
+
 //数据报表-用量汇总报告
 router.get('/summary/:date',function(req,res){
     let resdata={};
@@ -1788,8 +1707,6 @@ router.get('/summary/:date',function(req,res){
                 });
             });
         });
-
-
     }
     async.waterfall([
         function (callback){
