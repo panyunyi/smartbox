@@ -1127,11 +1127,45 @@ router.put('/box/edit/:id',function(req,res){
 });
 //删除售货机
 router.delete('/box/remove/:id',function(req,res){
-    var id=req.params.id;
-    var box = AV.Object.createWithoutData('BoxInfo', id);
+    let id=req.params.id;
+    let box = AV.Object.createWithoutData('BoxInfo', id);
     box.set('isDel',true);
     box.save().then(function(){
-        res.jsonp({"data":[]});
+        function promise1(callback){
+            let passageQuery=new AV.Query('Passage');
+            passageQuery.equalTo('isDel',false);
+            passageQuery.equalTo('boxId',box);
+            passageQuery.find().then(function(results){
+                results.map(function(result){
+                    result['isDel']=false;
+                });
+                AV.Object.saveAll(results);
+            }).then(function(){
+                callback(null,1);
+            });
+        }
+        function promise2(callback){
+            let boxProductQuery=new AV.Query('BoxProduct');
+            boxProductQuery.equalTo('isDel',false);
+            boxProductQuery.equalTo('boxId',box);
+            boxProductQuery.find().then(function(results){
+                results.map(function(result){
+                    result['isDel']=false;
+                });
+                AV.Object.saveAll(results);
+            }).then(function(){
+                callback(null,1);
+            });
+        }
+        async.parallel([
+            function (callback){
+                promise1(callback);
+            },
+            function (callback){
+                promise2(callback);
+            }],function(err,results){
+                res.jsonp({"data":[]});
+        });
     });
 });
 //货道配置
