@@ -423,10 +423,10 @@ router.get('/customerProduct',function(req,res){
     });
 });
 //增加客户产品
-var Product = AV.Object.extend('CustomerProduct');
+var CusProduct = AV.Object.extend('CustomerProduct');
 router.post('/cusproduct/add',function(req,res){
     var arr=req.body;
-    var product=new Product();
+    var product=new CusProduct();
     product.set('cusProductPrice',arr['data[0][cusProductPrice]']*1);
     let proobj=AV.Object.createWithoutData('Product', arr['data[0][productId]']);
     product.set('product',proobj);
