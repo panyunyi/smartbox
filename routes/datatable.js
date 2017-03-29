@@ -625,31 +625,54 @@ router.get('/employee',function(req,res){
         let query=new AV.Query('Employee');
         query.include('cusId');
         query.equalTo('isDel',false);
+        query.limit(1000);
         query.find().then(function(results){
-            async.map(results,function(result,callback1){
-                result.set('DT_RowId',result.id);
-                result.set('isDel',result.get('isDel')?"停用":"启用");
-                result.set('sex',result.get('sex'));
-                result.set('cus',result.get('cusId').get('name'));
-                result.set('cusId',result.get('cusId').id);
-                result.set('job',result.get('job')?result.get('job'):"");
-                result.set('phone',result.get('phone')?result.get('phone'):"");
-                result.set('notice',result.get('notice')?result.get('notice'):"");
-                result.set('dept',result.get('dept')?result.get('dept'):"");
+            function cardPromise(callback3){
                 let cardQuery=new AV.Query('EmployeeCard');
                 cardQuery.equalTo('isDel',false);
-                cardQuery.equalTo('emp',result);
+                cardQuery.equalTo('cusId',results[0].get('cusId'));
+                cardQuery.limit(1000);
                 cardQuery.find().then(function(cards){
-                    let arr=[];
-                    cards.forEach(function(card){
-                        arr.push(card.get('card'));
-                    });
-                    result.set('card',arr);
-                    callback1(null,result);
+                    callback3(null,cards);
                 });
-            },function(err,data){
-                resdata["data"]=data;
-                callback(null,data);
+            }
+            function resultsPromise(cards,callback3){
+                async.map(results,function(result,callback1){
+                    result.set('DT_RowId',result.id);
+                    result.set('isDel',result.get('isDel')?"停用":"启用");
+                    result.set('sex',result.get('sex'));
+                    result.set('cus',result.get('cusId').get('name'));
+                    result.set('cusId',result.get('cusId').id);
+                    result.set('job',result.get('job')?result.get('job'):"");
+                    result.set('phone',result.get('phone')?result.get('phone'):"");
+                    result.set('notice',result.get('notice')?result.get('notice'):"");
+                    result.set('dept',result.get('dept')?result.get('dept'):"");
+                    let arr=[];
+                    async.map(cards,function(card,callback2){
+                        if(card.get('emp').id==result.id){
+                            arr.push(card.get('card'));
+                            callback2(null,1);
+                        }else {
+                            callback2(null,0);
+                        }
+                    },function(err,cardsdata){
+                        result.set('card',arr);
+                        callback1(null,result);
+                    });
+                },function(err,data){
+                    resdata["data"]=data;
+                    callback3(null,data);
+                });
+            }
+            async.waterfall([
+                function (callback3){
+                    cardPromise(callback3);
+                },
+                function(cards,callback3){
+                    resultsPromise(cards,callback3);
+                }
+            ],function(err,results){
+                callback(null,results);
             });
         });
     }
@@ -710,18 +733,23 @@ router.post('/employee/add',function(req,res){
                         cardObj.set('emp',emp);
                         cardObj.save().then(function(ca){
                             cardArr.push(card);
+                            callback(null,1);
                         });
                     }else {
+                        emp.set('isDel',true);
+                        emp.save();
                         errArr.push({"name":"card","status":card+"已存在"});
+                        callback(null,0);
                     }
                 });
+            }else {
+                callback(null,0);
             }
-            callback(null,card);
         },function(err,results){
             emp.set('card',cardArr);
             emp.set('DT_RowId',emp.id);
             cus.fetch().then(function(c){
-                emp.set('cusId',c.get('name'));
+                emp.set('cus',c.get('name'));
                 data.push(emp);
                 if(errArr.length>0){
                     res.jsonp({"data":data,"fieldErrors":errArr});
@@ -767,18 +795,18 @@ router.put('/employee/edit/:id',function(req,res){
                         cardObj.set('emp',emp);
                         cardObj.save().then(function(ca){
                             cardArr.push(card);
+                            callback(null,1);
                         });
-                    }else {
-                        errArr.push({"name":"card","status":card+"已存在"});
                     }
                 });
+            }else {
+                callback(null,0);
             }
-            callback(null,card);
         },function(err,results){
             emp.set('card',cardArr);
             emp.set('DT_RowId',emp.id);
             cus.fetch().then(function(c){
-                emp.set('cusId',c.get('name'));
+                emp.set('cus',c.get('name'));
                 data.push(emp);
                 if(errArr.length>0){
                     res.jsonp({"data":data,"fieldErrors":errArr});
@@ -961,7 +989,7 @@ router.post('/empPower/add',function(req,res){
             emppower.set('product',p.get('name'));
             cus.fetch().then(function(c){
                 emppower.set('cus',c.get('name'));
-                emppower.set('cusId',c.id);
+                emppower.set('cusId',c);
                 data.push(emppower);
                 res.jsonp({"data":data});
             });
