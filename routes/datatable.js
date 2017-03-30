@@ -1549,8 +1549,9 @@ router.get('/pasrecord',function(req,res){
                 let cus=takeout.get('box').get('cusId').get('name');
                 let emp=takeout.get('card').get('emp').get('name');
                 let empNo=takeout.get('card').get('emp').get('empNo');
+                let count=takeout.get('count');
                 let onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
-                "cus":cus,"machine":machine,"passage":passage,"count":-1,
+                "cus":cus,"machine":machine,"passage":passage,"count":"-"+count,
                 "product":product,"sku":sku,"unit":unit,"employee":emp,
                 "empNo":empNo,"empCard":card};
                 jsondata.push(onetake);
@@ -1693,8 +1694,8 @@ router.get('/summary/:date',function(req,res){
         query.lessThan('time',new Date(end));
         query.limit(1000);
         query.include('product');
-        query.count().then(function(count){
-            let num=Math.ceil(count/1000);
+        query.find().then(function(results){
+            let num=Math.ceil(results.length/1000);
             let takes=[];
             async.times(num,function(n,callback5){
                 query.skip(1000*n);
@@ -1716,17 +1717,19 @@ router.get('/summary/:date',function(req,res){
                     boxData['cus']=box.get('cusId').id;
                     async.map(takes,function(take,callback2){
                         if(take.get('box').id==box.id){
-                            boxData['count']+=1;
-                            cuspros.forEach(function(cuspro){
+                            boxData['count']+=take.get('count');
+                            async.map(cuspros,function(cuspro,callback6){
                                 if(cuspro.get('product').id==take.get('product').id&&
                                     cuspro.get('cusId').id==box.get('cusId').id){
-                                    boxData['total']+=cuspro.get('cusProductPrice');
+                                    boxData['total']+=cuspro.get('cusProductPrice')*take.get('count');
                                     boxList.push({'sku':take.get('product').get('sku'),
                                     'name':take.get('product').get('name'),'id':
-                                    take.get('product').id,'price':cuspro.get('cusProductPrice')});
+                                    take.get('product').id,'price':cuspro.get('cusProductPrice')*take.get('count')});
                                 }
-                            });
-                            callback2(null,take);
+                                callback6(null,1);
+                            },function(err,cusprosres){
+                                callback2(null,take);
+                            });  
                         }
                     },function(err,takeres){
                         if(boxData['count']>0){

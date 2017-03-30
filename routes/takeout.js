@@ -6,7 +6,7 @@ var async = require('async');
 var moment=require('moment');
 var TakeOut = AV.Object.extend('TakeOut');
 
-function doWork(cus,box,deviceId,card,passage,res){
+function doWork(cus,box,deviceId,card,passage,res,getCount){
     let flag=false;
     let resdata={};
     let message="无权限";
@@ -70,14 +70,14 @@ function doWork(cus,box,deviceId,card,passage,res){
         powerQuery.equalTo('emp',arg2);
         powerQuery.first().then(function(power){
             if(typeof(power)!="undefined"){
-                verifyPower(arg2,power,product,callback);
+                verifyPower(arg2,power,product,getCount,callback);
             }else {
                 message="无取货权限";
                 return callback(null,false);
             }
         });
     }
-    function verifyPower(emp,power,product,callback){
+    function verifyPower(emp,power,product,getCount,callback){
         let unit=power.get('unit');
         let period=power.get('period');
         let count=power.get('count');
@@ -103,29 +103,38 @@ function doWork(cus,box,deviceId,card,passage,res){
         takeoutQuery.equalTo('product',product);
         takeoutQuery.greaterThanOrEqualTo('time',begin.toDate());
         takeoutQuery.lessThanOrEqualTo('time',new Date());
-        takeoutQuery.count().then(function(takecount){
-            console.log(takecount);
-            power.set('used',takecount);
-            if (count>takecount) {
-                flag=true;
-                onetake.set('result',true);
-                onetake.save().then(function(one){
-                    message="成功";
-                    resdata["result"]=flag;
-                    resdata["objectId"]=one.id;
-                    let passagedata=onetake.get('passage');
-                    passagedata.increment('stock',-1);
-                    power.increment('used',1);
-                    power.save();
-                    passagedata.save().then(function(){
-                        callback(null,true);
+        takeoutQuery.find().then(function(takeouts){
+            let takecount=0;
+            //console.log(takeouts.length);
+            async.map(takeouts,function(tk,callback1){
+                takecount+=tk.get('count');
+                callback1(null,1);
+            },function(err,tks){
+                //console.log(takecount);
+                power.set('used',takecount);
+                takecount=takecount*1+getCount*1;
+                onetake.set('count',getCount*1);
+                if (count>=takecount) {
+                    flag=true;
+                    onetake.set('result',true);
+                    onetake.save().then(function(one){
+                        message="成功";
+                        resdata["result"]=flag;
+                        resdata["objectId"]=one.id;
+                        let passagedata=onetake.get('passage');
+                        passagedata.increment('stock',-getCount);
+                        power.increment('used',getCount);
+                        power.save();
+                        passagedata.save().then(function(){
+                            callback(null,true);
+                        });
                     });
-                });
-            }else{
-                message="已取"+product.get('name')+"："+takecount+"次，超过领取次数";
-                resdata["result"]=flag;
-                callback(null,false);
-            }
+                }else{
+                    message="已取"+product.get('name')+"："+(takecount-getCount*1)+"次，超过领取次数";
+                    resdata["result"]=flag;
+                    callback(null,false);
+                }
+            });
         });
     }
     async.waterfall([
@@ -148,6 +157,42 @@ function doWork(cus,box,deviceId,card,passage,res){
     });
 }
 
+router.get('/:id/:card/:passage/:count', function(req, res) {
+    let deviceId=req.params.id;
+    let card=req.params.card;
+    let passage=req.params.passage;
+    let count=req.params.count;
+    let todo={"ip":req.headers['x-real-ip'],"api":"多次取货判断接口","deviceId":deviceId,"msg":"card:"+card+",passage:"+passage,
+    "count":count};
+    ApiLog.WorkOn(todo);
+    let boxQuery=new AV.Query('BoxInfo');
+    boxQuery.equalTo('deviceId',deviceId);
+    boxQuery.include('cusId');
+    boxQuery.first().then(function (box){
+        if (typeof(box) == "undefined") {
+          let result={
+            status:200,
+            message:"无此设备号的数据",
+            data:{"result":false},
+            server_time:new Date()
+          }
+          res.jsonp(result);
+          return;
+        }
+        let cus=box.get('cusId');
+        doWork(cus,box,deviceId,card,passage,res,count);
+    },function (error){
+        console.log(error);
+        let result={
+          status:200,
+          message:"查询出错",
+          data:{"result":false},
+          server_time:new Date()
+        }
+        res.jsonp(result);
+    });
+});
+
 router.get('/:id/:card/:passage', function(req, res) {
     let deviceId=req.params.id;
     let card=req.params.card;
@@ -169,7 +214,7 @@ router.get('/:id/:card/:passage', function(req, res) {
           return;
         }
         let cus=box.get('cusId');
-        doWork(cus,box,deviceId,card,passage,res);
+        doWork(cus,box,deviceId,card,passage,res,1);
     },function (error){
         console.log(error);
         let result={

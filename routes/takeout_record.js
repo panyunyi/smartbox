@@ -26,7 +26,7 @@ function doWork(deviceId,records,res){
                     callback(null,record);
                 }
                 if(record.result){
-                    passage.increment('stock',-1);
+                    passage.increment('stock',-record.count*1);
                     passage.save();
                 }
                 obj.set('box', box);
@@ -34,6 +34,7 @@ function doWork(deviceId,records,res){
                 obj.set('product',passage.get('product'));
                 obj.set('time',new Date(record.time));
                 obj.set('result',record.result);
+                obj.set('count',record.count*1);
                 obj.set('isDel',false);
                 let empCardQuery=new AV.Query('EmployeeCard');
                 empCardQuery.equalTo('card',record.card);
@@ -41,16 +42,16 @@ function doWork(deviceId,records,res){
                 empCardQuery.first().then(function(card){
                     obj.set('card',card);
                     obj.set('emp',card.get('emp'));
-                    if(record.result){
-                    let powerQuery=new AV.Query('EmployeePower');
-                        powerQuery.equalTo('isDel',false);
-                        powerQuery.equalTo('product',passage.get('product'));
-                        powerQuery.equalTo('emp',card.get('emp'));
-                        powerQuery.first().then(function(power){
-                            power.increment('used',1);
-                            power.save();
-                        });
-                    }
+                    /*if(record.result){
+                        let powerQuery=new AV.Query('EmployeePower');
+                            powerQuery.equalTo('isDel',false);
+                            powerQuery.equalTo('product',passage.get('product'));
+                            powerQuery.equalTo('emp',card.get('emp'));
+                            powerQuery.first().then(function(power){
+                                power.increment('used',record.count*1);
+                                power.save();
+                            });
+                    }*/
                     callback(null,obj);
                 },function(error){
                     callback(null,error);
