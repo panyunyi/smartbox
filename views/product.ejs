@@ -23,6 +23,7 @@
                                         <th>产品名称</th>
                                         <th>产品分类</th>
                                         <th>产品编码</th>
+                                        <th>老SKU</th>
                                         <th>单位</th>
                                         <th>单价</th>
                                         <th>规格</th>
@@ -89,6 +90,7 @@ $(document).ready(function() {
             { label: '产品名称', name: 'name' },
             { label: '产品分类',  name: 'assort',type:'select'},
             { label: '产品编码',  name: 'sku'  },
+            { label: '产品编码',  name: 'oldsku'  },
             { label: '单位',  name: 'unit'  },
             { label: '单价',  name: 'price'  },
             { label: '规格',  name: 'spec'  },
@@ -127,6 +129,7 @@ $(document).ready(function() {
             { "data": "name" },
             { "data": "type" },
             { "data": "sku" },
+            { "data": "oldsku" },
             { "data": "unit" },
             { "data": "price",render: $.fn.dataTable.render.number( ',', '.', 0, '¥' ) },
             { "data": "spec" },

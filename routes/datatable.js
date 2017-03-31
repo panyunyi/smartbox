@@ -211,6 +211,7 @@ router.get('/product',function(req,res){
                 result.set('price',result.get('price'));
                 result.set('spec',result.get('spec')?result.get('spec'):"");
                 result.set('sku',result.get('sku')?result.get('sku'):"");
+                result.set('sku',result.get('oldsku')?result.get('oldsku'):"");
                 callback(null,result);
             },function(err,data){
                 resdata["data"]=data;
@@ -258,6 +259,7 @@ router.post('/product/add',function(req,res){
     product.set('price',arr['data[0][price]']?arr['data[0][price]']*1:0);
     product.set('warning',arr['data[0][warning]']?arr['data[0][warning]']*1:0);
     product.set('sku',arr['data[0][sku]']);
+    product.set('oldsku',arr['data[0][oldsku]']);
     product.set('isDel',false);
     product.save().then(function(pro){
         var data=[];
@@ -289,6 +291,7 @@ router.put('/product/edit/:id',function(req,res){
     product.set('price',arr['data['+id+'][price]']*1);
     product.set('warning',arr['data['+id+'][warning]']*1);
     product.set('sku',arr['data['+id+'][sku]']);
+    product.set('oldsku',arr['data['+id+'][oldsku]']);
     product.set('isDel',false);
     product.save().then(function(pro){
         var data=[];
