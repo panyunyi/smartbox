@@ -154,7 +154,7 @@ router.get('/:id', function(req, res) {
     boxQuery.first().then(function (data){
         if (typeof(data) == "undefined") {
           let result={
-            status:1,
+            status:201,
             message:"无此设备号的数据",
             data:{},
             server_time:new Date()
@@ -167,7 +167,7 @@ router.get('/:id', function(req, res) {
     },function (error){
         console.log(error);
         let result={
-          status:2,
+          status:202,
           message:"查询失败",
           data:{},
           server_time:new Date()
@@ -186,7 +186,7 @@ router.get('/:id/:stamp', function(req, res) {
     boxQuery.first().then(function (data){
         if (typeof(data) == "undefined") {
           let result={
-            status:1,
+            status:201,
             message:"无此设备号的数据",
             data:{},
             server_time:new Date()
@@ -199,7 +199,7 @@ router.get('/:id/:stamp', function(req, res) {
     },function (error){
         console.log(error);
         let result={
-          status:2,
+          status:202,
           message:"查询失败",
           data:{},
           server_time:new Date()
