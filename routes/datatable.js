@@ -247,69 +247,90 @@ router.get('/product',function(req,res){
 //增加产品
 var Product = AV.Object.extend('Product');
 router.post('/product/add',function(req,res){
-    var arr=req.body;
-    var product=new Product();
-    product.set('name',arr['data[0][name]']);
-    product.set('unit',arr['data[0][unit]']);
-    var type=AV.Object.createWithoutData('Assortment', arr['data[0][assort]']);
-    product.set('type',type);
-    product.set('stockDays',arr['data[0][stockDays]']?arr['data[0][stockDays]']*1:1);
-    product.set('spec',arr['data[0][spec]']);
-    product.set('cue',arr['data[0][cue]']?arr['data[0][cue]']*1:0);
-    product.set('price',arr['data[0][price]']?arr['data[0][price]']*1:0);
-    product.set('warning',arr['data[0][warning]']?arr['data[0][warning]']*1:0);
-    product.set('sku',arr['data[0][sku]']);
-    product.set('oldsku',arr['data[0][oldsku]']);
-    product.set('isDel',false);
-    product.save().then(function(pro){
-        var data=[];
-        pro.set('DT_RowId',pro.id);
-        pro.set('typeId',pro.get('type').id);
-        pro.set('price',pro.get('price'));
-        pro.set('spec',pro.get('spec')?pro.get('spec'):"");
-        type.fetch().then(function(){
-            pro.set('type',type.get('name'));
-            data.push(pro);
-            res.jsonp({"data":data});
-        });
-    },function(error){
-        console.log(error);
+    let arr=req.body;
+    let product=new Product();
+    let productQuery=new AV.Query('Product');
+    productQuery.equalTo('isDel',false);
+    productQuery.equalTo('sku',arr['data[0][sku]']);
+    productQuery.count().then(function(count){
+        if(count>0){
+            res.jsonp({"data":[],"fieldErrors":[{"name":"sku","status":arr['data[0][sku]']+"已存在"}]});
+        }else{
+            product.set('name',arr['data[0][name]']);
+            product.set('unit',arr['data[0][unit]']);
+            let type=AV.Object.createWithoutData('Assortment', arr['data[0][assort]']);
+            product.set('type',type);
+            product.set('stockDays',arr['data[0][stockDays]']?arr['data[0][stockDays]']*1:1);
+            product.set('spec',arr['data[0][spec]']);
+            product.set('cue',arr['data[0][cue]']?arr['data[0][cue]']*1:0);
+            product.set('price',arr['data[0][price]']?arr['data[0][price]']*1:0);
+            product.set('warning',arr['data[0][warning]']?arr['data[0][warning]']*1:0);
+            product.set('sku',arr['data[0][sku]']);
+            product.set('oldsku',arr['data[0][oldsku]']);
+            product.set('isDel',false);
+            product.save().then(function(pro){
+                let data=[];
+                pro.set('DT_RowId',pro.id);
+                pro.set('typeId',pro.get('type').id);
+                pro.set('price',pro.get('price'));
+                pro.set('spec',pro.get('spec')?pro.get('spec'):"");
+                type.fetch().then(function(){
+                    pro.set('type',type.get('name'));
+                    data.push(pro);
+                    res.jsonp({"data":data});
+                });
+            },function(error){
+                console.log(error);
+            });
+        }
     });
+    
 });
 //更新产品资料
 router.put('/product/edit/:id',function(req,res){
-    var arr=req.body;
-    var id=req.params.id;
-    var product = AV.Object.createWithoutData('Product', id);
-    product.set('name',arr['data['+id+'][name]']);
-    product.set('unit',arr['data['+id+'][unit]']);
-    var type=AV.Object.createWithoutData('Assortment', arr['data['+id+'][assort]']);
-    product.set('type',type);
-    product.set('stockDays',arr['data['+id+'][stockDays]']*1);
-    product.set('spec',arr['data['+id+'][spec]']);
-    product.set('cue',arr['data['+id+'][cue]']*1);
-    product.set('price',arr['data['+id+'][price]']*1);
-    product.set('warning',arr['data['+id+'][warning]']*1);
-    product.set('sku',arr['data['+id+'][sku]']);
-    product.set('oldsku',arr['data['+id+'][oldsku]']);
-    product.set('isDel',false);
-    product.save().then(function(pro){
-        var data=[];
-        pro.set('DT_RowId',pro.id);
-        pro.set('typeId',pro.get('type').id);
-        pro.set('price',pro.get('price'));
-        pro.set('spec',pro.get('spec')?pro.get('spec'):"");
-        type.fetch().then(function(){
-            pro.set('type',type.get('name'));
-            data.push(pro);
-            res.jsonp({"data":data});
-        });
+    let arr=req.body;
+    let id=req.params.id;
+    let productQuery=new AV.Query('Product');
+    productQuery.equalTo('isDel',false);
+    productQuery.equalTo('sku',arr['data['+id+'][sku]']);
+    productQuery.count().then(function(count){
+        if(count>0){
+            res.jsonp({"data":[],"fieldErrors":[{"name":"sku","status":arr['data['+id+'][sku]']+"已存在"}]});
+        }else{
+            let product = AV.Object.createWithoutData('Product', id);
+            product.set('name',arr['data['+id+'][name]']);
+            product.set('unit',arr['data['+id+'][unit]']);
+            let type=AV.Object.createWithoutData('Assortment', arr['data['+id+'][assort]']);
+            product.set('type',type);
+            product.set('stockDays',arr['data['+id+'][stockDays]']*1);
+            product.set('spec',arr['data['+id+'][spec]']);
+            product.set('cue',arr['data['+id+'][cue]']*1);
+            product.set('price',arr['data['+id+'][price]']*1);
+            product.set('warning',arr['data['+id+'][warning]']*1);
+            product.set('sku',arr['data['+id+'][sku]']);
+            product.set('oldsku',arr['data['+id+'][oldsku]']);
+            product.set('isDel',false);
+            product.save().then(function(pro){
+                let data=[];
+                pro.set('DT_RowId',pro.id);
+                pro.set('typeId',pro.get('type').id);
+                pro.set('price',pro.get('price'));
+                pro.set('spec',pro.get('spec')?pro.get('spec'):"");
+                type.fetch().then(function(){
+                    pro.set('type',type.get('name'));
+                    data.push(pro);
+                    res.jsonp({"data":data});
+                });
+            },function(err){
+                console.log(err);
+            });
+        }
     });
 });
 //删除产品
 router.delete('/product/remove/:id',function(req,res){
-    var id=req.params.id;
-    var product = AV.Object.createWithoutData('Product', id);
+    let id=req.params.id;
+    let product = AV.Object.createWithoutData('Product', id);
     product.set('isDel',true);
     product.save().then(function(){
         res.jsonp({"data":[]});
@@ -317,7 +338,7 @@ router.delete('/product/remove/:id',function(req,res){
 });
 //产品分类
 router.get('/category',function(req,res){
-    var query=new AV.Query('Assortment');
+    let query=new AV.Query('Assortment');
     query.equalTo('isDel',false);
     query.find().then(function(results){
         results.forEach(function(result){
@@ -329,12 +350,12 @@ router.get('/category',function(req,res){
 //增加产品分类
 var Assortment = AV.Object.extend('Assortment');
 router.post('/category/add',function(req,res){
-    var arr=req.body;
-    var assortment=new Assortment();
+    let arr=req.body;
+    let assortment=new Assortment();
     assortment.set('name',arr['data[0][name]']);
     assortment.set('isDel',false);
     assortment.save().then(function(ass){
-        var data=[];
+        let data=[];
         ass.set('DT_RowId',ass.id);
         data.push(ass);
         res.jsonp({"data":data});
@@ -342,12 +363,12 @@ router.post('/category/add',function(req,res){
 });
 //更新产品分类
 router.put('/category/edit/:id',function(req,res){
-    var arr=req.body;
-    var id=req.params.id;
-    var assortment = AV.Object.createWithoutData('Assortment', id);
+    let arr=req.body;
+    let id=req.params.id;
+    let assortment = AV.Object.createWithoutData('Assortment', id);
     assortment.set('name',arr['data['+id+'][name]']);
     assortment.save().then(function(ass){
-        var data=[];
+        let data=[];
         ass.set('DT_RowId',ass.id);
         data.push(ass);
         res.jsonp({"data":data});
@@ -355,8 +376,8 @@ router.put('/category/edit/:id',function(req,res){
 });
 //删除产品分类
 router.delete('/category/remove/:id',function(req,res){
-    var id=req.params.id;
-    var assortment = AV.Object.createWithoutData('Assortment', id);
+    let id=req.params.id;
+    let assortment = AV.Object.createWithoutData('Assortment', id);
     assortment.set('isDel',true);
     assortment.save().then(function(){
         res.jsonp({"data":[]});
@@ -364,9 +385,9 @@ router.delete('/category/remove/:id',function(req,res){
 });
 //客户产品管理
 router.get('/customerProduct',function(req,res){
-    var resdata={};
+    let resdata={};
     function promise1(callback1){
-        var query=new AV.Query('CustomerProduct');
+        let query=new AV.Query('CustomerProduct');
         query.equalTo('isDel',false);
         query.include('product');
         query.include('cusId');
@@ -386,7 +407,7 @@ router.get('/customerProduct',function(req,res){
         });
     }
     function promise2(callback1){
-        var query=new AV.Query('Customer');
+        let query=new AV.Query('Customer');
         query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback){
@@ -399,11 +420,11 @@ router.get('/customerProduct',function(req,res){
         });
     }
     function promise3(callback1){
-        var query=new AV.Query('Product');
+        let query=new AV.Query('Product');
         query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback){
-                result.set('label',result.get('name'));
+                result.set('label',result.get('sku')+" "+result.get('name'));
                 result.set('value',result.id);
                 callback(null,result);
             },function(err,data){
@@ -428,8 +449,8 @@ router.get('/customerProduct',function(req,res){
 //增加客户产品
 var CusProduct = AV.Object.extend('CustomerProduct');
 router.post('/cusproduct/add',function(req,res){
-    var arr=req.body;
-    var product=new CusProduct();
+    let arr=req.body;
+    let product=new CusProduct();
     product.set('cusProductPrice',arr['data[0][cusProductPrice]']*1);
     let proobj=AV.Object.createWithoutData('Product', arr['data[0][productId]']);
     product.set('product',proobj);
@@ -437,7 +458,7 @@ router.post('/cusproduct/add',function(req,res){
     product.set('cusId',cus);
     product.set('isDel',false);
     product.save().then(function(pro){
-        var data=[];
+        let data=[];
         pro.set('DT_RowId',pro.id);
         pro.set('cusId',pro.get('cusId').id);
         pro.set('productId',pro.get('product').id);
@@ -458,7 +479,7 @@ router.post('/cusproduct/add',function(req,res){
 router.put('/cusproduct/edit/:id',function(req,res){
     let arr=req.body;
     let id=req.params.id;
-    var product = AV.Object.createWithoutData('CustomerProduct', id);
+    let product = AV.Object.createWithoutData('CustomerProduct', id);
     product.set('cusProductPrice',arr['data['+id+'][cusProductPrice]']*1);
     let proobj=AV.Object.createWithoutData('Product', arr['data['+id+'][productId]']);
     product.set('product',proobj);
@@ -466,7 +487,7 @@ router.put('/cusproduct/edit/:id',function(req,res){
     product.set('cusId',cus);
     product.set('isDel',false);
     product.save().then(function(pro){
-        var data=[];
+        let data=[];
         pro.set('DT_RowId',pro.id);
         pro.set('cusId',pro.get('cusId').id);
         pro.set('productId',pro.get('product').id);
@@ -485,8 +506,8 @@ router.put('/cusproduct/edit/:id',function(req,res){
 });
 //删除客户产品
 router.delete('/cusproduct/remove/:id',function(req,res){
-    var id=req.params.id;
-    var cusproduct = AV.Object.createWithoutData('CustomerProduct', id);
+    let id=req.params.id;
+    let cusproduct = AV.Object.createWithoutData('CustomerProduct', id);
     cusproduct.set('isDel',true);
     cusproduct.save().then(function(){
         res.jsonp({"data":[]});
@@ -796,11 +817,10 @@ router.put('/employee/edit/:id',function(req,res){
                         cardObj.set('cusId',cus);
                         cardObj.set('card',card);
                         cardObj.set('emp',emp);
-                        cardObj.save().then(function(ca){
-                            cardArr.push(card);
-                            callback(null,1);
-                        });
+                        cardObj.save();
                     }
+                    cardArr.push(card);
+                    callback(null,1);
                 });
             }else {
                 callback(null,0);
