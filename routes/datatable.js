@@ -284,7 +284,7 @@ router.post('/product/add',function(req,res){
             });
         }
     });
-    
+
 });
 //更新产品资料
 router.put('/product/edit/:id',function(req,res){
@@ -1752,7 +1752,7 @@ router.get('/summary/:date',function(req,res){
                                 callback6(null,1);
                             },function(err,cusprosres){
                                 callback2(null,take);
-                            });  
+                            });
                         }
                     },function(err,takeres){
                         if(boxData['count']>0){
@@ -1811,6 +1811,157 @@ router.get('/summary/:date',function(req,res){
         }
     ],function(err,results){
         return res.jsonp(resdata);
+    });
+});
+
+//上传excel
+var multer  = require('multer');
+var upload = multer({ dest: './public/upload' }).single('xlsx_file');
+var xlsx = require('node-xlsx');
+var fs = require('fs');
+router.post('/empUpload', function (req, res) {
+    let rescontent="";
+    let cusObj=AV.Object.createWithoutData('Customer','58455ef50ce463005781af58');
+    function uploadUser(data,file,res){
+        let i=0;
+        async.map(data,function(arr,callback1){
+            if(i!=0){
+                let empQuery=new AV.Query('Employee');
+                empQuery.equalTo('isDel',false);
+                empQuery.equalTo('cusId',cusObj);
+                empQuery.equalTo('empNo',arr[1].toString());
+                empQuery.count().then(function(count){
+                    if(count==0){
+                        let employee=new Employee();
+                        employee.set('empNo',arr[1].toString());
+                        employee.set('name',arr[2]);
+                        employee.set('sex',1);
+                        employee.set('job',arr[5]);
+                        employee.set('dept',arr[4]);
+                        employee.set('cusId',cusObj);
+                        employee.set('isDel',false);
+                        employee.save().then(function(emp){
+                            let cardQuery=new AV.Query('EmployeeCard');
+                            cardQuery.equalTo('isDel',false);
+                            cardQuery.equalTo('card',arr[3].toString());
+                            cardQuery.equalTo('cusId',cusObj);
+                            cardQuery.count().then(function(cardcount){
+                                if(cardcount==0){
+                                    let card=new EmpCard();
+                                    card.set('card',arr[3].toString());
+                                    card.set('emp',emp);
+                                    card.set('cusId',cusObj);
+                                    card.set('isDel',false);
+                                    card.save().then(function(){
+                                        callback1(null,arr[1].toString());
+                                    });
+                                }else {
+                                    rescontent+="卡号:"+arr[3]+"已存在;<br>";
+                                    callback1(null,0);
+                                }
+                            });
+                        });
+                    }else {
+                        rescontent+="工号:"+arr[1]+"已存在;<br>";
+                        callback1(null,0);
+                    }
+                });
+            }else {
+                callback1(null,0);
+            }
+            i++;
+        },function(err,results){
+            fs.unlinkSync(file);
+            res.send("员工信息导入完成。<br>"+rescontent);
+        });
+    }
+    function uploadPower(data,file,res){
+        let i=0;
+        async.map(data,function(arr,callback){
+            if(i!=0){
+                let empQuery=new AV.Query('Employee');
+                empQuery.equalTo('isDel',false);
+                empQuery.equalTo('cusId',cusObj);
+                empQuery.equalTo('empNo',arr[1].toString());
+                empQuery.first().then(function(emp){
+                    if(typeof(emp)=="undefined"){
+                        rescontent+="未找到工号"+arr[1].toString()+"的信息;<br>";
+                        return callback(null,0);
+                    }
+                    let productQuery=new AV.Query('Product');
+                    productQuery.equalTo('isDel',false);
+                    productQuery.equalTo('sku',arr[2]);
+                    productQuery.first().then(function(product){
+                        if(typeof(product)=="undefined"){
+                            rescontent+="未找到产品编号"+arr[2]+"的信息;<br>";
+                            return callback(null,0);
+                        }
+                        let empPowerQuery=new AV.Query('EmployeePower');
+                        empPowerQuery.equalTo('isDel',false);
+                        empPowerQuery.equalTo('emp',emp);
+                        empPowerQuery.equalTo('product',product);
+                        empPowerQuery.count().then(function(count){
+                            if(count>0){
+                                rescontent+="工号"+arr[1]+"产品编号"+arr[2]+
+                                "领料周期"+arr[3]+"周期单位"+arr[4]+"期间领料数"+arr[5]
+                                +"已存在<br>";
+                                return callback(null,0);
+                            }
+                            let power=new EmpPower();
+                            power.set('emp',emp);
+                            power.set('cusId',cusObj);
+                            power.set('product',product);
+                            let unit="day";
+                            if(arr[4]=="月"){
+                                unit="month";
+                            }else if(arr[4]=="日"){
+                                unit="day";
+                            }else if (arr[4]=="周") {
+                                unit="week";
+                            }
+                            power.set('unit',unit);
+                            power.set('count',arr[5]*1);
+                            power.set('period',arr[3]*1);
+                            power.set('isDel',false);
+                            power.save().then(function(p){
+                                return callback(null,p);
+                            });
+                        });
+                    });
+                });
+            }else {
+                callback(null,0);
+            }
+            i++;
+        },function(err,results){
+            fs.unlinkSync(file);
+            res.send("员工权限导入完成。<br>"+rescontent);
+        });
+    }
+    upload(req, res, function (err) {
+        let flag=req.body.radio;
+        if (err) {
+            return res.send("上传失败:"+err);
+        }
+        if(typeof(req.file)=="undefined"){
+            return res.send("请选择上传文件");
+        }
+        let obj = xlsx.parse(req.file.path);
+        let excelObj=obj[0].data;
+        let data = [];
+        for(let i in excelObj){
+            let arr=[];
+            let value=excelObj[i];
+            for(let j in value){
+                arr.push(value[j]);
+            }
+            data.push(arr);
+        }
+        if(flag==1){
+            uploadUser(data,req.file.path,res);
+        }else if(flag==2){
+            uploadPower(data,req.file.path,res);
+        }
     });
 });
 module.exports = router;

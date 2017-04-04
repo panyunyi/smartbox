@@ -51,7 +51,7 @@ app.get('/logout',function(req,res){
 });
 
 app.use('/api/json',datatable);
-app.use('/api/getData',getData);
+app.use('/api/getData1',getData);
 app.use('/api/takeout',takeout);
 app.use('/api/borrow',borrow);
 app.use('/api/return',back);

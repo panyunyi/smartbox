@@ -153,4 +153,12 @@ router.get('/morris', function(req, res) {
     	res.redirect('../login');
     }
 });
+
+router.get('/empimport', function(req, res) {
+    if(req.currentUser){
+    	res.render('empimport');
+    }else{
+    	res.redirect('../login');
+    }
+});
 module.exports = router;
