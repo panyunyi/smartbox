@@ -162,8 +162,7 @@ router.get('/:id/:card/:passage/:count', function(req, res) {
     let card=req.params.card;
     let passage=req.params.passage;
     let count=req.params.count;
-    let todo={"ip":req.headers['x-real-ip'],"api":"多次取货判断接口","deviceId":deviceId,"msg":"card:"+card+",passage:"+passage,
-    "count":count};
+    let todo={"ip":req.headers['x-real-ip'],"api":"多次取货判断接口","deviceId":deviceId,"msg":"card:"+card+",passage:"+passage+",count:"+count};
     ApiLog.WorkOn(todo);
     let boxQuery=new AV.Query('BoxInfo');
     boxQuery.equalTo('deviceId',deviceId);
@@ -180,7 +179,7 @@ router.get('/:id/:card/:passage/:count', function(req, res) {
           return;
         }
         let cus=box.get('cusId');
-        doWork(cus,box,deviceId,card,passage,res,count);
+        doWork(cus,box,deviceId,card,passage,res,count*1);
     },function (error){
         console.log(error);
         let result={

@@ -706,7 +706,6 @@ router.get('/employee',function(req,res){
                         //     callback1(null,result);
                         // });
                     },function(err,data){
-                        console.log(data.length);
                         resdata["data"]=data;
                         callback(null,data);
                         //callback3(null,data);
@@ -785,8 +784,7 @@ router.post('/employee/add',function(req,res){
                             callback(null,1);
                         });
                     }else {
-                        emp.set('isDel',true);
-                        emp.save();
+                        emp.destroy();
                         errArr.push({"name":"card","status":card+"已存在"});
                         callback(null,0);
                     }
@@ -851,16 +849,45 @@ router.put('/employee/edit/:id',function(req,res){
                 callback(null,0);
             }
         },function(err,results){
-            emp.set('card',cardArr);
-            emp.set('DT_RowId',emp.id);
-            cus.fetch().then(function(c){
-                emp.set('cus',c.get('name'));
-                data.push(emp);
-                if(errArr.length>0){
-                    res.jsonp({"data":data,"fieldErrors":errArr});
-                }else {
-                    res.jsonp({"data":data});
-                }
+            function promise1(callback1){
+                let cardQuery=new AV.Query('EmployeeCard');
+                cardQuery.equalTo('isDel',false);
+                cardQuery.equalTo('emp',emp);
+                cardQuery.find().then(function(cardsObj){
+                    cardsObj.forEach(function(cardobj){
+                        if(cardArr.indexOf(cardobj.get('card'))==-1){
+                            cardobj.set('isDel',true);
+                            cardobj.save();
+                        }else {
+                            cardobj.set('cusId',cus);
+                            cardobj.save();
+                        }
+                        callback1(null,cardobj);
+                    });
+                });
+            }
+            function promise2(callback1) {
+                emp.set('card',cardArr);
+                emp.set('DT_RowId',emp.id);
+                cus.fetch().then(function(c){
+                    emp.set('cus',c.get('name'));
+                    emp.set('cusId',c.id);
+                    data.push(emp);
+                    callback1(null,c);
+                });
+            }
+            async.parallel([
+                function (callback){
+                    promise1(callback);
+                },
+                function (callback){
+                    promise2(callback);
+                }],function(err,results){
+                    if(errArr.length>0){
+                        res.jsonp({"data":data,"fieldErrors":errArr});
+                    }else {
+                        res.jsonp({"data":data});
+                    }
             });
         });
     },function(error){
@@ -1098,7 +1125,8 @@ router.get('/box',function(req,res){
         query.include('cusId');
         query.find().then(function(results){
             async.map(results,function(result,callback){
-                result.set('cusId',result.get('cusId').get('name'));
+                result.set('cus',result.get('cusId').get('name'));
+                result.set('cusId',result.get('cusId').id);
                 result.set('DT_RowId',result.id);
                 callback(null,result);
             },function(err,data){
@@ -1156,7 +1184,7 @@ router.post('/box/add',function(req,res){
         var data=[];
         b.set('DT_RowId',b.id);
         cus.fetch().then(function(c){
-            b.set('cusId',c.get('name'));
+            b.set('cus',c.get('name'));
             data.push(b);
             res.jsonp({"data":data});
         },function(err){
@@ -1191,7 +1219,7 @@ router.put('/box/edit/:id',function(req,res){
         var data=[];
         b.set('DT_RowId',b.id);
         cus.fetch().then(function(c){
-            b.set('cusId',c.get('name'));
+            b.set('cus',c.get('name'));
             data.push(b);
             res.jsonp({"data":data});
         },function(err){
@@ -1922,9 +1950,8 @@ router.post('/empUpload', function (req, res) {
                         empPowerQuery.equalTo('product',product);
                         empPowerQuery.count().then(function(count){
                             if(count>0){
-                                rescontent+="工号"+arr[1]+"产品编号"+arr[2]+
-                                "领料周期"+arr[3]+"周期单位"+arr[4]+"期间领料数"+arr[5]
-                                +"已存在<br>";
+                                rescontent+="工号"+arr[1]+"领取产品"+arr[2]+
+                                arr[3]+arr[4]+arr[5]+"次的权限已存在<br>";
                                 return callback(null,0);
                             }
                             let power=new EmpPower();
@@ -1984,4 +2011,7 @@ router.post('/empUpload', function (req, res) {
         }
     });
 });
+function PrefixInteger(num, n) {
+    return (Array(n).join(0) + num).slice(-n);
+}
 module.exports = router;
