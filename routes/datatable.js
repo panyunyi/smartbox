@@ -649,54 +649,79 @@ router.get('/employee',function(req,res){
         let query=new AV.Query('Employee');
         query.include('cusId');
         query.equalTo('isDel',false);
-        query.limit(1000);
-        query.find().then(function(results){
-            function cardPromise(callback3){
-                let cardQuery=new AV.Query('EmployeeCard');
-                cardQuery.equalTo('isDel',false);
-                cardQuery.equalTo('cusId',results[0].get('cusId'));
-                cardQuery.limit(1000);
-                cardQuery.find().then(function(cards){
-                    callback3(null,cards);
+        query.count().then(function(count){
+            let num=Math.ceil(count/1000);
+            let emps=[];
+            async.times(num,function(n,callback4){
+                query.limit(1000);
+                query.skip(1000*n);
+                query.find().then(function(results){
+                    emps=emps.concat(results);
+                    callback4(null,results);
                 });
-            }
-            function resultsPromise(cards,callback3){
-                async.map(results,function(result,callback1){
-                    result.set('DT_RowId',result.id);
-                    result.set('isDel',result.get('isDel')?"停用":"启用");
-                    result.set('sex',result.get('sex'));
-                    result.set('cus',result.get('cusId').get('name'));
-                    result.set('cusId',result.get('cusId').id);
-                    result.set('job',result.get('job')?result.get('job'):"");
-                    result.set('phone',result.get('phone')?result.get('phone'):"");
-                    result.set('notice',result.get('notice')?result.get('notice'):"");
-                    result.set('dept',result.get('dept')?result.get('dept'):"");
-                    let arr=[];
-                    async.map(cards,function(card,callback2){
-                        if(card.get('emp').id==result.id){
-                            arr.push(card.get('card'));
-                            callback2(null,1);
-                        }else {
-                            callback2(null,0);
-                        }
-                    },function(err,cardsdata){
-                        result.set('card',arr);
-                        callback1(null,result);
+            },function(err,empsres){
+                // function cardPromise(callback3){
+                //     let cardQuery=new AV.Query('EmployeeCard');
+                //     cardQuery.equalTo('isDel',false);
+                //     cardQuery.equalTo('cusId',emps[0].get('cusId'));
+                //     cardQuery.limit(1000);
+                //     cardQuery.find().then(function(cards){
+                //         callback3(null,cards);
+                //     });
+                // }
+                //function resultsPromise(callback3){
+                    async.map(emps,function(result,callback1){
+                        result.set('DT_RowId',result.id);
+                        result.set('isDel',result.get('isDel')?"停用":"启用");
+                        result.set('sex',result.get('sex'));
+                        result.set('cus',result.get('cusId').get('name'));
+                        result.set('cusId',result.get('cusId').id);
+                        result.set('job',result.get('job')?result.get('job'):"");
+                        result.set('phone',result.get('phone')?result.get('phone'):"");
+                        result.set('notice',result.get('notice')?result.get('notice'):"");
+                        result.set('dept',result.get('dept')?result.get('dept'):"");
+                        let arr=[];
+                        let cardQuery=new AV.Query('EmployeeCard');
+                        cardQuery.equalTo('isDel',false);
+                        cardQuery.equalTo('emp',result);
+                        cardQuery.find().then(function(cards){
+                            cards.forEach(function(card){
+                                arr.push(card.get('card'));
+                            });
+                            result.set('card',arr);
+                            callback1(null,result);
+                        },function(err){
+                            //console.log(err);
+                            callback1(err);
+                        });
+                        // async.map(cards,function(card,callback2){
+                        //     if(card.get('emp').id==result.id){
+                        //         arr.push(card.get('card'));
+                        //         callback2(null,1);
+                        //     }else {
+                        //         callback2(null,0);
+                        //     }
+                        // },function(err,cardsdata){
+                        //     result.set('card',arr);
+                        //     callback1(null,result);
+                        // });
+                    },function(err,data){
+                        console.log(data.length);
+                        resdata["data"]=data;
+                        callback(null,data);
+                        //callback3(null,data);
                     });
-                },function(err,data){
-                    resdata["data"]=data;
-                    callback3(null,data);
-                });
-            }
-            async.waterfall([
-                function (callback3){
-                    cardPromise(callback3);
-                },
-                function(cards,callback3){
-                    resultsPromise(cards,callback3);
-                }
-            ],function(err,results){
-                callback(null,results);
+                //}
+                // async.parallel([
+                //     // function (callback3){
+                //     //     cardPromise(callback3);
+                //     // },
+                //     function(callback3){
+                //         resultsPromise(callback3);
+                //     }
+                // ],function(err,results){
+                //     callback(null,results);
+                // });
             });
         });
     }
@@ -1715,19 +1740,14 @@ router.get('/summary/:date',function(req,res){
         }
         query.greaterThanOrEqualTo('time',new Date(start));
         query.lessThan('time',new Date(end));
-        query.limit(1000);
         query.include('product');
-        query.find().then(function(results){
-            let num=Math.ceil(results.length/1000);
+        query.count().then(function(count){
+            let num=Math.ceil(count/1000);
             let takes=[];
             async.times(num,function(n,callback5){
                 query.skip(1000*n);
                 query.find().then(function(results){
-                    if(n==0){
-                        takes=results;
-                    }else {
-                        takes.concat(results);
-                    }
+                    takes=takes.concat(results);
                     callback5(null,n);
                 });
             },function(err,takesres){

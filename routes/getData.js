@@ -13,6 +13,7 @@ function doWork(cus,box,res,ts){
           query.equalTo('isDel',false);
       }
       query.select(['card','isDel']);
+      query.limit(1000);
       query.find().then(function (results) {
           data["AdminCard"]=results;
           return callback(null,results);
@@ -29,6 +30,7 @@ function doWork(cus,box,res,ts){
       if(new Date(0)==ts){
           query.equalTo('isDel',false);
       }
+      query.limit(1000);
       query.find().then(function (results) {
           async.map(results,function(result,callback1){
               let one={"cusProductName":result.get('product').get('name'),
@@ -52,19 +54,27 @@ function doWork(cus,box,res,ts){
             query.equalTo('isDel',false);
         }
         query.equalTo('cusId',cus);
-        query.find().then(function (results) {
-            async.map(results,function(result,callback1){
-                let one={"card":result.get('card'),"emp":result.get('emp').id,
-                "isDel":result.get('isDel'),"createdAt":result.get('createdAt'),
-                "updatedAt":result.get('updatedAt'),"objectId":result.id};
-                callback1(null,one);
-            },function(err,ones){
-                data["EmpCard"]=ones;
-                return callback(null,results);
+        query.count().then(function(count){
+            let num=Math.ceil(count/1000);
+            let empcards=[];
+            async.times(num,function(n,callback2){
+                query.limit(1000);
+                query.skip(1000*n);
+                query.find().then(function(results){
+                    empcards=empcards.concat(results);
+                    callback2(null,results);
+                });
+            },function(err,empcardres){
+                async.map(empcards,function(result,callback1){
+                    let one={"card":result.get('card'),"emp":result.get('emp').id,
+                    "isDel":result.get('isDel'),"createdAt":result.get('createdAt'),
+                    "updatedAt":result.get('updatedAt'),"objectId":result.id};
+                    callback1(null,one);
+                },function(err,ones){
+                    data["EmpCard"]=ones;
+                    return callback(null,ones);
+                });
             });
-        }, function (error) {
-            // 异常处理
-            return callback(error)
         });
     }
     function promise4(callback){
@@ -74,23 +84,31 @@ function doWork(cus,box,res,ts){
             query.equalTo('isDel',false);
         }
         query.equalTo('cusId',cus);
-        query.find().then(function (results) {
-            async.map(results,function(result,callback1){
-                let one={"emp":result.get('emp').id,"unit":result.get('unit'),
-                "begin":result.get('begin'),"isDel":result.get('isDel'),
-                "product":result.get('product').id,"count":result.get('count'),
-                "period":result.get('period'),"used":result.get('used'),
-                "createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt'),
-                "objectId":result.id};
-                callback1(null,one);
-            },function(err,ones){
-                data["EmpPower"]=ones;
-                return callback(null,results);
+        query.count().then(function(count){
+            let num=Math.ceil(count/1000);
+            let emppowers=[];
+            async.times(num,function(n,callback2){
+                query.limit(1000);
+                query.skip(1000*n);
+                query.find().then(function(results){
+                    emppowers=emppowers.concat(results);
+                    callback2(null,results);
+                });
+            },function(err,empcardres){
+                async.map(emppowers,function(result,callback1){
+                    let one={"emp":result.get('emp').id,"unit":result.get('unit'),
+                    "begin":result.get('begin'),"isDel":result.get('isDel'),
+                    "product":result.get('product').id,"count":result.get('count'),
+                    "period":result.get('period'),"used":result.get('used'),
+                    "createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt'),
+                    "objectId":result.id};
+                    callback1(null,one);
+                },function(err,ones){
+                    data["EmpPower"]=ones;
+                    return callback(null,ones);
+                });
             });
-          }, function (error) {
-            // 异常处理
-            return callback(error)
-          });
+        });
     }
     function promise5(callback){
         let query=new AV.Query('Passage');
@@ -99,25 +117,32 @@ function doWork(cus,box,res,ts){
             query.equalTo('isDel',false);
         }
         query.equalTo('boxId',box);
-        query.find().then(function (results) {
-            async.map(results,function(result,callback1){
-                let one={"flag":result.get('flag'),"capacity":result.get('capacity'),
-                "isDel":result.get('isDel'),"seqNo":result.get('seqNo'),
-                "used":result.get('used')?result.get('used').get('id'):"",
-                "whorlSize":result.get('whorlSize'),"product":result.get('product').get('id'),
-                "borrowState":result.get('borrowState'),"stock":result.get('stock'),
-                "isSend":result.get('isSend'),"objectId":result.get('id'),
-                "createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
-                callback1(null,one);
-            },function(err,ones){
-                data["Passage"]=ones;
-                console.log("passage");
-                return callback(null,results);
+        query.count().then(function(count){
+            let num=Math.ceil(count/1000);
+            let passages=[];
+            async.times(num,function(n,callback2){
+                query.limit(1000);
+                query.skip(1000*n);
+                query.find().then(function(results){
+                    passages=passages.concat(results);
+                    callback2(null,results);
+                });
+            },function(err,passagesres){
+                async.map(passages,function(result,callback1){
+                    let one={"flag":result.get('flag'),"capacity":result.get('capacity'),
+                    "isDel":result.get('isDel'),"seqNo":result.get('seqNo'),
+                    "used":result.get('used')?result.get('used').get('id'):"",
+                    "whorlSize":result.get('whorlSize'),"product":result.get('product').get('id'),
+                    "borrowState":result.get('borrowState'),"stock":result.get('stock'),
+                    "isSend":result.get('isSend'),"objectId":result.get('id'),
+                    "createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
+                    callback1(null,one);
+                },function(err,ones){
+                    data["Passage"]=ones;
+                    return callback(null,ones);
+                });
             });
-          }, function (error) {
-            // 异常处理
-            return callback(error)
-          });
+        });
     }
     async.parallel([
         function (callback){
