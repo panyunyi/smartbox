@@ -265,7 +265,7 @@ router.post('/product/add',function(req,res){
             product.set('cue',arr['data[0][cue]']?arr['data[0][cue]']*1:0);
             product.set('price',arr['data[0][price]']?arr['data[0][price]']*1:0);
             product.set('warning',arr['data[0][warning]']?arr['data[0][warning]']*1:0);
-            product.set('sku',arr['data[0][sku]']);
+            product.set('sku',arr['data[0][sku]'].trim());
             product.set('oldsku',arr['data[0][oldsku]']);
             product.set('isDel',false);
             product.save().then(function(pro){
@@ -307,7 +307,7 @@ router.put('/product/edit/:id',function(req,res){
             product.set('cue',arr['data['+id+'][cue]']*1);
             product.set('price',arr['data['+id+'][price]']*1);
             product.set('warning',arr['data['+id+'][warning]']*1);
-            product.set('sku',arr['data['+id+'][sku]']);
+            product.set('sku',arr['data['+id+'][sku]'].trim());
             product.set('oldsku',arr['data['+id+'][oldsku]']);
             product.set('isDel',false);
             product.save().then(function(pro){
@@ -1000,7 +1000,7 @@ router.get('/empPower/:id',function(req,res){
         query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback){
-                result.set('label',result.get('name'));
+                result.set('label',result.get('sku')+" "+result.get('name'));
                 result.set('value',result.id);
                 callback(null,result);
             },function(err,data){
@@ -1917,6 +1917,7 @@ router.post('/empUpload', function (req, res) {
         let i=0;
         async.map(data,function(arr,callback){
             if(i!=0){
+                //console.log('%j',data);
                 let empQuery=new AV.Query('Employee');
                 empQuery.equalTo('isDel',false);
                 empQuery.equalTo('cusId',cusObj);
@@ -1941,7 +1942,7 @@ router.post('/empUpload', function (req, res) {
                         empPowerQuery.count().then(function(count){
                             if(count>0){
                                 rescontent+="工号"+arr[1]+"领取产品"+arr[2]+
-                                arr[3]+arr[4]+arr[5]+"次的权限已存在<br>";
+                                arr[3]+"每"+arr[4]+arr[5]+"次的权限已存在<br>";
                                 return callback(null,0);
                             }
                             let power=new EmpPower();
@@ -1990,12 +1991,18 @@ router.post('/empUpload', function (req, res) {
         for(let i in excelObj){
             let arr=[];
             let value=excelObj[i];
-            if(tempEmpNo.indexOf(value[1])==-1){
+            if(tempEmpNo.indexOf(value[1])==-1&&flag==1){
                 tempEmpNo.push(value[1]);
                 for(let j in value){
                     arr.push(value[j]);
                 }
                 data.push(arr);
+            }else if (flag==2) {
+                for(let j in value){
+                    arr.push(value[j]);
+                }
+                //if(arr.length==7)
+                    data.push(arr);
             }
         }
         if(flag==1){

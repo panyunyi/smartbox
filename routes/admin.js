@@ -156,7 +156,11 @@ router.get('/morris', function(req, res) {
 
 router.get('/empimport', function(req, res) {
     if(req.currentUser){
-    	res.render('empimport');
+        let cusQuery=new AV.Query('Customer');
+        cusQuery.equalTo('isDel',false);
+        cusQuery.find().then(function(results){
+            res.render('empimport',{"results":results});
+        });
     }else{
     	res.redirect('../login');
     }

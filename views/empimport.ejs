@@ -10,6 +10,14 @@
                         <div class="upload_form_cont">
                             <form id="upload_form" enctype="multipart/form-data" method="post" action="../api/json/empUpload">
                                 <div class="form-group">
+                                    <label>选择客户</label>
+                                    <select class="form-control" style="width:59%">
+                                        <% for(var i=0; i<results.length; i++) {%>
+                                        <option><%= results[i].get('name') %></option>
+                                        <% } %>
+                                    </select>
+                                </div>
+                                <div class="form-group">
                                     <label class="radio-inline">
                                         <input type="radio" name="radio" id="optionsRadiosInline1" value=1 checked>员工信息
                                     </label>
