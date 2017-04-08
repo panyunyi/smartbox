@@ -14,7 +14,7 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
     let onetake=new TakeOut();
     function promise1(callback){
         let cardQuery=new AV.Query('EmployeeCard');
-        cardQuery.equalTo('card',card);
+        cardQuery.contains('card',card.slice(2));
         cardQuery.equalTo('cusId',cus);
         cardQuery.equalTo('isDel',false);
         cardQuery.first().then(function(cardObj){

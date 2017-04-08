@@ -32,7 +32,7 @@ function doWork(deviceId,records,res){
                 }
                 let cardQuery=new AV.Query('EmployeeCard');
                 cardQuery.equalTo('isDel',false);
-                cardQuery.equalTo('card',record.card);
+                cardQuery.contains('card',record.card.slice(2));
                 cardQuery.first().then(function(card){
                     if(typeof(passage)=="undefined"){
                         result['message']="未找到此卡";

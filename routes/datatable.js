@@ -660,16 +660,16 @@ router.get('/employee',function(req,res){
                     callback4(null,results);
                 });
             },function(err,empsres){
-                // function cardPromise(callback3){
-                //     let cardQuery=new AV.Query('EmployeeCard');
-                //     cardQuery.equalTo('isDel',false);
-                //     cardQuery.equalTo('cusId',emps[0].get('cusId'));
-                //     cardQuery.limit(1000);
-                //     cardQuery.find().then(function(cards){
-                //         callback3(null,cards);
-                //     });
-                // }
-                //function resultsPromise(callback3){
+                function cardPromise(callback3){
+                    let cardQuery=new AV.Query('EmployeeCard');
+                    cardQuery.equalTo('isDel',false);
+                    cardQuery.equalTo('cusId',emps[0].get('cusId'));
+                    cardQuery.limit(1000);
+                    cardQuery.find().then(function(cards){
+                        callback3(null,cards);
+                    });
+                }
+                function resultsPromise(cards,callback3){
                     async.map(emps,function(result,callback1){
                         result.set('DT_RowId',result.id);
                         result.set('isDel',result.get('isDel')?"停用":"启用");
@@ -681,46 +681,33 @@ router.get('/employee',function(req,res){
                         result.set('notice',result.get('notice')?result.get('notice'):"");
                         result.set('dept',result.get('dept')?result.get('dept'):"");
                         let arr=[];
-                        let cardQuery=new AV.Query('EmployeeCard');
-                        cardQuery.equalTo('isDel',false);
-                        cardQuery.equalTo('emp',result);
-                        cardQuery.find().then(function(cards){
-                            cards.forEach(function(card){
-                                arr.push(card.get('card'));
-                            });
+                        async.map(cards,function(card,callback2){
+                            if(card.get('emp').id==result.id){
+                               arr.push(card.get('card'));
+                               callback2(null,1);
+                            }else {
+                                callback2(null,0);
+                            }
+                        },function(err,cardsdata){
                             result.set('card',arr);
                             callback1(null,result);
-                        },function(err){
-                            //console.log(err);
-                            callback1(err);
                         });
-                        // async.map(cards,function(card,callback2){
-                        //     if(card.get('emp').id==result.id){
-                        //         arr.push(card.get('card'));
-                        //         callback2(null,1);
-                        //     }else {
-                        //         callback2(null,0);
-                        //     }
-                        // },function(err,cardsdata){
-                        //     result.set('card',arr);
-                        //     callback1(null,result);
-                        // });
                     },function(err,data){
                         resdata["data"]=data;
-                        callback(null,data);
-                        //callback3(null,data);
+                        //callback(null,data);
+                        callback3(null,data);
                     });
-                //}
-                // async.parallel([
-                //     // function (callback3){
-                //     //     cardPromise(callback3);
-                //     // },
-                //     function(callback3){
-                //         resultsPromise(callback3);
-                //     }
-                // ],function(err,results){
-                //     callback(null,results);
-                // });
+                }
+                async.waterfall([
+                function (callback3){
+                        cardPromise(callback3);
+                    },
+                    function(cards,callback3){
+                        resultsPromise(cards,callback3);
+                    }
+                ],function(err,results){
+                    callback(null,results);
+                });
             });
         });
     }
@@ -1583,6 +1570,7 @@ router.get('/passtock',function(req,res){
     query.include('boxId');
     query.include('boxId.cusId');
     query.include('product');
+    query.limit(1000);
     query.find().then(function(results){
         results.forEach(function(result){
             result.set('cus',result.get('boxId').get('cusId').get('name'));
@@ -1613,6 +1601,7 @@ router.get('/pasrecord',function(req,res){
         takeoutQuery.include('box.cusId');
         takeoutQuery.include('card.emp');
         takeoutQuery.descending('createdAt');
+        takeoutQuery.limit(1000);
         takeoutQuery.find().then(function(takeouts){
             async.map(takeouts,function(takeout,callback1){
                 let machine=takeout.get('box').get('machine');

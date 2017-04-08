@@ -37,7 +37,7 @@ function doWork(deviceId,records,res){
                 obj.set('count',record.count*1);
                 obj.set('isDel',false);
                 let empCardQuery=new AV.Query('EmployeeCard');
-                empCardQuery.equalTo('card',record.card);
+                empCardQuery.contains('card',record.card.slice(2));
                 empCardQuery.equalTo('cusId',box.get('cusId'));
                 empCardQuery.first().then(function(card){
                     obj.set('card',card);
