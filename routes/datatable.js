@@ -1858,9 +1858,9 @@ var xlsx = require('node-xlsx');
 var fs = require('fs');
 router.post('/empUpload', function (req, res) {
     let rescontent="";
-    let cusObj=AV.Object.createWithoutData('Customer','58455ef50ce463005781af58');
-    function uploadUser(data,file,res){
+    function uploadUser(data,cus,file,res){
         let i=0;
+        let cusObj=AV.Object.createWithoutData('Customer',cus);
         async.map(data,function(arr,callback1){
             if(i!=0){
                 let empQuery=new AV.Query('Employee');
@@ -1913,8 +1913,9 @@ router.post('/empUpload', function (req, res) {
             res.send("员工信息导入完成。<br>"+rescontent);
         });
     }
-    function uploadPower(data,file,res){
+    function uploadPower(data,cus,file,res){
         let i=0;
+        let cusObj=AV.Object.createWithoutData('Customer',cus);
         async.map(data,function(arr,callback){
             if(i!=0){
                 //console.log('%j',data);
@@ -1929,7 +1930,7 @@ router.post('/empUpload', function (req, res) {
                     }
                     let productQuery=new AV.Query('Product');
                     productQuery.equalTo('isDel',false);
-                    productQuery.equalTo('sku',arr[2]);
+                    productQuery.equalTo('sku',arr[2].trim());
                     productQuery.first().then(function(product){
                         if(typeof(product)=="undefined"){
                             rescontent+="未找到产品编号"+arr[2]+"的信息;<br>";
@@ -1950,11 +1951,11 @@ router.post('/empUpload', function (req, res) {
                             power.set('cusId',cusObj);
                             power.set('product',product);
                             let unit="day";
-                            if(arr[4]=="月"){
+                            if(arr[4].trim()=="月"){
                                 unit="month";
-                            }else if(arr[4]=="日"){
+                            }else if(arr[4].trim()=="日"){
                                 unit="day";
-                            }else if (arr[4]=="周") {
+                            }else if (arr[4].trim()=="周") {
                                 unit="week";
                             }
                             power.set('unit',unit);
@@ -1978,6 +1979,8 @@ router.post('/empUpload', function (req, res) {
     }
     upload(req, res, function (err) {
         let flag=req.body.radio;
+        let cus=req.body.customer;
+        console.log(cus);
         if (err) {
             return res.send("上传失败:"+err);
         }
@@ -2006,9 +2009,9 @@ router.post('/empUpload', function (req, res) {
             }
         }
         if(flag==1){
-            uploadUser(data,req.file.path,res);
+            uploadUser(data,cus,req.file.path,res);
         }else if(flag==2){
-            uploadPower(data,req.file.path,res);
+            uploadPower(data,cus,req.file.path,res);
         }
     });
 });

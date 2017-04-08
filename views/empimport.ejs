@@ -11,9 +11,9 @@
                             <form id="upload_form" enctype="multipart/form-data" method="post" action="../api/json/empUpload">
                                 <div class="form-group">
                                     <label>选择客户</label>
-                                    <select class="form-control" style="width:59%">
+                                    <select class="form-control" style="width:59%" name="customer">
                                         <% for(var i=0; i<results.length; i++) {%>
-                                        <option><%= results[i].get('name') %></option>
+                                        <option value=<%= results[i].id %>><%= results[i].get('name') %></option>
                                         <% } %>
                                     </select>
                                 </div>
