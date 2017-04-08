@@ -144,6 +144,14 @@ function doWork(cus,box,res,ts){
             });
         });
     }
+    function promise6(callback){
+        let one={"machine":box.get('machine'),"model":box.get('model'),
+        "connecter":box.get('connecter'),"phone":box.get('conPhone')};
+        let arr=[];
+        arr.push(one);
+        data["Box"]=arr;
+        callback(null,arr);
+    }
     async.parallel([
         function (callback){
             promise1(callback);
@@ -159,6 +167,9 @@ function doWork(cus,box,res,ts){
         },
         function (callback){
             promise5(callback);
+        },
+        function (callback){
+            promise6(callback);
         }],function(err,results){
         var result={
             status:200,

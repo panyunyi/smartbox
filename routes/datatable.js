@@ -996,7 +996,7 @@ router.get('/empPower/:id',function(req,res){
         });
     }
     function promise2(callback1){
-        var query=new AV.Query('Product');
+        let query=new AV.Query('Product');
         query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback){
@@ -1096,8 +1096,8 @@ router.put('/empPower/edit/:id',function(req,res){
 });
 //删除权限
 router.delete('/empPower/remove/:id',function(req,res){
-    var id=req.params.id;
-    var employee = AV.Object.createWithoutData('EmployeePower', id);
+    let id=req.params.id;
+    let employee = AV.Object.createWithoutData('EmployeePower', id);
     employee.set('isDel',true);
     employee.save().then(function(){
         res.jsonp({"data":[]});
@@ -1105,9 +1105,9 @@ router.delete('/empPower/remove/:id',function(req,res){
 });
 //售货机管理
 router.get('/box',function(req,res){
-    var resdata={};
+    let resdata={};
     function promise1(callback1){
-        var query=new AV.Query('BoxInfo');
+        let query=new AV.Query('BoxInfo');
         query.equalTo('isDel',false);
         query.include('cusId');
         query.find().then(function(results){
@@ -1123,7 +1123,7 @@ router.get('/box',function(req,res){
         });
     }
     function promise2(callback1){
-        var query=new AV.Query('Customer');
+        let query=new AV.Query('Customer');
         query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback){
@@ -1135,6 +1135,7 @@ router.get('/box',function(req,res){
             });
         });
     }
+
     async.parallel([
         function (callback){
             promise1(callback);
@@ -1149,8 +1150,8 @@ router.get('/box',function(req,res){
 //增加售货机
 var Box = AV.Object.extend('BoxInfo');
 router.post('/box/add',function(req,res){
-    var arr=req.body;
-    var box=new Box();
+    let arr=req.body;
+    let box=new Box();
     box.set('address',arr['data[0][address]']);
     box.set('machine',arr['data[0][machine]']);
     box.set('deviceId',arr['data[0][deviceId]']);
@@ -1168,7 +1169,7 @@ router.post('/box/add',function(req,res){
     box.set('isLive',false);
     box.set('isDel',false);
     box.save().then(function(b){
-        var data=[];
+        let data=[];
         b.set('DT_RowId',b.id);
         cus.fetch().then(function(c){
             b.set('cus',c.get('name'));
@@ -1183,9 +1184,9 @@ router.post('/box/add',function(req,res){
 });
 //更新售货机
 router.put('/box/edit/:id',function(req,res){
-    var arr=req.body;
-    var id=req.params.id;
-    var box = AV.Object.createWithoutData('BoxInfo', id);
+    let arr=req.body;
+    let id=req.params.id;
+    let box = AV.Object.createWithoutData('BoxInfo', id);
     box.set('address',arr['data['+id+'][address]']);
     box.set('machine',arr['data['+id+'][machine]']);
     box.set('deviceId',arr['data['+id+'][deviceId]']);
@@ -1203,7 +1204,7 @@ router.put('/box/edit/:id',function(req,res){
     box.set('isLive',false);
     box.set('isDel',false);
     box.save().then(function(b){
-        var data=[];
+        let data=[];
         b.set('DT_RowId',b.id);
         cus.fetch().then(function(c){
             b.set('cus',c.get('name'));
