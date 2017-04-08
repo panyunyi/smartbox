@@ -1880,12 +1880,13 @@ router.post('/empUpload', function (req, res) {
                         employee.save().then(function(emp){
                             let cardQuery=new AV.Query('EmployeeCard');
                             cardQuery.equalTo('isDel',false);
-                            cardQuery.equalTo('card',arr[3].toString());
+                            cardQuery.equalTo('card',PrefixInteger(arr[3].toString(),10));
+                            //console.log(PrefixInteger(arr[3].toString(),10));
                             cardQuery.equalTo('cusId',cusObj);
                             cardQuery.count().then(function(cardcount){
                                 if(cardcount==0){
                                     let card=new EmpCard();
-                                    card.set('card',arr[3].toString());
+                                    card.set('card',PrefixInteger(arr[3].toString(),10));
                                     card.set('emp',emp);
                                     card.set('cusId',cusObj);
                                     card.set('isDel',false);
@@ -1985,13 +1986,17 @@ router.post('/empUpload', function (req, res) {
         let obj = xlsx.parse(req.file.path);
         let excelObj=obj[0].data;
         let data = [];
+        let tempEmpNo=[];
         for(let i in excelObj){
             let arr=[];
             let value=excelObj[i];
-            for(let j in value){
-                arr.push(value[j]);
+            if(tempEmpNo.indexOf(value[1])==-1){
+                tempEmpNo.push(value[1]);
+                for(let j in value){
+                    arr.push(value[j]);
+                }
+                data.push(arr);
             }
-            data.push(arr);
         }
         if(flag==1){
             uploadUser(data,req.file.path,res);
