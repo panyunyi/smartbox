@@ -1424,9 +1424,9 @@ router.post('/passage/add',function(req,res){
 //更新货道'+id+'
 router.put('/passage/edit/:id',function(req,res){
     let flag=['A','B','C','D','E','F','G','H','I','J','L'];
-    var arr=req.body;
-    var id=req.params.id;
-    var passage = AV.Object.createWithoutData('Passage', id);
+    let arr=req.body;
+    let id=req.params.id;
+    let passage = AV.Object.createWithoutData('Passage', id);
     passage.set('capacity',arr['data['+id+'][capacity]']*1);
     let product=AV.Object.createWithoutData('Product', arr['data['+id+'][productId]']);
     passage.set('product',product);
@@ -1487,12 +1487,34 @@ router.put('/passage/edit/:id',function(req,res){
                 });
             });
         }
+        function promise3(callback){
+            let product = AV.Object.createWithoutData('Product', oldProduct);
+            let box=AV.Object.createWithoutData('BoxInfo',passage.get('boxId').id);
+            let query=new AV.Query('Passage');
+            query.equalTo('isDel',false);
+            query.equalTo('boxId',box);
+            query.equalTo('product',product);
+            query.count().then(function(count){
+                if(count==0){
+                    let boxProductQuery=new AV.Query('BoxProduct');
+                    boxProductQuery.equalTo('isDel',false);
+                    boxProductQuery.equalTo('boxId',box);
+                    boxProductQuery.equalTo('productId',product);
+                    boxProductQuery.first().then(function(data){
+                        data.destroy();
+                    });
+                }
+            });
+        }
         async.parallel([
             function(callback){
                 promise1(callback);
             },
             function(callback){
                 promise2(callback);
+            },
+            function(callback){
+                //promise3(callback);
             }
         ],function(err,results){
             res.jsonp({"data":results[1]});
@@ -1501,8 +1523,8 @@ router.put('/passage/edit/:id',function(req,res){
 });
 //删除货道
 router.delete('/passage/remove/:id',function(req,res){
-    var id=req.params.id;
-    var passage = AV.Object.createWithoutData('Passage', id);
+    let id=req.params.id;
+    let passage = AV.Object.createWithoutData('Passage', id);
     passage.set('isDel',true);
     passage.save().then(function(){
         res.jsonp({"data":[]});
@@ -1701,7 +1723,66 @@ router.get('/supply',function(req,res){
 
 //补货计划
 router.get('/supplyplan',function(req,res){
-
+    let resdata={};
+    function getBox(callback){
+        let boxQuery=new AV.Query('BoxInfo');
+        boxQuery.equalTo('isDel',false);
+        boxQuery.include('cusId');
+        boxQuery.find().then(function(boxes){
+            callback(null,boxes);
+        });
+    }
+    function getBoxProduct(boxes,callback){
+        async.map(boxes,function(box,callback1){
+            let boxProductQuery=new AV.Query('BoxProduct');
+            boxProductQuery.equalTo('isDel',false);
+            boxProductQuery.include('productId');
+            boxProductQuery.find().then(function(products){
+                async.map(products,function(product,callback2){
+                    //console.log('%j',product);
+                    let stock=0;
+                    let max=0;
+                    let passageQuery=new AV.Query('Passage');
+                    passageQuery.equalTo('isDel',false);
+                    passageQuery.equalTo('boxId',box);
+                    passageQuery.equalTo('product',product);
+                    passageQuery.find().then(function(passages){
+                        async.map(passages,function(passage,callback3){
+                            max+=passage.get('capacity');
+                            stock+=passage.get('stock');
+                            callback3(null,passage);
+                        },function(err,reuslts){
+                            let one={"cus":box.get('cusId').get('name'),"machine":
+                            box.get('machine'),"product":
+                            product.get('productId').get('name'),"sku":
+                            product.get('productId').get('sku'),"max":max,"stock":
+                            stock,"cue":product.get('cue'),"warning":
+                            product.get("warning"),"count":max-stock,"unit":
+                            product.get('productId').get('unit')};
+                            console.log('%j',one);
+                            callback2(null,one);
+                        });
+                    });
+                },function(err,reuslts){
+                    console.log(results.length);
+                    resdata["data"]=results;
+                    callback1(null,results);
+                });
+            });
+        },function(err,reuslts){
+            callback(null,results);
+        });
+    }
+    async.waterfall([
+        function (callback){
+            getBox(callback);
+        },
+        function(boxes,callback){
+            getBoxProduct(boxes,callback);
+        }
+    ],function(err,results){
+        return res.jsonp(resdata);
+    });
 });
 
 //盘点业务

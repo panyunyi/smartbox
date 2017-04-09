@@ -19,6 +19,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         cardQuery.equalTo('cusId',cus);
         cardQuery.first().then(function(cardObj){
             if (typeof(cardObj) == "undefined") {
+                message="未找到此卡号";
                 return callback(null,0,null);
             }
             oneborrow.set('isDel',false);
@@ -59,10 +60,11 @@ function doWork(cus,box,deviceId,card,passage,res){
     }
     function promise3(arg1,arg2,callback){
         if (typeof(arg1) == "undefined"||arg1==false||arg2==null) {
+            message="未找到格子柜";
             return callback(null,false);
         }
-        let product=arg1.get('product');
-        let powerQuery=new AV.Query('EmployeePower');
+        //let product=arg1.get('product');
+        /*let powerQuery=new AV.Query('EmployeePower');
         powerQuery.equalTo('isDel',false);
         powerQuery.equalTo('product',product);
         powerQuery.equalTo('emp',arg2);
@@ -73,7 +75,8 @@ function doWork(cus,box,deviceId,card,passage,res){
                 message="无取货权限";
                 return callback(null,false);
             }
-        });
+        });*/
+        verifyPower(arg2,callback);
     }
     function verifyPower(emp,callback){
         flag=true;

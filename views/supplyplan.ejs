@@ -12,16 +12,24 @@
                 <div class="col-lg-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            补货计划
+                            补货需求
                         </div>
                         <!-- /.panel-heading -->
                         <div class="panel-body">
-                            <div id="main" style="width: 600px;height:400px;"></div>
                             <table id="table" class="ui celled table" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
-                                        <th>序号</th>
-
+                                        <th>指示灯</th>
+                                        <th>客户名称</th>
+                                        <th>售货机编号</th>
+                                        <th>补货产品</th>
+                                        <th>产品编码</th>
+                                        <th>最大容量</th>
+                                        <th>库存数量</th>
+                                        <th>补货提示点</th>
+                                        <th>警戒值</th>
+                                        <th>需求数量</th>
+                                        <th>计量单位</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -54,23 +62,42 @@
 <script src="../dist/js/jquery.dataTables.min.js"></script>
 <script src="../dist/js/dataTables.semanticui.min.js"></script>
 <script src="../dist/js/semantic.min.js"></script>
-<script src="http://cdn.bootcss.com/echarts/3.3.2/echarts.min.js"></script>
 <script>
-    var myChart = echarts.init(document.getElementById('main'));
-    // 绘制图表
-    myChart.setOption({
-        title: { text: 'ECharts 入门示例' },
-        tooltip: {},
-        xAxis: {
-            data: ["衬衫","羊毛衫","雪纺衫","裤子","高跟鞋","袜子"]
-        },
-        yAxis: {},
-        series: [{
-            name: '销量',
-            type: 'bar',
-            data: [5, 20, 36, 10, 10, 20]
-        }]
+    var t= $('#table').DataTable( {
+        "processing": true,
+        stateSave: true,
+       "ajax": '../api/json/supplyplan',
+       "columns": [
+            {"data":"light"},
+            { "data": "cus" },
+            { "data": "machine" },
+            { "data": "product" },
+            { "data": "sku" },
+            { "data": "max" },
+            { "data": "stock" },
+            { "data": "cue" },
+            { "data": "waring" },
+            { "data": "count" },
+            { "data": "unit" }
+        ],
+        "columnDefs": [{
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+        }],
+        "order": [[1, 'desc']],
+        "language": {
+            "url": "../vendor/zh_CN.txt"
+        }
     });
+    t.on('order.dt search.dt',function() {
+                t.column(0, {
+                    search: 'applied',
+                    order: 'applied'
+                }).nodes().each(function(cell, i) {
+                    cell.innerHTML = i + 1;
+                });
+            }).draw();
 </script>
 </body>
 

@@ -23,7 +23,7 @@ function doWork(deviceId,records,res){
             passageQuery.first().then(function(passage){
                 if(typeof(passage)=="undefined"){
                     result['message']="提交的货道号异常";
-                    callback(null,record);
+                    return callback(null,record);
                 }
                 if(record.result){
                     passage.increment('stock',-record.count*1);

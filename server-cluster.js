@@ -1,7 +1,7 @@
 var cluster = require('cluster');
 
 // 取决于你的实例的可用 CPU 数量
-var workers = 2;
+var workers = 4;
 
 if (cluster.isMaster) {
   for (var i = 0; i < workers; i++) {
