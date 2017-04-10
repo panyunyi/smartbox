@@ -18,7 +18,9 @@ router.get('/:id/:card/:passage', function(req, res) {
     ApiLog.WorkOn(todo);
     let cardQuery=new AV.Query('EmployeeCard');
     cardQuery.equalTo('isDel',false);
-    cardQuery.equalTo('card',card);
+    let num=card*1;
+    let tempCard=num.toString(16).slice(2);
+    cardQuery.contains('card',tempCard);
     cardQuery.first().then(function(cardObj){
     	let boxQuery=new AV.Query('BoxInfo');
 	    boxQuery.equalTo('deviceId',deviceId);
