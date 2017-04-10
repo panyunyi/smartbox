@@ -76,10 +76,19 @@
             { "data": "max" },
             { "data": "stock" },
             { "data": "cue" },
-            { "data": "waring" },
+            { "data": "warning" },
             { "data": "count" },
             { "data": "unit" }
         ],
+            "createdRow": function ( row, data, index ) {
+                if ( data.light=="green" ) {
+                    $('td', row).eq(0).css("color","#32c5d2");
+                }else if(data.light=="red"){
+                    $('td', row).eq(0).css("color","#e7505a");
+                }else if (data.light=="yellow") {
+                    $('td', row).eq(0).css("color","#f89406");
+                }
+            },
         "columnDefs": [{
             "searchable": false,
             "orderable": false,
@@ -90,14 +99,7 @@
             "url": "../vendor/zh_CN.txt"
         }
     });
-    t.on('order.dt search.dt',function() {
-                t.column(0, {
-                    search: 'applied',
-                    order: 'applied'
-                }).nodes().each(function(cell, i) {
-                    cell.innerHTML = i + 1;
-                });
-            }).draw();
+
 </script>
 </body>
 

@@ -759,15 +759,17 @@ router.post('/employee/add',function(req,res){
             if(card!==null&&card!==undefined&&card!==''){
                 let cardQuery=new AV.Query('EmployeeCard');
                 cardQuery.equalTo('isDel',false);
-                cardQuery.equalTo('card',card);
+                let num=card*1;
+                let tempCard=PrefixInteger(num.toString(16),6);
+                cardQuery.equalTo('card',tempCard);
                 cardQuery.count().then(function(count){
                     if(count==0){
                         let cardObj=new EmpCard();
                         cardObj.set('cusId',cus);
-                        cardObj.set('card',card);
+                        cardObj.set('card',tempCard);
                         cardObj.set('emp',emp);
                         cardObj.save().then(function(ca){
-                            cardArr.push(card);
+                            cardArr.push(tempCard);
                             callback(null,1);
                         });
                     }else {
@@ -819,17 +821,19 @@ router.put('/employee/edit/:id',function(req,res){
         async.map(cards,function(card,callback){
             if(card!==null&&card!==undefined&&card!==''){
                 let cardQuery=new AV.Query('EmployeeCard');
+                let num=card*1;
+                let tempCard=PrefixInteger(num.toString(16),6);
                 cardQuery.equalTo('isDel',false);
-                cardQuery.equalTo('card',card);
+                cardQuery.equalTo('card',tempCard);
                 cardQuery.count().then(function(count){
                     if(count==0){
                         let cardObj=new EmpCard();
                         cardObj.set('cusId',cus);
-                        cardObj.set('card',card);
+                        cardObj.set('card',tempCard);
                         cardObj.set('emp',emp);
                         cardObj.save();
                     }
-                    cardArr.push(card);
+                    cardArr.push(tempCard);
                     callback(null,1);
                 });
             }else {
@@ -863,12 +867,29 @@ router.put('/employee/edit/:id',function(req,res){
                     callback1(null,c);
                 });
             }
+            function promise3(callback1){
+                let powerQuery=new AV.Query('EmployeePower');
+                powerQuery.equalTo('isDel',false);
+                powerQuery.equalTo('emp',emp);
+                powerQuery.find().then(function(powers){
+                    powers.forEach(function(power){
+                        if(powerQuery.get('cusId').id!=cus.id){
+                            power.set('cusId',cus);
+                            power.save();
+                        }
+                        callback1(null,power);
+                    });
+                });
+            }
             async.parallel([
                 function (callback){
                     promise1(callback);
                 },
                 function (callback){
                     promise2(callback);
+                },
+                function (callback){
+                    promise3(callback);
                 }],function(err,results){
                     if(errArr.length>0){
                         res.jsonp({"data":data,"fieldErrors":errArr});
@@ -887,20 +908,42 @@ router.delete('/employee/remove/:id',function(req,res){
     var employee = AV.Object.createWithoutData('Employee', id);
     employee.set('isDel',true);
     employee.save().then(function(emp){
-        let cardQuery=new AV.Query('EmployeeCard');
-        cardQuery.equalTo('isDel',false);
-        cardQuery.equalTo('emp',emp);
-        cardQuery.find().then(function(cards){
-            async.map(cards,function(card,callback){
-                card.set('isDel',true);
-                callback(null,card);
-            },function(err,results){
-                AV.Object.saveAll(cards);
+        function promise1(callback){
+            let cardQuery=new AV.Query('EmployeeCard');
+            cardQuery.equalTo('isDel',false);
+            cardQuery.equalTo('emp',emp);
+            cardQuery.find().then(function(cards){
+                async.map(cards,function(card,callback1){
+                    card.set('isDel',true);
+                    callback1(null,card);
+                },function(err,results){
+                    AV.Object.saveAll(cards);
+                    callback(null,1);
+                });
             });
-        }).then(function(cards){
-            res.jsonp({"data":[]});
-        },function(err){
-            console.log(err);
+        }
+        function promise2(callback){
+            let powerQuery=new AV.Query('EmployeePower');
+            powerQuery.equalTo('isDel',false);
+            powerQuery.equalTo('emp',emp);
+            powerQuery.find().then(function(powers){
+                async.map(powers,function(power,callback1){
+                    power.set('isDel',true);
+                    callback1(null,power);
+                },function(err,results){
+                    AV.Object.saveAll(powers);
+                    callback(null,1);
+                });
+            });
+        }
+        async.parallel([
+            function (callback){
+                promise1(callback);
+            },
+            function (callback){
+                promise2(callback);
+            }],function(err,results){
+                res.jsonp({"data":[]});
         });
     });
 });
@@ -1514,7 +1557,7 @@ router.put('/passage/edit/:id',function(req,res){
                 promise2(callback);
             },
             function(callback){
-                //promise3(callback);
+                //promise3(callback);修改货道配置删除售货机产品
             }
         ],function(err,results){
             res.jsonp({"data":results[1]});
@@ -1534,6 +1577,7 @@ router.delete('/passage/remove/:id',function(req,res){
 router.get('/boxProduct/:id',function(req,res){
     let id=req.params.id;
     let query=new AV.Query('BoxProduct');
+    let arr=[];
     let box=AV.Object.createWithoutData('BoxInfo', id);
     query.equalTo('isDel',false);
     query.equalTo('boxId',box);
@@ -1541,14 +1585,24 @@ router.get('/boxProduct/:id',function(req,res){
     query.include('productId');
     query.find().then(function(results){
         async.map(results,function(result,callback1){
-            result.set('DT_RowId',result.id);
-            result.set('machine',result.get('boxId').get('machine'));
-            result.set('product',result.get('productId').get('name'));
-            result.set('sku',result.get('productId').get('sku'));
-            result.set('productId',result.get('productId').id);
-            callback1(null,result);
+            let passageQuery=new AV.Query('Passage');
+            passageQuery.equalTo('isDel',false);
+            passageQuery.equalTo('product',result.get('productId'));
+            passageQuery.count().then(function(count){
+                if(count==0){
+                    result.destroy();
+                }else {
+                    result.set('DT_RowId',result.id);
+                    result.set('machine',result.get('boxId').get('machine'));
+                    result.set('product',result.get('productId').get('name'));
+                    result.set('sku',result.get('productId').get('sku'));
+                    result.set('productId',result.get('productId').id);
+                    arr.push(result);
+                }
+                callback1(null,result);
+            });
         },function(err,data){
-            res.jsonp({"data":data});
+            res.jsonp({"data":arr});
         });
     });
 });
@@ -1724,6 +1778,7 @@ router.get('/supply',function(req,res){
 //补货计划
 router.get('/supplyplan',function(req,res){
     let resdata={};
+    let arr=[];
     function getBox(callback){
         let boxQuery=new AV.Query('BoxInfo');
         boxQuery.equalTo('isDel',false);
@@ -1736,40 +1791,46 @@ router.get('/supplyplan',function(req,res){
         async.map(boxes,function(box,callback1){
             let boxProductQuery=new AV.Query('BoxProduct');
             boxProductQuery.equalTo('isDel',false);
+            boxProductQuery.equalTo('boxId',box);
             boxProductQuery.include('productId');
             boxProductQuery.find().then(function(products){
                 async.map(products,function(product,callback2){
-                    //console.log('%j',product);
                     let stock=0;
                     let max=0;
                     let passageQuery=new AV.Query('Passage');
                     passageQuery.equalTo('isDel',false);
                     passageQuery.equalTo('boxId',box);
-                    passageQuery.equalTo('product',product);
+                    passageQuery.equalTo('product',product.get('productId'));
                     passageQuery.find().then(function(passages){
                         async.map(passages,function(passage,callback3){
                             max+=passage.get('capacity');
                             stock+=passage.get('stock');
                             callback3(null,passage);
-                        },function(err,reuslts){
-                            let one={"cus":box.get('cusId').get('name'),"machine":
+                        },function(err,respassage){
+                            let light="green";
+                            if(stock<=product.get('cue')){
+                                light="yellow";
+                            }
+                            if(stock<=product.get('warning')){
+                                light="red";
+                            }
+                            let one={"light":light,"cus":box.get('cusId').get('name'),"machine":
                             box.get('machine'),"product":
                             product.get('productId').get('name'),"sku":
                             product.get('productId').get('sku'),"max":max,"stock":
                             stock,"cue":product.get('cue'),"warning":
                             product.get("warning"),"count":max-stock,"unit":
                             product.get('productId').get('unit')};
-                            console.log('%j',one);
-                            callback2(null,one);
+                            arr.push(one)
+                            callback2(null,1);
                         });
                     });
-                },function(err,reuslts){
-                    console.log(results.length);
-                    resdata["data"]=results;
-                    callback1(null,results);
+                },function(err,resproduct){
+                    resdata["data"]=arr;
+                    callback1(null,arr);
                 });
             });
-        },function(err,reuslts){
+        },function(err,results){
             callback(null,results);
         });
     }
@@ -2062,7 +2123,6 @@ router.post('/empUpload', function (req, res) {
     upload(req, res, function (err) {
         let flag=req.body.radio;
         let cus=req.body.customer;
-        console.log(cus);
         if (err) {
             return res.send("上传失败:"+err);
         }
@@ -2098,6 +2158,11 @@ router.post('/empUpload', function (req, res) {
     });
 });
 function PrefixInteger(num, n) {
-    return (Array(n).join(0) + num).slice(-n);
+    var len = num.toString().length;
+    while(len < n) {
+        num = "0" + num;
+        len++;
+    }
+    return num;
 }
 module.exports = router;

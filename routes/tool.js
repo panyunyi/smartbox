@@ -25,7 +25,13 @@ router.get('/', function(req, res) {
         });
     });
 });
+
 function PrefixInteger(num, n) {
-    return (Array(n).join(0) + num).slice(-n);
+    var len = num.toString().length;
+    while(len < n) {
+        num = "0" + num;
+        len++;
+    }
+    return num;
 }
 module.exports = router;
