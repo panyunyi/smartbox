@@ -103,6 +103,7 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
         takeoutQuery.equalTo('result',true);
         takeoutQuery.equalTo('emp',emp);
         takeoutQuery.equalTo('product',product);
+        takeoutQuery.limit(1000);
         takeoutQuery.greaterThanOrEqualTo('time',begin.toDate());
         takeoutQuery.lessThanOrEqualTo('time',new Date());
         takeoutQuery.find().then(function(takeouts){
