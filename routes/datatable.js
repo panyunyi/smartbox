@@ -1530,34 +1530,12 @@ router.put('/passage/edit/:id',function(req,res){
                 });
             });
         }
-        function promise3(callback){
-            let product = AV.Object.createWithoutData('Product', oldProduct);
-            let box=AV.Object.createWithoutData('BoxInfo',passage.get('boxId').id);
-            let query=new AV.Query('Passage');
-            query.equalTo('isDel',false);
-            query.equalTo('boxId',box);
-            query.equalTo('product',product);
-            query.count().then(function(count){
-                if(count==0){
-                    let boxProductQuery=new AV.Query('BoxProduct');
-                    boxProductQuery.equalTo('isDel',false);
-                    boxProductQuery.equalTo('boxId',box);
-                    boxProductQuery.equalTo('productId',product);
-                    boxProductQuery.first().then(function(data){
-                        data.destroy();
-                    });
-                }
-            });
-        }
         async.parallel([
             function(callback){
                 promise1(callback);
             },
             function(callback){
                 promise2(callback);
-            },
-            function(callback){
-                //promise3(callback);修改货道配置删除售货机产品
             }
         ],function(err,results){
             res.jsonp({"data":results[1]});
@@ -1587,6 +1565,7 @@ router.get('/boxProduct/:id',function(req,res){
         async.map(results,function(result,callback1){
             let passageQuery=new AV.Query('Passage');
             passageQuery.equalTo('isDel',false);
+            passageQuery.equalTo('boxId',box);
             passageQuery.equalTo('product',result.get('productId'));
             passageQuery.count().then(function(count){
                 if(count==0){
@@ -1681,22 +1660,32 @@ router.get('/pasrecord',function(req,res){
         takeoutQuery.limit(1000);
         takeoutQuery.find().then(function(takeouts){
             async.map(takeouts,function(takeout,callback1){
+                console.log(takeout.id);
                 let machine=takeout.get('box').get('machine');
-                let card=takeout.get('card').get('card');
+                let card="";
+                let emp="";
+                let empNo="";
+                if(typeof(takeout.get('card'))!="undefined"){
+                    emp=takeout.get('card').get('emp').get('name');
+                    empNo=takeout.get('card').get('emp').get('empNo');
+                    card=takeout.get('card')?takeout.get('card').get('card'):"";
+                }
+
                 let sku=takeout.get('product').get('sku')?takeout.get('product').get('sku'):"";
                 let product=takeout.get('product').get('name');
                 let unit=takeout.get('product').get('unit');
                 let passage=takeout.get('passage').get('flag')*1>0?arr[takeout.get('passage').get('flag')*1-1]+takeout.get('passage').get('seqNo'):takeout.get('passage').get('seqNo');
                 let time=new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
                 let cus=takeout.get('box').get('cusId').get('name');
-                let emp=takeout.get('card').get('emp').get('name');
-                let empNo=takeout.get('card').get('emp').get('empNo');
+
                 let count=takeout.get('count');
+                console.log(count);
                 let onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
                 "cus":cus,"machine":machine,"passage":passage,"count":"-"+count,
                 "product":product,"sku":sku,"unit":unit,"employee":emp,
                 "empNo":empNo,"empCard":card};
                 jsondata.push(onetake);
+                console.log('%j',onetake);
                 callback1(null,onetake);
             },function(error,results){
                 return callback(null,results);
@@ -1716,7 +1705,7 @@ router.get('/pasrecord',function(req,res){
         borrowQuery.find().then(function(borrows){
             async.map(borrows,function(borrow,callback1){
                 let machine=borrow.get('box').get('machine');
-                let card=borrow.get('card').get('card');
+                let card=borrow.get('card')?borrow.get('card').get('card'):"";
                 let sku=borrow.get('product').get('sku')?borrow.get('product').get('sku'):"";
                 let product=borrow.get('product').get('name');
                 let unit=borrow.get('product').get('unit');
