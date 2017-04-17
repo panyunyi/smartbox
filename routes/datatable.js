@@ -681,15 +681,18 @@ router.get('/employee',function(req,res){
                         result.set('notice',result.get('notice')?result.get('notice'):"");
                         result.set('dept',result.get('dept')?result.get('dept'):"");
                         let arr=[];
+                        let old=[];
                         async.map(cards,function(card,callback2){
                             if(card.get('emp').id==result.id){
                                arr.push(card.get('card'));
+                               old.push(card.get('oldCard')?card.get('oldCard'):"");
                                callback2(null,1);
                             }else {
                                 callback2(null,0);
                             }
                         },function(err,cardsdata){
                             result.set('card',arr);
+                            result.set('old',old);
                             callback1(null,result);
                         });
                     },function(err,data){
@@ -754,6 +757,7 @@ router.post('/employee/add',function(req,res){
     employee.save().then(function(emp){
         let data=[];
         let cardArr=[];
+        let oldArr=[];
         let errArr=[];
         async.map(cards,function(card,callback){
             if(card!==null&&card!==undefined&&card!==''){
@@ -768,8 +772,10 @@ router.post('/employee/add',function(req,res){
                         cardObj.set('cusId',cus);
                         cardObj.set('card',tempCard);
                         cardObj.set('emp',emp);
+                        cardObj.set('oldCard',PrefixInteger(num,10));
                         cardObj.save().then(function(ca){
                             cardArr.push(tempCard);
+                            oldArr.push(PrefixInteger(num,10));
                             callback(null,1);
                         });
                     }else {
@@ -783,6 +789,7 @@ router.post('/employee/add',function(req,res){
             }
         },function(err,results){
             emp.set('card',cardArr);
+            emp.set('old',oldArr);
             emp.set('DT_RowId',emp.id);
             cus.fetch().then(function(c){
                 emp.set('cus',c.get('name'));
@@ -1306,6 +1313,7 @@ router.delete('/box/remove/:id',function(req,res){
 //货道配置
 router.get('/passage/:id',function(req,res){
     let resdata={};
+    let boxData=[];
     let arr=['A','B','C','D','E','F','G','H','I','J','L'];
     function promise1(callback1) {
         let id=req.params.id;
@@ -1353,6 +1361,7 @@ router.get('/passage/:id',function(req,res){
         let id=req.params.id;
         let box=AV.Object.createWithoutData('BoxInfo', id);
         box.fetch().then(function(result){
+            boxData.push({"label":result.get('machine'),"value":result.id});
             let count=result.get('child');
             async.timesSeries(count,function(i,callback){
                 let child={};
@@ -1376,7 +1385,7 @@ router.get('/passage/:id',function(req,res){
             promise3(callback);
         }],function(err,results){
             resdata["options"]=Object.assign({"productId":results[1]},
-            {"childId":results[2]});
+            {"childId":results[2]},{"boxId":boxData});
             res.jsonp(resdata);
     });
 });
@@ -2011,14 +2020,17 @@ router.post('/empUpload', function (req, res) {
                         employee.set('isDel',false);
                         employee.save().then(function(emp){
                             let cardQuery=new AV.Query('EmployeeCard');
+                            let inputCard=
                             cardQuery.equalTo('isDel',false);
-                            cardQuery.equalTo('card',PrefixInteger(arr[3].toString(),10));
+                            cardQuery.equalTo('oldCard',PrefixInteger(arr[3].toString(),10));
+                            cardQuery.equalTo('card',PrefixInteger(arr[3].toString(16),6));
                             //console.log(PrefixInteger(arr[3].toString(),10));
                             cardQuery.equalTo('cusId',cusObj);
                             cardQuery.count().then(function(cardcount){
                                 if(cardcount==0){
                                     let card=new EmpCard();
-                                    card.set('card',PrefixInteger(arr[3].toString(),10));
+                                    card.set('card',PrefixInteger(arr[3].toString(16),6));
+                                    card.set('oldCard',PrefixInteger(arr[3].toString(),10));
                                     card.set('emp',emp);
                                     card.set('cusId',cusObj);
                                     card.set('isDel',false);
@@ -2046,11 +2058,12 @@ router.post('/empUpload', function (req, res) {
         });
     }
     function uploadPower(data,cus,file,res){
+        let tempi=0;
         let i=0;
         let cusObj=AV.Object.createWithoutData('Customer',cus);
         async.map(data,function(arr,callback){
             if(i!=0){
-                //console.log('%j',data);
+                //console.log('%j',arr[1]);
                 let empQuery=new AV.Query('Employee');
                 empQuery.equalTo('isDel',false);
                 empQuery.equalTo('cusId',cusObj);
@@ -2058,6 +2071,7 @@ router.post('/empUpload', function (req, res) {
                 empQuery.first().then(function(emp){
                     if(typeof(emp)=="undefined"){
                         rescontent+="未找到工号"+arr[1].toString()+"的信息;<br>";
+                        console.log(arr[1]);
                         return callback(null,0);
                     }
                     let productQuery=new AV.Query('Product');
@@ -2066,16 +2080,19 @@ router.post('/empUpload', function (req, res) {
                     productQuery.first().then(function(product){
                         if(typeof(product)=="undefined"){
                             rescontent+="未找到产品编号"+arr[2]+"的信息;<br>";
+                            console.log(arr[2]);
                             return callback(null,0);
                         }
+                        //console.log(arr[1]+":"+arr[2]);
                         let empPowerQuery=new AV.Query('EmployeePower');
                         empPowerQuery.equalTo('isDel',false);
                         empPowerQuery.equalTo('emp',emp);
                         empPowerQuery.equalTo('product',product);
                         empPowerQuery.count().then(function(count){
                             if(count>0){
-                                rescontent+="工号"+arr[1]+"领取产品"+arr[2]+
-                                arr[3]+"每"+arr[4]+arr[5]+"次的权限已存在<br>";
+                                rescontent+="工号"+arr[1]+"领取产品"+arr[2]+"的权限已存在<br>";
+                                tempi++;
+                                console.log(tempi);
                                 return callback(null,0);
                             }
                             let power=new EmpPower();
@@ -2083,16 +2100,22 @@ router.post('/empUpload', function (req, res) {
                             power.set('cusId',cusObj);
                             power.set('product',product);
                             let unit="day";
+                            let takecount=arr[5]*1;
+                            let period=arr[3]*1;
                             if(arr[4].trim()=="月"){
                                 unit="month";
                             }else if(arr[4].trim()=="日"){
                                 unit="day";
+                                if(period==7){
+                                    unit="week";
+                                    period=1;
+                                }
                             }else if (arr[4].trim()=="周") {
                                 unit="week";
                             }
                             power.set('unit',unit);
-                            power.set('count',arr[5]*1);
-                            power.set('period',arr[3]*1);
+                            power.set('count',takecount);
+                            power.set('period',period);
                             power.set('isDel',false);
                             power.save().then(function(p){
                                 return callback(null,p);

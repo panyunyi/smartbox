@@ -21,7 +21,25 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
         cardQuery.equalTo('isDel',false);
         cardQuery.first().then(function(cardObj){
             if (typeof(cardObj) == "undefined") {
-                return callback(null,0,null);
+                let admincardQuery=new AV.Query('AdminCard');
+                admincardQuery.equalTo('isDel',false);
+                admincardQuery.equalTo('card',card);
+                admincardQuery.count().then(function(count){
+                    if(count>0){
+                        message="管理卡取货成功";
+                        resdata["result"]=true;
+                        resdata["objectId"]="123";
+                        let result={
+                            status:200,
+                            message:message,
+                            data:resdata,
+                            server_time:new Date()
+                        }
+                        return res.jsonp(result);
+                    }else {
+                        return callback(null,0,null);
+                    }
+                });
             }
             onetake.set('isDel',false);
             onetake.set('box',box);

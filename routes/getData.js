@@ -23,23 +23,31 @@ function doWork(cus,box,res,ts){
         });
     }
     function promise2(callback){
-      let query = new AV.Query('CustomerProduct');
+      let query = new AV.Query('Passage');
       query.greaterThanOrEqualTo('updatedAt',ts);
       query.include('product');
-      query.equalTo('cusId',cus);
+      query.equalTo('boxId',box);
       if(new Date(0)==ts){
           query.equalTo('isDel',false);
       }
       query.limit(1000);
+      let obidArr=[];
+      let productArr=[];
       query.find().then(function (results) {
           async.map(results,function(result,callback1){
-              let one={"cusProductName":result.get('product').get('name'),
-              "isDel":result.get('isDel'),"productName":result.get('product').get('name'),
-              "objectId":result.get('product').get('id'),"createdAt":result.get('createdAt'),
-              "updatedAt":result.get('updatedAt')};
-              callback1(null,one);
+              let obid=result.get('product').id;
+              let productName=result.get('product').get('name');
+              if(obidArr.indexOf(obid)==-1){
+                  let one={"cusProductName":productName,
+                  "isDel":result.get('isDel'),"productName":productName,
+                  "objectId":obid,"createdAt":result.get('createdAt'),
+                  "updatedAt":result.get('updatedAt')};
+                  obidArr.push(obid);
+                  productArr.push(one);
+              }
+              callback1(null,result);
           },function(err,ones){
-              data["Product"]=ones;
+              data["Product"]=productArr;
               return callback(null,results);
           });
         }, function (error) {

@@ -3,9 +3,11 @@ var router = require('express').Router();
 var AV = require('leanengine');
 var async = require('async');
 
-/*router.get('/', function(req, res) {
+router.get('/', function(req, res) {
     let query=new AV.Query('EmployeeCard');
     query.equalTo('isDel',false);
+    let time=new Date('2017-04-14 23:00:00');
+    query.greaterThan('createdAt',time);
     query.limit(1000);
     query.find().then(function(cards){
         async.map(cards,function(card,callback){
@@ -24,8 +26,9 @@ var async = require('async');
 
         });
     });
-});*/
+});
 
+/*
 router.get('/', function(req, res) {
     let query=new AV.Query('EmployeePower');
     query.count().then(function(count){
@@ -57,6 +60,8 @@ router.get('/', function(req, res) {
         });
     });
 });
+*/
+
 function PrefixInteger(num, n) {
     var len = num.toString().length;
     while(len < n) {

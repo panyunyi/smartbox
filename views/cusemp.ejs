@@ -28,6 +28,7 @@
                                             <th>职务</th>
                                             <th>电话</th>
                                             <th>备注</th>
+                                            <th>原卡号</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -119,7 +120,7 @@
                     { label: '客户',  name: 'cusId' ,type:'select' },
                     { label: '工号',  name: 'empNo' },
                     { label: '姓名',  name: 'name' },
-                    { label: '卡号',  name: 'card' },
+                    { label: '卡号',  name: 'old' },
                     { label: '性别',  name: 'sex' ,type:'radio',options:[
                         { label: "女", value: 0},
                         { label: "男",  value: 1 }
@@ -165,7 +166,8 @@
                     { "data": "dept" },
                     { "data": "job" },
                     { "data": "phone" },
-                    { "data": "notice" }
+                    { "data": "notice" },
+                    { "data": "old" }
                 ],
                 select:true,
                 buttons: [

@@ -225,11 +225,6 @@
             var data = table.row( this ).data();
             table1.ajax.url('../api/json/passage/'+data.DT_RowId).load();
             table2.ajax.url('../api/json/boxProduct/'+data.DT_RowId).load();
-            editor1.add( {
-                type:  "hidden",
-                name:  "boxId",
-                def:   data.DT_RowId
-            } );
         } );
         table.on('order.dt search.dt',function() {
                     table.column(0, {
@@ -256,6 +251,7 @@
             },
             table: "#table1",
             fields: [
+                { name: 'boxId', type:'select',label:'售货机' },
                 { label: '货道编号',  name: 'seqNo' },
                 { label: '附属柜',  name: 'childId',type :'select'},
                 { label: '容量',  name: 'capacity' },
