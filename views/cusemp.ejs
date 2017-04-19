@@ -22,13 +22,13 @@
                                             <th>客户名称</th>
                                             <th>工号</th>
                                             <th>姓名</th>
-                                            <th>卡号</th>
+                                            <th>16进制卡号</th>
+                                            <th>10进制卡号</th>
                                             <th>性别</th>
                                             <th>部门</th>
                                             <th>职务</th>
                                             <th>电话</th>
                                             <th>备注</th>
-                                            <th>原卡号</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -161,13 +161,13 @@
                     { "data": "cus" },
                     { "data": "empNo" },
                     { "data": "name" },
-                    { "data": "card"},
+                    { "data": "card" },
+                    { "data": "old",render:function(data){return data?data:""} },
                     { "data": "sex" ,render:function(data){return data?"男":"女"}},
                     { "data": "dept" },
                     { "data": "job" },
                     { "data": "phone" },
-                    { "data": "notice" },
-                    { "data": "old" }
+                    { "data": "notice" }
                 ],
                 select:true,
                 buttons: [
@@ -197,15 +197,6 @@
             $('#table tbody').on('click', 'tr', function () {
                 var data = table.row( this ).data();
                 table1.ajax.url('../api/json/empPower/'+data.DT_RowId).load();
-                editor1.add( [{
-                    type:  "hidden",
-                    name:  "emp",
-                    def:   data.DT_RowId
-                },{
-                    type:  "hidden",
-                    name:  "cus",
-                    def:   data.cusId
-                }] );
             } );
             editor1 = new $.fn.dataTable.Editor( {
                 ajax: {
@@ -224,6 +215,7 @@
                 },
                 table: "#table1",
                 fields: [
+                    { name: 'emp', type:'select',label:'员工' },
                     { label: '产品',  name: 'productId',type :'select'},
                     { label: '周期单位',  name: 'unit',type:'select',options:[
                         { label: "日", value: 'day'},
@@ -263,7 +255,7 @@
                     {"data":null},
                     { "data": "sku" },
                     { "data": "product"},
-                    { "data": "unit" },
+                    { "data": "unitName" },
                     { "data": "period" },
                     { "data": "count" }
                 ],
