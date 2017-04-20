@@ -855,38 +855,31 @@ router.get('/empPower/:id',function(req,res){
     let resdata={};
     function promise1(callback){
         let id=req.params.id;
-        let emp=AV.Object.createWithoutData('EmployeeCard',id);
+        let emp=AV.Object.createWithoutData('Employee',id);
         let query=new AV.Query('EmployeePower');
         query.include('product');
-        query.include('emp');
         query.equalTo('emp',emp);
         query.equalTo('isDel',false);
         query.find().then(function(results){
-            emp.fetch().then(function(empdata){
-                let empQuery=new AV.Query('Employee');
-                empQuery.equalTo('isDel',false);
-                empQuery.equalTo('objectId',empdata.get('emp').id);
-                empQuery.first().then(function(data){
-                    empArr.push({"label":data.get('empNo')+" "+data.get('name'),"value":data.id});
-                    async.map(results,function(result,callback1){
-                        result.set('DT_RowId',result.id);
-                        result.set('sku',result.get('product').get('sku'));
-                        result.set('productId',result.get('product').id);
-                        result.set('product',result.get('product').get('name'));
-                        let unitName="";
-                        if(result.get('unit')=="month"){
-                            unitName="月";
-                        }else if(result.get('unit')=="day"){
-                            unitName="日";
-                        }else if(result.get('unit')=="week"){
-                            unitName="周";
-                        }
-                        result.set('unitName',unitName);
-                        callback1(null,result);
-                    },function(err,data){
-                        callback(null,data);
-                    });
-
+            emp.fetch().then(function(){
+                empArr.push({"label":emp.get('empNo')+" "+emp.get('name'),"value":emp.id});
+                async.map(results,function(result,callback1){
+                    result.set('DT_RowId',result.id);
+                    result.set('sku',result.get('product').get('sku'));
+                    result.set('productId',result.get('product').id);
+                    result.set('product',result.get('product').get('name'));
+                    let unitName="";
+                    if(result.get('unit')=="month"){
+                        unitName="月";
+                    }else if(result.get('unit')=="day"){
+                        unitName="日";
+                    }else if(result.get('unit')=="week"){
+                        unitName="周";
+                    }
+                    result.set('unitName',unitName);
+                    callback1(null,result);
+                },function(err,data){
+                    callback(null,data);
                 });
             });
         });
@@ -930,37 +923,34 @@ router.post('/empPower/add',function(req,res){
     power.set('count',arr['data[0][count]']*1);
     power.set('period',arr['data[0][period]']*1);
     let emp=AV.Object.createWithoutData('Employee', arr['data[0][emp]']);
-    let cus=AV.Object.createWithoutData('Customer', arr['data[0][cus]']);
     let product=AV.Object.createWithoutData('Product', arr['data[0][productId]']);
-    power.set('emp',emp);
-    power.set('cusId',cus);
-    power.set('product',product);
-    power.set('isDel',false);
-    power.save().then(function(emppower){
-        let data=[];
-        emppower.set('DT_RowId',emppower.id);
-        let unit="";
-        if(emppower.get('unit')=="month"){
-            unit="月";
-        }else if(emppower.get('unit')=="day"){
-            unit="日";
-        }else if(emppower.get('unit')=="year"){
-            unit="年";
-        }
-        emppower.set('unit',unit);
-        product.fetch().then(function(p){
-            emppower.set('productId',p.id);
-            emppower.set('sku',p.get('sku'));
-            emppower.set('product',p.get('name'));
-            cus.fetch().then(function(c){
-                emppower.set('cus',c.get('name'));
-                emppower.set('cusId',c);
+    emp.fetch().then(function(){
+        power.set('emp',emp);
+        power.set('cusId',emp.get('cusId'));
+        power.set('product',product);
+        power.set('isDel',false);
+        power.save().then(function(emppower){
+            let data=[];
+            emppower.set('DT_RowId',emppower.id);
+            let unitName="";
+            if(emppower.get('unit')=="month"){
+                unitName="月";
+            }else if(emppower.get('unit')=="day"){
+                unitName="日";
+            }else if(emppower.get('unit')=="week"){
+                unitName="周";
+            }
+            emppower.set('unitName',unitName);
+            product.fetch().then(function(p){
+                emppower.set('productId',p.id);
+                emppower.set('sku',p.get('sku'));
+                emppower.set('product',p.get('name'));
                 data.push(emppower);
                 res.jsonp({"data":data});
             });
+        },function(error){
+            console.log(error);
         });
-    },function(error){
-        console.log(error);
     });
 });
 //更新员工权限'+id+'
@@ -977,15 +967,15 @@ router.put('/empPower/edit/:id',function(req,res){
     power.save().then(function(emppower){
         let data=[];
         emppower.set('DT_RowId',emppower.id);
-        let unit="";
+        let unitName="";
         if(emppower.get('unit')=="month"){
-            unit="月";
+            unitName="月";
         }else if(emppower.get('unit')=="day"){
-            unit="日";
-        }else if(emppower.get('unit')=="year"){
-            unit="年";
+            unitName="日";
+        }else if(emppower.get('unit')=="week"){
+            unitName="周";
         }
-        emppower.set('unit',unit);
+        emppower.set('unitName',unitName);
         product.fetch().then(function(p){
             emppower.set('productId',p.id);
             emppower.set('sku',p.get('sku'));
