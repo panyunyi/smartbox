@@ -206,12 +206,11 @@ router.get('/product',function(req,res){
         query.find().then(function(results){
             async.map(results,function(result,callback){
                 result.set('DT_RowId',result.id);
-                result.set('typeId',result.get('type').id);
+                result.set('assort',result.get('type').id);
                 result.set('type',result.get('type')?result.get('type').get('name'):"");
                 result.set('price',result.get('price'));
                 result.set('spec',result.get('spec')?result.get('spec'):"");
                 result.set('sku',result.get('sku')?result.get('sku'):"");
-                result.set('oldsku',result.get('oldsku')?result.get('oldsku'):"");
                 callback(null,result);
             },function(err,data){
                 resdata["data"]=data;
