@@ -266,7 +266,7 @@ router.get('/fail/:id', function(req, res) {
             result['data']=true;
             res.jsonp(result);
             let passage=takeout.get('passage');
-            passage.increment('stock',1);
+            passage.increment('stock',takeout.get('count'));
             passage.save();
         }else{
             result['message']="操作已回滚";

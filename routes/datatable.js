@@ -557,16 +557,13 @@ router.get('/employee',function(req,res){
                             },function(err,cardsres){
                                 result.set('card',cardArr);
                                 result.set('old',oldArr);
-                                //console.log(1);
                                 callback1(null,result);
                             });
                         }else {
-                            //console.log(result.id);
                             result.set('card',cardArr);
                             result.set('old',oldArr);
                             callback1(null,result);
                         }
-                        //callback1(null,result);
                     });
                 },function(err,data){
                     resdata["data"]=data;
