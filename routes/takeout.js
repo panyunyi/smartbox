@@ -46,7 +46,7 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
                 onetake.set('time',new Date());
                 onetake.set('card',cardObj);
                 if(cardObj.get('oldCard')==null){
-                    cardObj.set('oldCard',card);
+                    cardObj.set('oldCard',PrefixInteger(card,10));
                     cardObj.save();
                 }
                 onetake.set('cardNo',card);
@@ -283,4 +283,12 @@ router.get('/fail/:id', function(req, res) {
         res.jsonp(result);
     });
 });
+function PrefixInteger(num, n) {
+    var len = num.toString().length;
+    while(len < n) {
+        num = "0" + num;
+        len++;
+    }
+    return num;
+}
 module.exports = router;
