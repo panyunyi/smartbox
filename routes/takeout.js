@@ -45,6 +45,7 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
             onetake.set('box',box);
             onetake.set('time',new Date());
             onetake.set('card',cardObj);
+            onetake.set('cardNo',card);
             onetake.set('result',false);
             onetake.set('emp',cardObj.get('emp'));
             onetake.save();
@@ -71,6 +72,7 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
         passageQuery.equalTo('boxId',box);
         passageQuery.first().then(function(passageObj){
             onetake.set('passage',passageObj);
+            onetake.set('passageNo',passage);
             onetake.set('product',passageObj.get('product'));
             onetake.save();
             return callback(null,passageObj,arg2);
