@@ -1490,6 +1490,14 @@ router.get('/passtock',function(req,res){
     });
 });
 
+router.get('/pasrecord1',function(req,res){
+    let draw=req.query.draw;
+    let order_column=req.query.order[0].column;
+    let order_dir=req.query.order[0].dir;
+    console.log("draw:"+draw);
+    console.log("order_column:"+order_column);
+    console.log("order_dir:"+order_dir);
+});
 //交易记录
 router.get('/pasrecord',function(req,res){
     let arr=['A','B','C','D','E','F','G','H','I','J','L'];
