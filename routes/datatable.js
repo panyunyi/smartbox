@@ -525,6 +525,7 @@ router.get('/employee',function(req,res){
             let num=Math.ceil(count/1000);
             let emps=[];
             async.times(num,function(n,callback2){
+                query.descending('createdAt');
                 query.limit(1000);
                 query.skip(1000*n);
                 query.find().then(function(results){
@@ -1499,44 +1500,49 @@ router.get('/pasrecord',function(req,res){
         takeoutQuery.equalTo('isDel',false);
         takeoutQuery.equalTo('result',true);
         takeoutQuery.include('product');
-        takeoutQuery.include('passage');
+        //takeoutQuery.include('passage');
         takeoutQuery.include('box');
-        takeoutQuery.include('card');
+        //takeoutQuery.include('card');
         takeoutQuery.include('box.cusId');
-        takeoutQuery.include('card.emp');
+        takeoutQuery.include('emp');
+        //takeoutQuery.include('card.emp');
         takeoutQuery.descending('createdAt');
-        takeoutQuery.limit(1000);
-        takeoutQuery.find().then(function(takeouts){
-            async.map(takeouts,function(takeout,callback1){
-                console.log(takeout.id);
-                let machine=takeout.get('box').get('machine');
-                let card="";
-                let emp="";
-                let empNo="";
-                if(typeof(takeout.get('card'))!="undefined"){
-                    emp=takeout.get('card').get('emp').get('name');
-                    empNo=takeout.get('card').get('emp').get('empNo');
-                    card=takeout.get('card')?takeout.get('card').get('card'):"";
-                }
-
-                let sku=takeout.get('product').get('sku')?takeout.get('product').get('sku'):"";
-                let product=takeout.get('product').get('name');
-                let unit=takeout.get('product').get('unit');
-                let passage=takeout.get('passage').get('flag')*1>0?arr[takeout.get('passage').get('flag')*1-1]+takeout.get('passage').get('seqNo'):takeout.get('passage').get('seqNo');
-                let time=new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
-                let cus=takeout.get('box').get('cusId').get('name');
-
-                let count=takeout.get('count');
-                console.log(count);
-                let onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
-                "cus":cus,"machine":machine,"passage":passage,"count":"-"+count,
-                "product":product,"sku":sku,"unit":unit,"employee":emp,
-                "empNo":empNo,"empCard":card};
-                jsondata.push(onetake);
-                console.log('%j',onetake);
-                callback1(null,onetake);
-            },function(error,results){
-                return callback(null,results);
+        takeoutQuery.count().then(function(count){
+            let num=Math.ceil(count/1000);
+            async.times(num,function(n,callback2){
+                takeoutQuery.descending('createdAt');
+                takeoutQuery.limit(1000);
+                takeoutQuery.skip(1000*n);
+                takeoutQuery.find().then(function(takeouts){
+                    async.map(takeouts,function(takeout,callback1){
+                        let machine=takeout.get('box').get('machine');
+                        let card="";
+                        let emp="";
+                        let empNo="";
+                        emp=takeout.get('emp').get('name');
+                        empNo=takeout.get('emp').get('empNo');
+                        card=takeout.get('cardNo')?takeout.get('cardNo'):"";
+                        let sku=takeout.get('product').get('sku')?takeout.get('product').get('sku'):"";
+                        let product=takeout.get('product').get('name');
+                        let unit=takeout.get('product').get('unit');
+                        let passage=takeout.get('passageNo')?takeout.get('passageNo'):"";
+                        //let passage=takeout.get('passage').get('flag')*1>0?arr[takeout.get('passage').get('flag')*1-1]+takeout.get('passage').get('seqNo'):takeout.get('passage').get('seqNo');
+                        let time=new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
+                        let cus=takeout.get('box').get('cusId').get('name');
+                        let count=takeout.get('count');
+                        let onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
+                        "cus":cus,"machine":machine,"passage":passage,"count":"-"+count,
+                        "product":product,"sku":sku,"unit":unit,"employee":emp,
+                        "empNo":empNo,"empCard":card};
+                        jsondata.push(onetake);
+                        //console.log(jsondata.length);
+                        callback1(null,onetake);
+                    },function(error,results){
+                        callback2(null,results);
+                    });
+                });
+            },function(err,tempres){
+                return callback(null,1);
             });
         });
     }
@@ -1553,11 +1559,11 @@ router.get('/pasrecord',function(req,res){
         borrowQuery.find().then(function(borrows){
             async.map(borrows,function(borrow,callback1){
                 let machine=borrow.get('box').get('machine');
-                let card=borrow.get('card')?borrow.get('card').get('card'):"";
+                let card=borrow.get('cardNo')?borrow.get('cardNo'):"";
                 let sku=borrow.get('product').get('sku')?borrow.get('product').get('sku'):"";
                 let product=borrow.get('product').get('name');
                 let unit=borrow.get('product').get('unit');
-                let passage=borrow.get('passage').get('flag')*1>0?arr[borrow.get('passage').get('flag')*1-1]+borrow.get('passage').get('seqNo'):borrow.get('passage').get('seqNo');
+                let passage=borrow.get('passageNo')?borrow.get('passageNo'):"";
                 let time=new moment(borrow.get('time')).format('YYYY-MM-DD HH:mm:ss');
                 let cus=borrow.get('box').get('cusId').get('name');
                 let emp=borrow.get('card').get('emp').get('name');
@@ -1578,7 +1584,7 @@ router.get('/pasrecord',function(req,res){
         function (callback){
             promise1(callback);
         },
-        function (callback){
+        function(callback){
             promise2(callback);
         }],function(err,results){
             res.jsonp({"data":jsondata});
@@ -1742,6 +1748,7 @@ router.get('/summary/:date',function(req,res){
             let num=Math.ceil(count/1000);
             let takes=[];
             async.times(num,function(n,callback5){
+                query.descending('createdAt');
                 query.skip(1000*n);
                 query.find().then(function(results){
                     takes=takes.concat(results);

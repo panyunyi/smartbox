@@ -66,6 +66,7 @@ function doWork(cus,box,res,ts){
             let num=Math.ceil(count/1000);
             let empcards=[];
             async.times(num,function(n,callback2){
+                query.descending('createdAt');
                 query.limit(1000);
                 query.skip(1000*n);
                 query.find().then(function(results){
@@ -96,6 +97,7 @@ function doWork(cus,box,res,ts){
             let num=Math.ceil(count/1000);
             let emppowers=[];
             async.times(num,function(n,callback2){
+                query.descending('createdAt');
                 query.limit(1000);
                 query.skip(1000*n);
                 query.find().then(function(results){
@@ -129,6 +131,7 @@ function doWork(cus,box,res,ts){
             let num=Math.ceil(count/1000);
             let passages=[];
             async.times(num,function(n,callback2){
+                query.descending('createdAt');
                 query.limit(1000);
                 query.skip(1000*n);
                 query.find().then(function(results){
