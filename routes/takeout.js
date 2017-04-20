@@ -40,16 +40,21 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
                         return callback(null,0,null);
                     }
                 });
+            }else{
+                onetake.set('isDel',false);
+                onetake.set('box',box);
+                onetake.set('time',new Date());
+                onetake.set('card',cardObj);
+                if(cardObj.get('oldCard')==null){
+                    cardObj.set('oldCard',card);
+                    cardObj.save();
+                }
+                onetake.set('cardNo',card);
+                onetake.set('result',false);
+                onetake.set('emp',cardObj.get('emp'));
+                onetake.save();
+                return callback(null,1,cardObj.get('emp'));
             }
-            onetake.set('isDel',false);
-            onetake.set('box',box);
-            onetake.set('time',new Date());
-            onetake.set('card',cardObj);
-            onetake.set('cardNo',card);
-            onetake.set('result',false);
-            onetake.set('emp',cardObj.get('emp'));
-            onetake.save();
-            return callback(null,1,cardObj.get('emp'));
         },function(error){
             message="卡号异常";
             return callback(error);
