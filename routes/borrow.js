@@ -28,6 +28,7 @@ function doWork(cus,box,deviceId,card,passage,res){
             oneborrow.set('box',box);
             oneborrow.set('time',new Date());
             oneborrow.set('card',cardObj);
+            oneborrow.set('cardNo',card);
             oneborrow.set('result',false);
             oneborrow.set('borrow',true);
             oneborrow.set('emp',cardObj.get('emp'));
@@ -49,6 +50,7 @@ function doWork(cus,box,deviceId,card,passage,res){
         passageQuery.equalTo('boxId',box);
         passageQuery.first().then(function(passageObj){
             oneborrow.set('passage',passageObj);
+            oneborrow.set('passageNo',passage);
             oneborrow.set('product',passageObj.get('product'));
             oneborrow.save();
             if(passageObj.get('borrowState')||passageObj.get('used')!=null){

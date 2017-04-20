@@ -31,6 +31,7 @@ function doWork(deviceId,records,res){
                 }
                 obj.set('box', box);
                 obj.set('passage',passage);
+                obj.set('passageNo',seqNo);
                 obj.set('product',passage.get('product'));
                 obj.set('time',new Date(record.time));
                 obj.set('result',record.result);
@@ -43,6 +44,7 @@ function doWork(deviceId,records,res){
                 empCardQuery.equalTo('cusId',box.get('cusId'));
                 empCardQuery.first().then(function(card){
                     obj.set('card',card);
+                    obj.set('cardNo',record.card);
                     obj.set('emp',card.get('emp'));
                     /*if(record.result){
                         let powerQuery=new AV.Query('EmployeePower');

@@ -43,6 +43,8 @@ function doWork(deviceId,records,res){
                     obj.set('box', box);
                     obj.set('passage',passage);
                     obj.set('card',card);
+                    obj.set('cardNo',record.card);
+                    obj.set('passageNo',seqNo);
                     obj.set('emp',card.get('emp'));
                     obj.set('borrow',record.borrow);
                     obj.set('product',passage.get('product'));
