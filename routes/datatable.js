@@ -1498,6 +1498,64 @@ router.get('/pasrecord1',function(req,res){
     console.log("order_column:"+order_column);
     console.log("order_dir:"+order_dir);
 });
+router.get('/pasrecord/:date',function(req,res){
+    let arr=req.params.date.split(' - ');
+    let start,end;
+    start=new moment(arr[0]).startOf('days').format('YYYY-MM-DD HH:mm:ss');
+    if(arr.length==1){
+        end=new moment(arr[0]).endOf('days').format('YYYY-MM-DD HH:mm:ss');
+    }else{
+        end=new moment(arr[1]).endOf('days').format('YYYY-MM-DD HH:mm:ss');
+    }
+    let jsondata=[];
+    let takeoutQuery=new AV.Query('TakeOut');
+    takeoutQuery.equalTo('isDel',false);
+    takeoutQuery.equalTo('result',true);
+    takeoutQuery.greaterThanOrEqualTo('time',new Date(start));
+    takeoutQuery.lessThanOrEqualTo('time',new Date(end));
+    takeoutQuery.include('product');
+    takeoutQuery.include('box');
+    takeoutQuery.include('box.cusId');
+    takeoutQuery.include('emp');
+    takeoutQuery.descending('time');
+    takeoutQuery.count().then(function(count){
+        let num=Math.ceil(count/1000);
+        async.times(num,function(n,callback){
+            takeoutQuery.descending('time');
+            takeoutQuery.limit(1000);
+            takeoutQuery.skip(1000*n);
+            takeoutQuery.find().then(function(takeouts){
+                async.map(takeouts,function(takeout,callback1){
+                    let machine=takeout.get('box').get('machine');
+                    let card="";
+                    let emp="";
+                    let empNo="";
+                    emp=takeout.get('emp').get('name');
+                    empNo=takeout.get('emp').get('empNo');
+                    card=takeout.get('cardNo')?takeout.get('cardNo'):"";
+                    let sku=takeout.get('product').get('sku')?takeout.get('product').get('sku'):"";
+                    let product=takeout.get('product').get('name');
+                    let unit=takeout.get('product').get('unit');
+                    let passage=takeout.get('passageNo')?takeout.get('passageNo'):"";
+                    let time=new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
+                    let cus=takeout.get('box').get('cusId').get('name');
+                    let count=takeout.get('count');
+                    let price=takeout.get('product').get('price')*count;
+                    let onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
+                    "cus":cus,"machine":machine,"passage":passage,"count":count,
+                    "product":product,"sku":sku,"unit":unit,"employee":emp,
+                    "empNo":empNo,"empCard":card,"price":price.toFixed(2)};
+                    jsondata.push(onetake);
+                    callback1(null,onetake);
+                },function(err,takesres){
+                    callback(null,1);
+                });
+            });
+        },function(err,takeoutsres){
+            res.jsonp({"data":jsondata});
+        });
+    });
+});
 //交易记录
 router.get('/pasrecord',function(req,res){
     let arr=['A','B','C','D','E','F','G','H','I','J','L'];
@@ -1534,16 +1592,15 @@ router.get('/pasrecord',function(req,res){
                         let product=takeout.get('product').get('name');
                         let unit=takeout.get('product').get('unit');
                         let passage=takeout.get('passageNo')?takeout.get('passageNo'):"";
-                        //let passage=takeout.get('passage').get('flag')*1>0?arr[takeout.get('passage').get('flag')*1-1]+takeout.get('passage').get('seqNo'):takeout.get('passage').get('seqNo');
                         let time=new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
                         let cus=takeout.get('box').get('cusId').get('name');
                         let count=takeout.get('count');
+                        let price=takeout.get('product').get('price')*count;
                         let onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
                         "cus":cus,"machine":machine,"passage":passage,"count":"-"+count,
                         "product":product,"sku":sku,"unit":unit,"employee":emp,
-                        "empNo":empNo,"empCard":card};
+                        "empNo":empNo,"empCard":card,"price":price.toFixed(2)};
                         jsondata.push(onetake);
-                        //console.log(jsondata.length);
                         callback1(null,onetake);
                     },function(error,results){
                         callback2(null,results);
@@ -1580,7 +1637,7 @@ router.get('/pasrecord',function(req,res){
                 let oneborrow={"time":time,"type":flag?"借":"还",
                 "objectId":borrow.get('id'),"cus":cus,"machine":machine,
                 "passage":passage,"sku":sku,"product":product,"count":flag?-1:+1,
-                "unit":unit,"employee":emp,"empNo":empNo,"empCard":card};
+                "unit":unit,"employee":emp,"empNo":empNo,"empCard":card,"price":0};
                 jsondata.push(oneborrow);
                 callback1(null,oneborrow);
             },function(error,results){
@@ -1729,13 +1786,13 @@ router.get('/summary/:date',function(req,res){
         });
     }
     function getCusProduct(customers,boxes,callback){
-        let cusProQuery=new AV.Query('CustomerProduct');
-        cusProQuery.equalTo('isDel',false);
-        cusProQuery.find().then(function(results){
+        let productQuery=new AV.Query('Product');
+        productQuery.equalTo('isDel',false);
+        productQuery.find().then(function(results){
             callback(null,customers,boxes,results);
         });
     }
-    function getTakeout(customers,boxes,cuspros,callback){
+    function getTakeout(customers,boxes,products,callback){
         let arr=req.params.date.split(' - ');
         let start,end;
         let query=new AV.Query('TakeOut');
@@ -1750,12 +1807,13 @@ router.get('/summary/:date',function(req,res){
             end=new moment(arr[1]).endOf('days').format('YYYY-MM-DD HH:mm:ss');
         }
         query.greaterThanOrEqualTo('time',new Date(start));
-        query.lessThan('time',new Date(end));
+        query.lessThanOrEqualTo('time',new Date(end));
         query.include('product');
         query.count().then(function(count){
             let num=Math.ceil(count/1000);
             let takes=[];
             async.times(num,function(n,callback5){
+                query.limit(1000);
                 query.descending('createdAt');
                 query.skip(1000*n);
                 query.find().then(function(results){
@@ -1773,18 +1831,21 @@ router.get('/summary/:date',function(req,res){
                     async.map(takes,function(take,callback2){
                         if(take.get('box').id==box.id){
                             boxData['count']+=take.get('count');
-                            async.map(cuspros,function(cuspro,callback6){
-                                if(cuspro.get('product').id==take.get('product').id&&
-                                    cuspro.get('cusId').id==box.get('cusId').id){
-                                    boxData['total']+=cuspro.get('cusProductPrice')*take.get('count');
+                            async.map(products,function(product,callback6){
+                                if(product.id==take.get('product').id){
+                                    let total=product.get('price')*take.get('count');
+                                    boxData['total']+=total.toFixed(2)*1;
+                                    let price=product.get('price')*take.get('count');
                                     boxList.push({'sku':take.get('product').get('sku'),
                                     'name':take.get('product').get('name'),'id':
-                                    take.get('product').id,'price':cuspro.get('cusProductPrice')*take.get('count')});
+                                    take.get('product').id,'price':price,'count':take.get('count')});
                                 }
                                 callback6(null,1);
                             },function(err,cusprosres){
                                 callback2(null,take);
                             });
+                        }else {
+                            callback2(null,1);
                         }
                     },function(err,takeres){
                         if(boxData['count']>0){
@@ -1803,15 +1864,12 @@ router.get('/summary/:date',function(req,res){
                         cusData['total']=0;
                         async.map(boxArr,function(ba,callback4){
                             if(cus.id==ba['cus']){
-                                let i=0;
                                 cusData['count']+=ba['count'];
                                 cusData['total']+=ba['total'];
-                                cusArr.push(cusData);
-                                if(i==0){
-                                    cusList=ba['list'];
-                                }else{
-                                    cusList.concat(ba['list']);
+                                if(cusArr.indexOf(cusData)==-1){
+                                    cusArr.push(cusData);
                                 }
+                                cusList=cusList.concat(ba['list']);
                                 callback4(null,1);
                             }else{
                                 callback4(null,0);
@@ -1925,7 +1983,6 @@ router.post('/empUpload', function (req, res) {
                 empQuery.first().then(function(emp){
                     if(typeof(emp)=="undefined"){
                         rescontent+="未找到工号"+arr[1].toString()+"的信息;<br>";
-                        console.log(arr[1]);
                         return callback(null,0);
                     }
                     let productQuery=new AV.Query('Product');
@@ -1934,7 +1991,6 @@ router.post('/empUpload', function (req, res) {
                     productQuery.first().then(function(product){
                         if(typeof(product)=="undefined"){
                             rescontent+="未找到产品编号"+arr[2]+"的信息;<br>";
-                            console.log(arr[2]);
                             return callback(null,0);
                         }
                         //console.log(arr[1]+":"+arr[2]);
@@ -1946,7 +2002,6 @@ router.post('/empUpload', function (req, res) {
                             if(count>0){
                                 rescontent+="工号"+arr[1]+"领取产品"+arr[2]+"的权限已存在<br>";
                                 tempi++;
-                                console.log(tempi);
                                 return callback(null,0);
                             }
                             let power=new EmpPower();

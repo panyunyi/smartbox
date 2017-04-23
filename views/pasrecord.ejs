@@ -15,6 +15,7 @@
                             </div>
                             <!-- /.panel-heading -->
                             <div class="panel-body">
+                                <div id="top"></div>
                                 <table id="table" class="ui celled table" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
@@ -27,6 +28,7 @@
                                             <th>产品编号</th>
                                             <th>产品名称</th>
                                             <th>数量</th>
+                                            <th>总价</th>
                                             <th>领用人</th>
                                             <th>卡号</th>
                                         </tr>
@@ -62,11 +64,21 @@
     <script src="../dist/js/jquery.dataTables.min.js"></script>
     <script src="../dist/js/dataTables.semanticui.min.js"></script>
     <script src="../dist/js/semantic.min.js"></script>
+    <script src="http://cdn.bootcss.com/moment.js/2.18.1/moment.min.js"></script>
+    <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
+    <script src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js"></script>
+    <script src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js" charset="utf-8"></script>
+    <script src="//cdn.datatables.net/buttons/1.2.4/js/buttons.html5.min.js" charset="utf-8"></script>
+    <script src="//cdn.datatables.net/buttons/1.2.4/js/buttons.print.min.js" charset="utf-8"></script>
     <script>
         var t= $('#table').DataTable( {
             "processing": true,
-            "serverSide": true,
-           "ajax": {"url":'../api/json/pasrecord1'},
+            "serverSide": false,
+            destroy:true,
+            "dom": '<"top"Br>t<"bottom"ilp>',
+           "ajax": {"url":'../api/json/pasrecord/'+moment().format('YYYY-MM-DD')},
            "columns": [
                 {"data":null},
                 { "data": "time" },
@@ -77,9 +89,22 @@
                 { "data": "sku" },
                 { "data": "product" },
                 { "data": "count" },
+                { "data": "price" },
                 { "data": "employee" },
                 { "data": "empCard" }
             ],
+            buttons: [
+              {
+                  extend: 'collection',
+                  text: '导出',
+                  buttons: [
+                      'copy',
+                      'excel',
+                      'csv',
+                      'pdf',
+                      'print'
+                  ]
+              }],
             "columnDefs": [{
                 "searchable": false,
                 "orderable": false,
@@ -89,7 +114,6 @@
             "language": {
                 "url": "../vendor/zh_CN.txt"
             },
-            initComplete:initComplete
         });
 
         t.on('order.dt search.dt',function() {
@@ -100,6 +124,147 @@
                         cell.innerHTML = i + 1;
                     });
                 }).draw();
+        initComplete();
+
+        function initComplete(){
+
+            var dataPlugin =
+                   '<div id="reportrange" class="pull-left dateRange" style="width:400px;margin-bottom: 12px"> '+
+                   '日期：<i class="glyphicon glyphicon-calendar fa fa-calendar"></i> '+
+                   '<span id="searchDateRange"></span>  '+
+                   '<b class="caret"></b></div> ';
+            $('#top').append(dataPlugin);
+            //时间插件
+            $('#reportrange span').html(moment().subtract(1,'hours').format('YYYY-MM-DD') + ' - ' + moment().format('YYYY-MM-DD'));
+
+            $('#reportrange').daterangepicker(
+                   {
+                       // startDate: moment().startOf('day'),
+                       //endDate: moment(),
+                       //minDate: '01/01/2012',    //最小时间
+                       maxDate : moment(), //最大时间
+                       dateLimit : {
+                           days : 30
+                       }, //起止时间的最大间隔
+                       showDropdowns : true,
+                       showWeekNumbers : false, //是否显示第几周
+                       timePicker : false, //是否显示小时和分钟
+                       timePickerIncrement : 60, //时间的增量，单位为分钟
+                       timePicker12Hour : false, //是否使用12小时制来显示时间
+                       ranges : {
+                           //'最近1小时': [moment().subtract('hours',1), moment()],
+                           '今日': [moment().startOf('day'), moment()],
+                           '昨日': [moment().subtract(1,'days').startOf('day'), moment().subtract(1,'days').endOf('day')],
+                           '最近7日': [moment().subtract(6,'days'), moment()],
+                           '最近30日': [moment().subtract(29,'days'), moment()]
+                       },
+                       opens : 'right', //日期选择框的弹出位置
+                       buttonClasses : [ 'btn btn-default' ],
+                       applyClass : 'btn-small btn-primary blue',
+                       cancelClass : 'btn-small',
+                       format : 'YYYY-MM-DD HH:mm:ss', //控件中from和to 显示的日期格式
+                       separator : ' to ',
+                       locale : {
+                           applyLabel : '确定',
+                           cancelLabel : '取消',
+                           fromLabel : '起始时间',
+                           toLabel : '结束时间',
+                           customRangeLabel : '自定义',
+                           daysOfWeek : [ '日', '一', '二', '三', '四', '五', '六' ],
+                           monthNames : [ '一月', '二月', '三月', '四月', '五月', '六月',
+                               '七月', '八月', '九月', '十月', '十一月', '十二月' ],
+                           firstDay : 1
+                       }
+                   }, function(start, end, label) {//格式化日期显示框
+
+                       $('#reportrange span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
+                   });
+
+            //设置日期菜单被选项  --开始--
+            var dateOption ;
+            if("${riqi}"=='day') {
+               dateOption = "今日";
+            }else if("${riqi}"=='yday') {
+               dateOption = "昨日";
+            }else if("${riqi}"=='week'){
+               dateOption ="最近7日";
+            }else if("${riqi}"=='month'){
+               dateOption ="最近30日";
+            }else if("${riqi}"=='year'){
+               dateOption ="最近一年";
+            }else{
+               dateOption = "自定义";
+            }
+            $(".daterangepicker").find("li").each(function (){
+               if($(this).hasClass("active")){
+                   $(this).removeClass("active");
+               }
+               if(dateOption==$(this).html()){
+                   $(this).addClass("active");
+               }
+            });
+            //设置日期菜单被选项  --结束--
+
+
+            //选择时间后触发重新加载的方法
+            $("#reportrange").on('apply.daterangepicker',function(){
+               //当选择时间后，出发dt的重新加载数据的方法
+               var date=$('#reportrange span').html();
+               $('#table1_processing').css("z-index",100);
+               $('#table1_processing').css('display','block');
+               t.ajax.url('../api/json/pasrecord/'+date).load();
+               /*$.getJSON('../api/json/pasrecord/'+date,function(data){
+                   console.log(data);
+
+                   $('#table1_processing').css("display","none");
+                    t1= $('#table1').DataTable( {
+                      "processing": true,
+                      stateSave: true,
+                      "searching":false,
+                      destroy:true,
+                      "dom": '<"top"Br>t<"bottom"ilp>',
+                     "data":data,
+                     buttons: [
+                       {
+                           extend: 'collection',
+                           text: '导出',
+                           buttons: [
+                               'copy',
+                               'excel',
+                               'csv',
+                               'pdf',
+                               'print'
+                           ]
+                       }
+                   ],
+                   "columns": [
+                        {"data":null},
+                        { "data": "time" },
+                        { "data": "type" },
+                        { "data": "cus" },
+                        { "data": "machine" },
+                        { "data": "passage" },
+                        { "data": "sku" },
+                        { "data": "product" },
+                        { "data": "count" },
+                        { "data": "price" },
+                        { "data": "employee" },
+                        { "data": "empCard" }
+                    ],
+                      "columnDefs": [{
+                          "searchable": false,
+                          "orderable": false,
+                          "targets": 0
+                      }],
+                      "order": [[1, 'desc']],
+                      "language": {
+                          "url": "../vendor/zh_CN.txt"
+                      }
+                  });
+
+              });*/
+            });
+   }
     </script>
 </body>
 

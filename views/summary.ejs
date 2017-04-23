@@ -55,7 +55,7 @@
                                 <table id="table3" class="ui celled table" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
-                                            <th>售货机编号</th>
+                                            <th id="title">售货机编号</th>
                                             <th>产品编号</th>
                                             <th>产品名称</th>
                                             <th>使用数量</th>
@@ -98,7 +98,7 @@
     <script src="../dist/js/dataTables.select.min.js"></script>
     <script src="../dist/js/dataTables.editor.min.js"></script>
     <script src="../dist/js/editor.semanticui.min.js"></script>
-    <script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script src="http://cdn.bootcss.com/moment.js/2.18.1/moment.min.js"></script>
     <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
     <script src="//cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
@@ -119,7 +119,7 @@
            "columns": [
                 {"data":"name"},
                 { "data": "count" },
-                { "data": "total" }
+                { "data": "total",render:function(data){return data.toFixed(2)} }
             ],
             "columnDefs": [{
                 "searchable": false,
@@ -142,7 +142,7 @@
            "columns": [
                 {"data":"name"},
                 { "data": "count" },
-                { "data": "total" }
+                { "data": "total",render:function(data){return data.toFixed(2)} }
             ],
             "columnDefs": [{
                 "searchable": false,
@@ -175,7 +175,7 @@
                        //minDate: '01/01/2012',    //最小时间
                        maxDate : moment(), //最大时间
                        dateLimit : {
-                           days : 30
+                           days : 90
                        }, //起止时间的最大间隔
                        showDropdowns : true,
                        showWeekNumbers : false, //是否显示第几周
@@ -269,7 +269,7 @@
                      "columns": [
                           {"data":"name"},
                           { "data": "count" },
-                          { "data": "total" }
+                          { "data": "total",render:function(data){return data.toFixed(2)} }
                       ],
                       "columnDefs": [{
                           "searchable": false,
@@ -291,7 +291,7 @@
                      "columns": [
                           {"data":"name"},
                           { "data": "count" },
-                          { "data": "total" }
+                          { "data": "total",render:function(data){return data.toFixed(2)} }
                       ],
                       "columnDefs": [{
                           "searchable": false,
@@ -320,9 +320,10 @@
             });
    }
    $('#table1 tbody').on('click', 'tr', function () {
-       var data = t2.row( this ).data();
+       var data = t1.row( this ).data();
        var list=data.list;
-       var data2= duplicate(list,data.name);
+       var data2= test(list,data.name);
+       $('#title').html("客户名称");
         var t3= $('#table3').DataTable( {
           "processing": true,
           stateSave: true,
@@ -335,8 +336,8 @@
               {"data":"box"},
               {"data":"sku"},
               {"data":"name"},
-              { "data": "number" },
-              { "data": "price" }
+              { "data": "count" },
+              { "data": "price" ,render:function(data){return data.toFixed(2)}}
           ],
           "columnDefs": [{
               "searchable": false,
@@ -365,7 +366,8 @@
    $('#table2 tbody').on('click', 'tr', function () {
         var data = t2.row( this ).data();
         var list=data.list;
-        var data2= duplicate(list,data.name);
+        var data2= test(list,data.name);
+        $('#title').html("售货机编号");
         var t3= $('#table3').DataTable( {
           "processing": true,
           stateSave: true,
@@ -378,8 +380,8 @@
               {"data":"box"},
               {"data":"sku"},
               {"data":"name"},
-              { "data": "number" },
-              { "data": "price" }
+              { "data": "count" },
+              { "data": "price",render:function(data){return data.toFixed(2)} }
           ],
           "columnDefs": [{
               "searchable": false,
@@ -406,32 +408,35 @@
       });
    } );
 
-   function duplicate(list,box){
-        var list2 = [];
-        var listMap = {};
-        for (var i = 0, len = list.length, id, name, key, pirce, sku; i < len; i++) {
-            id = list[i].id;
-            sku = list[i].sku;
-            name = list[i].name;
-            price= list[i].price;
-            key = id + '-' + name + '-' +price + '-' + sku; // key为id和name的组合，值为number
-            if (!!listMap[key]) {
-                listMap[key]++;
-            } else {
-                listMap[key] = 1;
+   function test(arr,box){
+        var map = {},
+        dest = [];
+        for(var i = 0; i < arr.length; i++){
+            var ai = arr[i];
+            if(!map[ai.id]){
+                dest.push({
+                    id: ai.id,
+                    name: ai.name,
+                    sku:ai.sku,
+                    box:box,
+                    count:ai.count,
+                    price:ai.price,
+                    data: [ai]
+                });
+                map[ai.id] = ai;
+            }else{
+                for(var j = 0; j < dest.length; j++){
+                    var dj = dest[j];
+                    if(dj.id == ai.id){
+                        dj.count+=ai.count;
+                        dj.price+=ai.price;
+                        dj.data.push(ai);
+                        break;
+                    }
+                }
             }
         }
-        for (var item in listMap) {
-            list2.push({
-                box: box,
-                id: item.split('-')[0],
-                name: item.split('-')[1],
-                price: item.split('-')[2]*1*listMap[item],
-                sku: item.split('-')[3],
-                number: listMap[item]
-            })
-        }
-        return list2;
+        return dest;
    }
     </script>
 </body>
