@@ -1846,8 +1846,7 @@ router.get('/summary/:date',function(req,res){
                                     let price=product.get('price')*take.get('count');
                                     boxList.push({'sku':take.get('product').get('sku'),
                                     'name':take.get('product').get('name'),'id':
-                                    take.get('product').id,'price':price,'count':take.get('count'),'unitprice':product.get('price')});
-                                    boxData['cus']=take.get('emp').get('cusId').id;
+                                    take.get('product').id,'price':price,'count':take.get('count'),'unitprice':product.get('price'),'cus':take.get('emp').get('cusId').id});
                                 }
                                 callback6(null,1);
                             },function(err,cusprosres){
@@ -1871,14 +1870,17 @@ router.get('/summary/:date',function(req,res){
                         cusData['name']=cus.get('name');
                         cusData['count']=0;
                         cusData['total']=0;
-                        async.map(boxArr,function(ba,callback4){
-                            if(cus.id==ba['cus']){
-                                cusData['count']+=ba['count'];
-                                cusData['total']+=ba['total'];
+                        async.map(takes,function(take,callback4){
+                            if(cus.id==take.get('emp').get('cusId').id){
+                                cusData['count']+=take.get('count');
+                                cusData['total']+=take.get('product').get('price')*take.get('count');
                                 if(cusArr.indexOf(cusData)==-1){
                                     cusArr.push(cusData);
                                 }
-                                cusList=cusList.concat(ba['list']);
+                                let price=take.get('product').get('price')*take.get('count');
+                                cusList.push({'sku':take.get('product').get('sku'),
+                                'name':take.get('product').get('name'),'id':
+                                take.get('product').id,'price':price,'count':take.get('count'),'unitprice':take.get('product').get('price'),'cus':take.get('emp').get('cusId').id});
                                 callback4(null,1);
                             }else{
                                 callback4(null,0);
