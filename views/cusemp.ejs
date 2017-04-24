@@ -198,6 +198,7 @@
             $('#table tbody').on('click', 'tr', function () {
                 var data = table.row( this ).data();
                 table1.ajax.url('../api/json/empPower/'+data.DT_RowId).load();
+                
             } );
             editor1 = new $.fn.dataTable.Editor( {
                 ajax: {

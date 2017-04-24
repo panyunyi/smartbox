@@ -543,28 +543,31 @@ router.get('/employee',function(req,res){
                     result.set('phone',result.get('phone')?result.get('phone'):"");
                     result.set('notice',result.get('notice')?result.get('notice'):"");
                     result.set('dept',result.get('dept')?result.get('dept'):"");
-                    let cardQuery=new AV.Query('EmployeeCard');
-                    cardQuery.equalTo('isDel',false);
-                    cardQuery.equalTo('emp',result);
-                    cardQuery.find().then(function(cards){
-                        let cardArr=[];
-                        let oldArr=[];
-                        if(cards.length>0){
-                            async.map(cards,function(card,callback3){
-                                cardArr.push(card.get('card'));
-                                oldArr.push(card.get('oldCard'));
-                                callback3(null,card);
-                            },function(err,cardsres){
-                                result.set('card',cardArr);
-                                result.set('old',oldArr);
-                                callback1(null,result);
-                            });
-                        }else {
-                            result.set('card',cardArr);
-                            result.set('old',oldArr);
-                            callback1(null,result);
-                        }
-                    });
+                    result.set('card',"");
+                    result.set('old',"");
+                    callback1(null,result);
+                    // let cardQuery=new AV.Query('EmployeeCard');
+                    // cardQuery.equalTo('isDel',false);
+                    // cardQuery.equalTo('emp',result);
+                    // cardQuery.find().then(function(cards){
+                    //     let cardArr=[];
+                    //     let oldArr=[];
+                    //     if(cards.length>0){
+                    //         async.map(cards,function(card,callback3){
+                    //             cardArr.push(card.get('card'));
+                    //             oldArr.push(card.get('oldCard'));
+                    //             callback3(null,card);
+                    //         },function(err,cardsres){
+                    //             result.set('card',cardArr);
+                    //             result.set('old',oldArr);
+                    //             callback1(null,result);
+                    //         });
+                    //     }else {
+                    //         result.set('card',cardArr);
+                    //         result.set('old',oldArr);
+                    //         callback1(null,result);
+                    //     }
+                    //});
                 },function(err,data){
                     resdata["data"]=data;
                     callback(null,data);
@@ -725,8 +728,8 @@ router.put('/employee/edit/:id',function(req,res){
                 cardQuery.find().then(function(cardsObj){
                     cardsObj.forEach(function(cardobj){
                         if(cardArr.indexOf(cardobj.get('card'))==-1){
-                            cardobj.set('isDel',true);
-                            cardobj.save();
+                            // cardobj.set('isDel',true);
+                            // cardobj.save();
                         }else {
                             cardobj.set('cusId',cus);
                             cardobj.save();
@@ -942,6 +945,7 @@ router.post('/empPower/add',function(req,res){
                 emppower.set('productId',p.id);
                 emppower.set('sku',p.get('sku'));
                 emppower.set('product',p.get('name'));
+                emppower.set('used',0);
                 data.push(emppower);
                 res.jsonp({"data":data});
             });
@@ -1811,6 +1815,8 @@ router.get('/summary/:date',function(req,res){
         query.greaterThanOrEqualTo('time',new Date(start));
         query.lessThanOrEqualTo('time',new Date(end));
         query.include('product');
+        query.include('emp');
+        query.include('emp.cusId');
         query.count().then(function(count){
             let num=Math.ceil(count/1000);
             let takes=[];
@@ -1829,7 +1835,7 @@ router.get('/summary/:date',function(req,res){
                     boxData['name']=box.get('machine');
                     boxData['count']=0;
                     boxData['total']=0;
-                    boxData['cus']=box.get('cusId').id;
+                    //boxData['cus']=box.get('cusId').id;
                     async.map(takes,function(take,callback2){
                         if(take.get('box').id==box.id){
                             boxData['count']+=take.get('count');
@@ -1841,6 +1847,7 @@ router.get('/summary/:date',function(req,res){
                                     boxList.push({'sku':take.get('product').get('sku'),
                                     'name':take.get('product').get('name'),'id':
                                     take.get('product').id,'price':price,'count':take.get('count'),'unitprice':product.get('price')});
+                                    boxData['cus']=take.get('emp').get('cusId').id;
                                 }
                                 callback6(null,1);
                             },function(err,cusprosres){

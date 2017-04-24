@@ -270,7 +270,6 @@
                      "columns": [
                           {"data":"name"},
                           { "data": "count" },
-                          {"data":"unitprice"},
                           { "data": "total",render:function(data){return data.toFixed(2)} }
                       ],
                       "columnDefs": [{
@@ -424,6 +423,7 @@
                     sku:ai.sku,
                     box:box,
                     count:ai.count,
+                    unitprice:ai.unitprice,
                     price:ai.price,
                     data: [ai]
                 });
