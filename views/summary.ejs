@@ -59,6 +59,7 @@
                                             <th>产品编号</th>
                                             <th>产品名称</th>
                                             <th>使用数量</th>
+                                            <th>单价</th>
                                             <th>总价</th>
                                         </tr>
                                     </thead>
@@ -269,6 +270,7 @@
                      "columns": [
                           {"data":"name"},
                           { "data": "count" },
+                          {"data":"unitprice"},
                           { "data": "total",render:function(data){return data.toFixed(2)} }
                       ],
                       "columnDefs": [{
@@ -337,6 +339,7 @@
               {"data":"sku"},
               {"data":"name"},
               { "data": "count" },
+              {"data":"unitprice"},
               { "data": "price" ,render:function(data){return data.toFixed(2)}}
           ],
           "columnDefs": [{
@@ -381,6 +384,7 @@
               {"data":"sku"},
               {"data":"name"},
               { "data": "count" },
+              { "data": "unitprice" },
               { "data": "price",render:function(data){return data.toFixed(2)} }
           ],
           "columnDefs": [{

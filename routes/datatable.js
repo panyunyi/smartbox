@@ -1515,8 +1515,8 @@ router.get('/pasrecord/:date',function(req,res){
     takeoutQuery.lessThanOrEqualTo('time',new Date(end));
     takeoutQuery.include('product');
     takeoutQuery.include('box');
-    takeoutQuery.include('box.cusId');
     takeoutQuery.include('emp');
+    takeoutQuery.include('emp.cusId');
     takeoutQuery.descending('time');
     takeoutQuery.count().then(function(count){
         let num=Math.ceil(count/1000);
@@ -1538,7 +1538,7 @@ router.get('/pasrecord/:date',function(req,res){
                     let unit=takeout.get('product').get('unit');
                     let passage=takeout.get('passageNo')?takeout.get('passageNo'):"";
                     let time=new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
-                    let cus=takeout.get('box').get('cusId').get('name');
+                    let cus=takeout.get('emp').get('cusId').get('name');
                     let count=takeout.get('count');
                     let price=takeout.get('product').get('price')*count;
                     let unitprice=takeout.get('product').get('price');
@@ -1553,7 +1553,7 @@ router.get('/pasrecord/:date',function(req,res){
                 });
             });
         },function(err,takeoutsres){
-            exportExcel(jsondata);
+            exportExcel(start+" - "+end,jsondata);
             res.jsonp({"data":jsondata});
         });
     });
@@ -1840,7 +1840,7 @@ router.get('/summary/:date',function(req,res){
                                     let price=product.get('price')*take.get('count');
                                     boxList.push({'sku':take.get('product').get('sku'),
                                     'name':take.get('product').get('name'),'id':
-                                    take.get('product').id,'price':price,'count':take.get('count')});
+                                    take.get('product').id,'price':price,'count':take.get('count'),'unitprice':product.get('price')});
                                 }
                                 callback6(null,1);
                             },function(err,cusprosres){
@@ -2090,7 +2090,7 @@ function PrefixInteger(num, n) {
 }
 
 var ejsExcel = require("ejsexcel");
-function exportExcel(data){
+function exportExcel(filename,data){
     let exlBuf = fs.readFileSync("./public/upload/pasrecord.xlsx");
     //用数据源(对象)data渲染Excel模板
     ejsExcel.renderExcelCb(exlBuf, data, function(err,exlBuf2){
@@ -2098,8 +2098,8 @@ function exportExcel(data){
         console.error(err);
         return;
     }
-    fs.writeFileSync("./public/upload/导出.xlsx", exlBuf2);
-        console.log("1");
+    fs.writeFileSync("./public/upload/交易清单"+filename+".xlsx", exlBuf2);
+        console.log(filename);
     });
 }
 module.exports = router;
