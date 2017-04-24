@@ -1541,10 +1541,11 @@ router.get('/pasrecord/:date',function(req,res){
                     let cus=takeout.get('box').get('cusId').get('name');
                     let count=takeout.get('count');
                     let price=takeout.get('product').get('price')*count;
+                    let unitprice=takeout.get('product').get('price');
                     let onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
                     "cus":cus,"machine":machine,"passage":passage,"count":count,
                     "product":product,"sku":sku,"unit":unit,"employee":emp,
-                    "empNo":empNo,"empCard":card,"price":price.toFixed(2)};
+                    "empNo":empNo,"empCard":card,"price":price.toFixed(2),"unitprice":unitprice};
                     jsondata.push(onetake);
                     callback1(null,onetake);
                 },function(err,takesres){
@@ -1552,6 +1553,7 @@ router.get('/pasrecord/:date',function(req,res){
                 });
             });
         },function(err,takeoutsres){
+            exportExcel(jsondata);
             res.jsonp({"data":jsondata});
         });
     });
@@ -2085,5 +2087,19 @@ function PrefixInteger(num, n) {
         len++;
     }
     return num;
+}
+
+var ejsExcel = require("ejsexcel");
+function exportExcel(data){
+    let exlBuf = fs.readFileSync("./public/upload/pasrecord.xlsx");
+    //用数据源(对象)data渲染Excel模板
+    ejsExcel.renderExcelCb(exlBuf, data, function(err,exlBuf2){
+    if(err) {
+        console.error(err);
+        return;
+    }
+    fs.writeFileSync("./public/upload/导出.xlsx", exlBuf2);
+        console.log("1");
+    });
 }
 module.exports = router;
