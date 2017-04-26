@@ -973,6 +973,7 @@ router.put('/empPower/edit/:id',function(req,res){
             emppower.set('productId',p.id);
             emppower.set('sku',p.get('sku'));
             emppower.set('product',p.get('name'));
+            emppower.set('used',0);
             data.push(emppower);
             res.jsonp({"data":data});
         });
