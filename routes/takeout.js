@@ -19,6 +19,7 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
         cardQuery.contains('card',tempCard);
         cardQuery.equalTo('cusId',cus);
         cardQuery.equalTo('isDel',false);
+        cardQuery.include('emp');
         cardQuery.first().then(function(cardObj){
             if (typeof(cardObj) == "undefined") {
                 let admincardQuery=new AV.Query('AdminCard');
@@ -51,6 +52,7 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
                 }
                 onetake.set('cardNo',card);
                 onetake.set('result',false);
+                onetake.set('count',getCount*1);
                 onetake.set('emp',cardObj.get('emp'));
                 onetake.save();
                 return callback(null,1,cardObj.get('emp'));
@@ -60,7 +62,7 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
             return callback(error);
         });
     }
-    function promise2(arg1,arg2,callback){
+    function promise2(arg1,emp,callback){
         if(arg1==0){
             return callback(null,false,null);
         }
@@ -80,25 +82,38 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
             onetake.set('passageNo',passage);
             onetake.set('product',passageObj.get('product'));
             onetake.save();
-            return callback(null,passageObj,arg2);
+            return callback(null,passageObj,emp);
         },function(error){
             message="货道异常";
             return callback(error);
         });
     }
-    function promise3(arg1,arg2,callback){
-        if (typeof(arg1) == "undefined"||arg1==false||arg2==null) {
+    function promise3(passageObj,emp,callback){
+        if (typeof(passageObj) == "undefined"||passageObj==false||emp==null) {
             return callback(null,false);
         }
-        let product=arg1.get('product');
+        let product=passageObj.get('product');
         let powerQuery=new AV.Query('EmployeePower');
         powerQuery.equalTo('isDel',false);
         powerQuery.equalTo('product',product);
-        powerQuery.equalTo('emp',arg2);
+        powerQuery.equalTo('emp',emp);
         powerQuery.first().then(function(power){
             if(typeof(power)!="undefined"){
-                verifyPower(arg2,power,product,getCount,callback);
-            }else {
+                verifyPower(emp,power,product,getCount,callback);
+            }else if(emp.get('super')>0){
+                onetake.set('result',true);
+                onetake.save().then(function(one){
+                    flag=true;
+                    message="成功";
+                    resdata["result"]=flag;
+                    resdata["objectId"]=one.id;
+                    let passagedata=onetake.get('passage');
+                    passagedata.increment('stock',-getCount);
+                    passagedata.save().then(function(){
+                        callback(null,true);
+                    });
+                });
+            }else{
                 message="无取货权限";
                 return callback(null,false);
             }
@@ -141,7 +156,6 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
                 //console.log(takecount);
                 power.set('used',takecount);
                 takecount=takecount*1+getCount*1;
-                onetake.set('count',getCount*1);
                 if (count>=takecount) {
                     flag=true;
                     onetake.set('result',true);
