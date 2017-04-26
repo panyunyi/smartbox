@@ -253,7 +253,7 @@ router.post('/product/add',function(req,res){
     productQuery.equalTo('sku',arr['data[0][sku]']);
     productQuery.count().then(function(count){
         if(count>0){
-            res.jsonp({"data":[],"fieldErrors":[{"name":"sku","status":arr['data[0][sku]']+"已存在"}]});
+            return res.jsonp({"data":[],"fieldErrors":[{"name":"sku","status":arr['data[0][sku]']+"已存在"}]});
         }else{
             product.set('name',arr['data[0][name]']);
             product.set('unit',arr['data[0][unit]']);
@@ -289,14 +289,9 @@ router.post('/product/add',function(req,res){
 router.put('/product/edit/:id',function(req,res){
     let arr=req.body;
     let id=req.params.id;
-    let productQuery=new AV.Query('Product');
-    productQuery.equalTo('isDel',false);
-    productQuery.equalTo('sku',arr['data['+id+'][sku]']);
-    productQuery.count().then(function(count){
-        if(count>0){
-            res.jsonp({"data":[],"fieldErrors":[{"name":"sku","status":arr['data['+id+'][sku]']+"已存在"}]});
-        }else{
-            let product = AV.Object.createWithoutData('Product', id);
+    let product = AV.Object.createWithoutData('Product', id);
+    product.fetch().then(function(){
+        if(product.get('sku')==arr['data['+id+'][sku]'].trim()){
             product.set('name',arr['data['+id+'][name]']);
             product.set('unit',arr['data['+id+'][unit]']);
             let type=AV.Object.createWithoutData('Assortment', arr['data['+id+'][assort]']);
@@ -306,8 +301,6 @@ router.put('/product/edit/:id',function(req,res){
             product.set('cue',arr['data['+id+'][cue]']*1);
             product.set('price',arr['data['+id+'][price]']*1);
             product.set('warning',arr['data['+id+'][warning]']*1);
-            product.set('sku',arr['data['+id+'][sku]'].trim());
-            product.set('oldsku',arr['data['+id+'][oldsku]']);
             product.set('isDel',false);
             product.save().then(function(pro){
                 let data=[];
@@ -322,6 +315,41 @@ router.put('/product/edit/:id',function(req,res){
                 });
             },function(err){
                 console.log(err);
+            });
+        }else{
+            let productQuery=new AV.Query('Product');
+            productQuery.equalTo('isDel',false);
+            productQuery.equalTo('sku',arr['data['+id+'][sku]']);
+            productQuery.count().then(function(count){
+                if(count>0){
+                    return res.jsonp({"data":[],"fieldErrors":[{"name":"sku","status":arr['data['+id+'][sku]']+"已存在"}]});
+                }else{
+                    product.set('name',arr['data['+id+'][name]']);
+                    product.set('unit',arr['data['+id+'][unit]']);
+                    let type=AV.Object.createWithoutData('Assortment', arr['data['+id+'][assort]']);
+                    product.set('type',type);
+                    product.set('stockDays',arr['data['+id+'][stockDays]']*1);
+                    product.set('spec',arr['data['+id+'][spec]']);
+                    product.set('cue',arr['data['+id+'][cue]']*1);
+                    product.set('price',arr['data['+id+'][price]']*1);
+                    product.set('warning',arr['data['+id+'][warning]']*1);
+                    product.set('sku',arr['data['+id+'][sku]'].trim());
+                    product.set('isDel',false);
+                    product.save().then(function(pro){
+                        let data=[];
+                        pro.set('DT_RowId',pro.id);
+                        pro.set('typeId',pro.get('type').id);
+                        pro.set('price',pro.get('price'));
+                        pro.set('spec',pro.get('spec')?pro.get('spec'):"");
+                        type.fetch().then(function(){
+                            pro.set('type',type.get('name'));
+                            data.push(pro);
+                            res.jsonp({"data":data});
+                        });
+                    },function(err){
+                        console.log(err);
+                    });
+                }
             });
         }
     });
