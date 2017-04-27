@@ -2056,6 +2056,35 @@ router.post('/empUpload', function (req, res) {
             res.send("员工权限导入完成。<br>"+rescontent);
         });
     }
+    function uploadDept(data,cus,file,res){
+        let i=0;
+        let count=0;
+        let cusObj=AV.Object.createWithoutData('Customer',cus);
+        async.map(data,function(arr,callback){
+            if(i!=0){
+                let empQuery=new AV.Query('Employee');
+                empQuery.equalTo('isDel',false);
+                //empQuery.equalTo('cusId',cusObj);
+                empQuery.equalTo('empNo',arr[0].toString().trim());
+                empQuery.first().then(function(empObj){
+                    if(typeof(empObj)!="undefined"){
+                        rescontent+=arr[0].toString().trim()+"未找到<br>";
+                        callback1(null,0);
+                    }else {
+                        empObj.set('dept',arr[1].trim());
+                        empObj.save().then(function(){
+                            count++;
+                            return callback(null,1);
+                        })
+                    }
+                });
+            }
+            i++;
+        },function(err,results){
+            fs.unlinkSync(file);
+            res.send("员工部门导入完成。共计："+count+"<br>"+rescontent);
+        });
+    }
     upload(req, res, function (err) {
         let flag=req.body.radio;
         let cus=req.body.customer;
@@ -2090,6 +2119,8 @@ router.post('/empUpload', function (req, res) {
             uploadUser(data,cus,req.file.path,res);
         }else if(flag==2){
             uploadPower(data,cus,req.file.path,res);
+        }else if(flag==3){
+            uploadDept(data,cus,req.file.path,res);
         }
     });
 });
