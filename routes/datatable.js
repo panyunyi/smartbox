@@ -619,8 +619,8 @@ router.post('/employee/add',function(req,res){
     employee.set('phone',arr['data[0][phone]']);
     employee.set('dept',arr['data[0][dept]']);
     employee.set('notice',arr['data[0][notice]']);
-    employee.set('super',arr['data[0][super]']*1);
-    //let cards=arr['data[0][old]'].split(',');
+    let unlimit=arr['data[0][super][]'];
+    employee.set('super',unlimit?unlimit*1:0);
     let card=arr['data[0][old]'].trim();
     let cus=AV.Object.createWithoutData('Customer', arr['data[0][cusId]']);
     let empQuery=new AV.Query('Employee');
@@ -697,7 +697,8 @@ router.put('/employee/edit/:id',function(req,res){
                 employee.set('phone',arr['data['+id+'][phone]']);
                 employee.set('dept',arr['data['+id+'][dept]']);
                 employee.set('notice',arr['data['+id+'][notice]']);
-                employee.set('super',arr['data['+id+'][super]']*1);
+                let unlimit=arr['data['+id+'][super][]'];
+                employee.set('super',unlimit?unlimit*1:0);
                 let card=arr['data['+id+'][old]'];
                 employee.set('cusId',cus);
                 employee.set('isDel',false);

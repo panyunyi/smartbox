@@ -29,7 +29,7 @@
                                             <th>职务</th>
                                             <th>电话</th>
                                             <th>备注</th>
-                                            <th>超级权限</th>
+                                            <th>无限领料</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -131,9 +131,8 @@
                     { label: '职务',  name: 'job' },
                     { label: '电话',  name: 'phone' },
                     { label: '备注',  name: 'notice' },
-                    { label: '超级权限', name: 'super',type:'radio',options:[
-                        { label: "是", value: 1},
-                        { label: "否",  value: 0 }
+                    { label: '无限领料', name: 'super',type:'checkbox',options:[
+                        { label: "是", value: 1}
                     ], }
                 ],i18n: {
                         create: {
