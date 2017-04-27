@@ -21,6 +21,7 @@
                                             <th>序号</th>
                                             <th>卡号</th>
                                             <th>售货机编号</th>
+                                            <th>备注</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -80,7 +81,8 @@
             table: "#table",
             fields: [
                 { label: '卡号', name: 'card' },
-                { label: '售货机',  name: 'box[].id' ,type:'checkbox' }
+                { label: '售货机',  name: 'box[].id' ,type:'checkbox' },
+                { label: '备注', name : 'notice'}
             ],i18n: {
                     create: {
                         button: "新增",
@@ -112,7 +114,8 @@
             "columns": [
                 {"data":null},
                 { "data": "card" },
-                { "data": "box",render: "[, ].name" }
+                { "data": "box",render: "[, ].name" },
+                { "data": "notice"}
             ],
             select:true,
             buttons: [

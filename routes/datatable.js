@@ -7,26 +7,24 @@ var moment=require('moment');
 
 //管理卡
 router.get('/admincard', function(req, res) {
-    var resdata={};
+    let resdata={};
     function promise1(callback){
-        var query=new AV.Query('AdminCard');
+        let query=new AV.Query('AdminCard');
         query.equalTo('isDel',false);
         query.find().then(function (results){
-            var jsondata=[];
+            let jsondata=[];
             async.map(results,function(result,callback1){
-                var arrboxes=[];
             	async.map(result.get('box'),function(boxId,callback2){
-            		var box=AV.Object.createWithoutData('BoxInfo',boxId);
+            		let box=AV.Object.createWithoutData('BoxInfo',boxId);
             		box.fetch().then(function(data){
-                        var boxdata={};
+                        let boxdata={};
                         boxdata['id']=data.id;
                         boxdata['name']=data.get('machine');
-                        arrboxes.push(boxdata);
             			callback2(null,boxdata);
             		});
             	},function(err,boxes){
-               		var one={"DT_RowId":result.id,"card":result.get('card'),
-                    "box":boxes};
+               		let one={"DT_RowId":result.id,"card":result.get('card'),
+                    "box":boxes,"notice":result.get('notice')?result.get('notice'):""};
                 	jsondata.push(one);
                 	callback1(null,boxes);
             	});
@@ -37,7 +35,7 @@ router.get('/admincard', function(req, res) {
         });
     }
     function promise2(callback){
-        var query=new AV.Query('BoxInfo');
+        let query=new AV.Query('BoxInfo');
         query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback1){
@@ -64,16 +62,17 @@ router.get('/admincard', function(req, res) {
 //增加管理卡
 var AdminCard = AV.Object.extend('AdminCard');
 router.post('/admincard/add',function(req,res){
-    var arr=req.body;
-    var admincard=new AdminCard();
-    var box=[];
-    var boxarr=[];
+    let arr=req.body;
+    let admincard=new AdminCard();
+    let box=[];
+    let boxarr=[];
     admincard.set('card',arr['data[0][card]']);
+    admincard.set('notice',arr['data[0][notice]']);
     async.times(arr['data[0][box-many-count]']*1,function(i,callback){
-        var boxdata={};
+        let boxdata={};
         box.push(arr['data[0][box]['+i+'][id]']);
         boxdata['id']=arr['data[0][box]['+i+'][id]'];
-        var boxObj=AV.Object.createWithoutData('BoxInfo', arr['data[0][box]['+i+'][id]']);
+        let boxObj=AV.Object.createWithoutData('BoxInfo', arr['data[0][box]['+i+'][id]']);
         boxObj.fetch().then(function(){
             boxdata['name']=boxObj.get('machine');
             boxarr.push(boxdata);
@@ -82,7 +81,7 @@ router.post('/admincard/add',function(req,res){
     },function(err,results){
         admincard.set('box',box);
         admincard.save().then(function(ac){
-            var data=[];
+            let data=[];
             ac.set('DT_RowId',ac.id);
             ac.set('box',boxarr);
             data.push(ac);
@@ -92,17 +91,18 @@ router.post('/admincard/add',function(req,res){
 });
 //更新管理卡
 router.put('/admincard/edit/:id',function(req,res){
-    var arr=req.body;
-    var id=req.params.id;
-    var admincard = AV.Object.createWithoutData('AdminCard', id);
-    var box=[];
-    var boxarr=[];
+    let arr=req.body;
+    let id=req.params.id;
+    let admincard = AV.Object.createWithoutData('AdminCard', id);
+    let box=[];
+    let boxarr=[];
     admincard.set('card',arr['data['+id+'][card]']);
+    admincard.set('notice',arr['data['+id+'][notice]']);
     async.times(arr['data['+id+'][box-many-count]']*1,function(i,callback){
-        var boxdata={};
+        let boxdata={};
         box.push(arr['data['+id+'][box]['+i+'][id]']);
         boxdata['id']=arr['data['+id+'][box]['+i+'][id]'];
-        var boxObj=AV.Object.createWithoutData('BoxInfo', arr['data['+id+'][box]['+i+'][id]']);
+        let boxObj=AV.Object.createWithoutData('BoxInfo', arr['data['+id+'][box]['+i+'][id]']);
         boxObj.fetch().then(function(){
             boxdata['name']=boxObj.get('machine');
             boxarr.push(boxdata);
@@ -111,7 +111,7 @@ router.put('/admincard/edit/:id',function(req,res){
     },function(err,results){
         admincard.set('box',box);
         admincard.save().then(function(ac){
-            var data=[];
+            let data=[];
             ac.set('DT_RowId',ac.id);
             ac.set('box',boxarr);
             data.push(ac);
@@ -121,8 +121,8 @@ router.put('/admincard/edit/:id',function(req,res){
 });
 //删除管理卡
 router.delete('/admincard/remove/:id',function(req,res){
-    var id=req.params.id;
-    var admincard = AV.Object.createWithoutData('AdminCard', id);
+    let id=req.params.id;
+    let admincard = AV.Object.createWithoutData('AdminCard', id);
     admincard.set('isDel',true);
     admincard.save().then(function(){
         res.jsonp({"data":[]});
@@ -130,7 +130,7 @@ router.delete('/admincard/remove/:id',function(req,res){
 });
 //客户
 router.get('/customer',function(req,res){
-    var query=new AV.Query('Customer');
+    let query=new AV.Query('Customer');
     query.equalTo('isDel',false);
     query.find().then(function(results){
         async.map(results,function(result,callback){
@@ -151,8 +151,8 @@ router.get('/customer',function(req,res){
 //增加客户
 var Customer = AV.Object.extend('Customer');
 router.post('/customer/add',function(req,res){
-    var arr=req.body;
-    var customer=new Customer();
+    let arr=req.body;
+    let customer=new Customer();
     customer.set('name',arr['data[0][name]']);
     customer.set('connecter',arr['data[0][connecter]']);
     customer.set('connectPhone',arr['data[0][connectPhone]']);
@@ -162,7 +162,7 @@ router.post('/customer/add',function(req,res){
     customer.set('address',arr['data[0][address]']);
     customer.set('isDel',false);
     customer.save().then(function(cus){
-        var data=[];
+        let data=[];
         cus.set('DT_RowId',cus.id);
         data.push(cus);
         res.jsonp({"data":data});
@@ -170,9 +170,9 @@ router.post('/customer/add',function(req,res){
 });
 //更新客户资料
 router.put('/customer/edit/:id',function(req,res){
-    var arr=req.body;
-    var id=req.params.id;
-    var customer = AV.Object.createWithoutData('Customer', id);
+    let arr=req.body;
+    let id=req.params.id;
+    let customer = AV.Object.createWithoutData('Customer', id);
     customer.set('name',arr['data['+id+'][name]']);
     customer.set('connecter',arr['data['+id+'][connecter]']);
     customer.set('connectPhone',arr['data['+id+'][connectPhone]']);
@@ -181,7 +181,7 @@ router.put('/customer/edit/:id',function(req,res){
     customer.set('area',arr['data['+id+'][area]']);
     customer.set('address',arr['data['+id+'][address]']);
     customer.save().then(function(cus){
-        var data=[];
+        let data=[];
         cus.set('DT_RowId',cus.id);
         data.push(cus);
         res.jsonp({"data":data});
@@ -189,8 +189,8 @@ router.put('/customer/edit/:id',function(req,res){
 });
 //删除客户资料
 router.delete('/customer/remove/:id',function(req,res){
-    var id=req.params.id;
-    var customer = AV.Object.createWithoutData('Customer', id);
+    let id=req.params.id;
+    let customer = AV.Object.createWithoutData('Customer', id);
     customer.set('isDel',true);
     customer.save().then(function(){
         res.jsonp({"data":[]});
@@ -198,9 +198,9 @@ router.delete('/customer/remove/:id',function(req,res){
 });
 //产品
 router.get('/product',function(req,res){
-    var resdata={};
+    let resdata={};
     function promise1(callback1){
-        var query=new AV.Query('Product');
+        let query=new AV.Query('Product');
         query.equalTo('isDel',false);
         query.include('type');
         query.find().then(function(results){
@@ -219,7 +219,7 @@ router.get('/product',function(req,res){
         });
     }
     function promise2(callback1){
-        var query=new AV.Query('Assortment');
+        let query=new AV.Query('Assortment');
         query.equalTo('isDel',false);
         query.find().then(function(results){
             async.map(results,function(result,callback){
@@ -573,6 +573,7 @@ router.get('/employee',function(req,res){
                     result.set('old',result.get('oldCard'));
                     result.set('empNo',result.get('emp').get('empNo'));
                     result.set('name',result.get('emp').get('name'));
+                    result.set('super',result.get('emp').get('super'));
                     callback1(null,result);
                 },function(err,data){
                     resdata["data"]=data;
@@ -618,6 +619,7 @@ router.post('/employee/add',function(req,res){
     employee.set('phone',arr['data[0][phone]']);
     employee.set('dept',arr['data[0][dept]']);
     employee.set('notice',arr['data[0][notice]']);
+    employee.set('super',arr['data[0][super]']*1);
     //let cards=arr['data[0][old]'].split(',');
     let card=arr['data[0][old]'].trim();
     let cus=AV.Object.createWithoutData('Customer', arr['data[0][cusId]']);
@@ -695,6 +697,7 @@ router.put('/employee/edit/:id',function(req,res){
                 employee.set('phone',arr['data['+id+'][phone]']);
                 employee.set('dept',arr['data['+id+'][dept]']);
                 employee.set('notice',arr['data['+id+'][notice]']);
+                employee.set('super',arr['data['+id+'][super]']*1);
                 let card=arr['data['+id+'][old]'];
                 employee.set('cusId',cus);
                 employee.set('isDel',false);
@@ -1401,7 +1404,6 @@ router.delete('/passage/remove/:id',function(req,res){
 router.get('/boxProduct/:id',function(req,res){
     let id=req.params.id;
     let query=new AV.Query('BoxProduct');
-    let arr=[];
     let box=AV.Object.createWithoutData('BoxInfo', id);
     query.equalTo('isDel',false);
     query.equalTo('boxId',box);
@@ -1417,17 +1419,25 @@ router.get('/boxProduct/:id',function(req,res){
                 if(count==0){
                     result.destroy();
                 }else {
-                    result.set('DT_RowId',result.id);
-                    result.set('machine',result.get('boxId').get('machine'));
-                    result.set('product',result.get('productId').get('name'));
-                    result.set('sku',result.get('productId').get('sku'));
-                    result.set('productId',result.get('productId').id);
-                    arr.push(result);
+                    passageQuery.find().then(function(passages){
+                        let capacity=0;
+                        async.map(passages,function(passage,callback){
+                            capacity+=passage.get('capacity');
+                            callback(null,1);
+                        },function(err,passagesres){
+                            result.set('capacity',capacity);
+                            result.set('DT_RowId',result.id);
+                            result.set('machine',result.get('boxId').get('machine'));
+                            result.set('product',result.get('productId').get('name'));
+                            result.set('sku',result.get('productId').get('sku'));
+                            result.set('productId',result.get('productId').id);
+                            callback1(null,result);
+                        });
+                    });
                 }
-                callback1(null,result);
             });
         },function(err,data){
-            res.jsonp({"data":arr});
+            res.jsonp({"data":data});
         });
     });
 });
