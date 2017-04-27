@@ -37,7 +37,8 @@ function doWork(deviceId,records,res){
                     obj.set('count',record.count*1);
                     obj.set('isDel',false);
                     let empCardQuery=new AV.Query('EmployeeCard');
-                    empCardQuery.contains('card',record.card.toString(16).slice(2));
+                    let tempCard=PrefixInteger(record.card.toString(16),6);
+                    empCardQuery.contains('card',tempCard.length>6?tempCard.slice(2):tempCard);
                     empCardQuery.equalTo('cusId',box.get('cusId'));
                     empCardQuery.first().then(function(card){
                         obj.set('card',card);
@@ -89,4 +90,12 @@ router.post('/', function(req, res, next) {
   let records=req.body.record;
   doWork(deviceId,records,res);
 });
+function PrefixInteger(num, n) {
+    var len = num.toString().length;
+    while(len < n) {
+        num = "0" + num;
+        len++;
+    }
+    return num;
+}
 module.exports = router;

@@ -641,7 +641,7 @@ router.post('/employee/add',function(req,res){
                     cardQuery.equalTo('isDel',false);
                     let num=card*1;
                     let tempCard=PrefixInteger(num.toString(16),6);
-                    cardQuery.contains('card',tempCard.slice(2));
+                    cardQuery.contains('card',tempCard.length>6?tempCard.slice(2):tempCard);
                     cardQuery.count().then(function(count){
                         if(count==0){
                             let cardObj=new EmpCard();
@@ -713,7 +713,7 @@ router.put('/employee/edit/:id',function(req,res){
                         if(card==null||card==undefined||card==''){
                             return res.jsonp({"data":[],"fieldErrors":[{"name":"old","status":"卡号填写不正确"}]});
                         }
-                        if(cardObj.get('oldCard')==card||cardObj.get('card').indexOf(tempCard.slice(2))>-1){
+                        if(cardObj.get('oldCard')==card||cardObj.get('card').indexOf(tempCard.length>6?tempCard.slice(2):tempCard)>-1){
                             emp.set('card',tempCard);
                             emp.set('old',PrefixInteger(num,10));
                             emp.set('DT_RowId',emp.id);
@@ -734,7 +734,7 @@ router.put('/employee/edit/:id',function(req,res){
                         }else{
                             let cardQuery=new AV.Query('EmployeeCard');
                             cardQuery.equalTo('isDel',false);
-                            cardQuery.contains('card',tempCard.slice(2));
+                            cardQuery.contains('card',tempCard.length>6?tempCard.slice(2):tempCard);
                             cardQuery.count().then(function(count){
                                 if(count==0){
                                     cardObj.set('cusId',cus);

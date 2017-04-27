@@ -33,8 +33,8 @@ function doWork(deviceId,records,res){
                 let cardQuery=new AV.Query('EmployeeCard');
                 cardQuery.equalTo('isDel',false);
                 let num=record.card*1;
-                let tempCard=num.toString(16).slice(2);
-                cardQuery.contains('card',tempCard);
+                let tempCard=PrefixInteger(num.toString(16),6);
+                cardQuery.contains('card',tempCard.length>6?tempCard.slice(2):tempCard);
                 cardQuery.first().then(function(card){
                     if(typeof(passage)=="undefined"){
                         result['message']="未找到此卡";
@@ -87,4 +87,12 @@ router.post('/', function(req, res, next) {
   let records=req.body.record;
   doWork(deviceId,records,res);
 });
+function PrefixInteger(num, n) {
+    var len = num.toString().length;
+    while(len < n) {
+        num = "0" + num;
+        len++;
+    }
+    return num;
+}
 module.exports = router;

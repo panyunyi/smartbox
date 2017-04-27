@@ -15,8 +15,8 @@ function doWork(cus,box,deviceId,card,passage,res,getCount){
     function promise1(callback){
         let cardQuery=new AV.Query('EmployeeCard');
         let num=card*1;
-        let tempCard=num.toString(16).slice(2);
-        cardQuery.contains('card',tempCard);
+        let tempCard=PrefixInteger(num.toString(16),6);
+        cardQuery.contains('card',tempCard.length>6?tempCard.slice(2):tempCard);
         cardQuery.equalTo('cusId',cus);
         cardQuery.equalTo('isDel',false);
         cardQuery.include('emp');

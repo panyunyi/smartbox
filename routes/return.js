@@ -19,8 +19,8 @@ router.get('/:id/:card/:passage', function(req, res) {
     let cardQuery=new AV.Query('EmployeeCard');
     cardQuery.equalTo('isDel',false);
     let num=card*1;
-    let tempCard=num.toString(16).slice(2);
-    cardQuery.contains('card',tempCard);
+    let tempCard=PrefixInteger(num.toString(16),6);
+    cardQuery.contains('card',tempCard.length>6?tempCard.slice(2):tempCard);
     cardQuery.first().then(function(cardObj){
     	let boxQuery=new AV.Query('BoxInfo');
 	    boxQuery.equalTo('deviceId',deviceId);
@@ -108,5 +108,12 @@ router.get('/fail/:id/', function(req, res) {
         res.jsonp(result);
     });
 });
-
+function PrefixInteger(num, n) {
+    var len = num.toString().length;
+    while(len < n) {
+        num = "0" + num;
+        len++;
+    }
+    return num;
+}
 module.exports = router;
