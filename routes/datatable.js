@@ -1542,6 +1542,7 @@ router.get('/pasrecord/:date',function(req,res){
                     empNo=takeout.get('emp').get('empNo');
                     card=takeout.get('cardNo')?takeout.get('cardNo'):"";
                     let sku=takeout.get('product').get('sku')?takeout.get('product').get('sku'):"";
+                    let dept=takeout.get('emp').get('dept');
                     let product=takeout.get('product').get('name');
                     let unit=takeout.get('product').get('unit');
                     let passage=takeout.get('passageNo')?takeout.get('passageNo'):"";
@@ -1553,7 +1554,8 @@ router.get('/pasrecord/:date',function(req,res){
                     let onetake={"time":time,"type":"领料","objectId":takeout.get('id'),
                     "cus":cus,"machine":machine,"passage":passage,"count":count,
                     "product":product,"sku":sku,"unit":unit,"employee":emp,
-                    "empNo":empNo,"empCard":card,"price":price.toFixed(2),"unitprice":unitprice};
+                    "empNo":empNo,"empCard":card,"price":price.toFixed(2),
+                    "unitprice":unitprice,"dept":dept?dept:""};
                     jsondata.push(onetake);
                     callback1(null,onetake);
                 },function(err,takesres){

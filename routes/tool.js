@@ -10,10 +10,33 @@ router.get('/', function(req, res) {
     empQuery.find().then(function(emps){
         let powerQuery=new AV.Query('EmployeePower');
         powerQuery.equalTo('isDel',false);
-        async.map(emps,function(emp,callback){
-
-        },function(err,results){
-
+        powerQuery.count().then(function(count){
+            let num=Math.ceil(count/1000);
+            let powerArr=[];
+            async.times(num,function(n,callback1){
+                powerQuery.limit(1000);
+                powerQuery.skip(n*1000);
+                powerQuery.find().then(function(powers){
+                    powerArr=powerArr.concat(powers);
+                    callback1(null,1);
+                });
+            },function(err,timesres){
+                async.map(emps,function(emp,callback2){
+                    let emppower=[];
+                    async.map(powerArr,function(power,callback3){
+                        if(power.get('emp').id==emp.id){
+                            emppower.push(power);
+                        }
+                        callback3(null,1);
+                    },function(err,powerres){
+                        let one={"name":emp.get('name'),"empNo",emp.get('empNo'),
+                        "dept":emp.get('dept'),"power":emppower};
+                        callback2(null,one);
+                    });
+                },function(err,empsres){
+                    res.jsonp(empsres);
+                });
+            });
         });
     });
 });
