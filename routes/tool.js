@@ -3,6 +3,20 @@ var router = require('express').Router();
 var AV = require('leanengine');
 var async = require('async');
 
+router.get('/', function(req, res) {
+    let empQuery=new AV.Query('Employee');
+    empQuery.equalTo('isDel',false);
+    empQuery.limit(1000);
+    empQuery.find().then(function(emps){
+        let powerQuery=new AV.Query('EmployeePower');
+        powerQuery.equalTo('isDel',false);
+        async.map(emps,function(emp,callback){
+
+        },function(err,results){
+
+        });
+    });
+});
 // router.get('/', function(req, res) {
 //     let query=new AV.Query('TakeOut');
 //     query.include('card');

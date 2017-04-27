@@ -2065,19 +2065,21 @@ router.post('/empUpload', function (req, res) {
                 let empQuery=new AV.Query('Employee');
                 empQuery.equalTo('isDel',false);
                 //empQuery.equalTo('cusId',cusObj);
-                empQuery.equalTo('empNo',arr[0].toString().trim());
+                empQuery.equalTo('empNo',arr[0].toString());
                 empQuery.first().then(function(empObj){
-                    if(typeof(empObj)!="undefined"){
-                        rescontent+=arr[0].toString().trim()+"未找到<br>";
-                        callback1(null,0);
+                    if(typeof(empObj)=="undefined"){
+                        rescontent+=arr[0].toString()+"未找到<br>";
+                        callback(null,0);
                     }else {
+                        count++;
                         empObj.set('dept',arr[1].trim());
-                        empObj.save().then(function(){
-                            count++;
-                            return callback(null,1);
-                        })
+                        empObj.save().then(function(emp){
+                            callback(null,1);
+                        });
                     }
                 });
+            }else {
+                callback(null,1);
             }
             i++;
         },function(err,results){
@@ -2107,7 +2109,7 @@ router.post('/empUpload', function (req, res) {
                     arr.push(value[j]);
                 }
                 data.push(arr);
-            }else if (flag==2) {
+            }else if (flag==2||flag==3) {
                 for(let j in value){
                     arr.push(value[j]);
                 }
