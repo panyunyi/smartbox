@@ -4,7 +4,7 @@
   "description": "CPSuperMarket using Express 4",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node server-cluster.js",
     "dev": "./node_modules/.bin/nodemon server.js"
   },
   "keywords": [

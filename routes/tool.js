@@ -29,7 +29,7 @@ router.get('/', function(req, res) {
                         }
                         callback3(null,1);
                     },function(err,powerres){
-                        let one={"name":emp.get('name'),"empNo",emp.get('empNo'),
+                        let one={"name":emp.get('name'),"empNo":emp.get('empNo'),
                         "dept":emp.get('dept'),"power":emppower};
                         callback2(null,one);
                     });
