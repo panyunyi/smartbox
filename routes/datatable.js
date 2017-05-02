@@ -714,6 +714,8 @@ router.put('/employee/edit/:id',function(req,res){
                             return res.jsonp({"data":[],"fieldErrors":[{"name":"old","status":"卡号填写不正确"}]});
                         }
                         if(cardObj.get('oldCard')==card||cardObj.get('card').indexOf(tempCard.length>6?tempCard.slice(2):tempCard)>-1){
+                            cardObj.set('cusId',cus);
+                            cardObj.save();
                             emp.set('card',tempCard);
                             emp.set('old',PrefixInteger(num,10));
                             emp.set('DT_RowId',emp.id);
