@@ -2148,7 +2148,7 @@ function exportExcel(filename,data){
         console.error(err);
         return;
     }
-    fs.writeFileSync("./public/upload/交易清单"+filename+".xlsx", exlBuf2);
+    fs.writeFileSync("./public/upload/1.xlsx", exlBuf2);
         console.log(filename);
     });
 }
