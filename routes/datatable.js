@@ -635,7 +635,7 @@ router.post('/employee/add',function(req,res){
             employee.set('isDel',false);
             employee.save().then(function(emp){
                 let data=[];
-                if(card!==null&&card!==undefined&&card!==''){
+                if(card!==null&&typeof(card)!="undefined"&&card!==''){
                     let cardQuery=new AV.Query('EmployeeCard');
                     cardQuery.equalTo('cusId',cus);
                     cardQuery.equalTo('isDel',false);
@@ -648,10 +648,10 @@ router.post('/employee/add',function(req,res){
                             cardObj.set('cusId',cus);
                             cardObj.set('card',tempCard);
                             cardObj.set('emp',emp);
-                            cardObj.set('oldCard',PrefixInteger(num,10));
+                            cardObj.set('oldCard',PrefixInteger(num,10).toString());
                             cardObj.save();
                             emp.set('card',tempCard);
-                            emp.set('old',PrefixInteger(num,10));
+                            emp.set('old',PrefixInteger(num,10).toString());
                             emp.set('DT_RowId',emp.id);
                             cus.fetch().then(function(){
                                 emp.set('cus',cus.get('name'));
@@ -710,14 +710,14 @@ router.put('/employee/edit/:id',function(req,res){
                     cardQuery.equalTo('isDel',false);
                     cardQuery.equalTo('emp',emp);
                     cardQuery.first().then(function(cardObj){
-                        if(card==null||card==undefined||card==''){
+                        if(card==null||typeof(card)=="undefined"||card==''){
                             return res.jsonp({"data":[],"fieldErrors":[{"name":"old","status":"卡号填写不正确"}]});
                         }
-                        if(cardObj.get('oldCard')==card||cardObj.get('card').indexOf(tempCard.length>6?tempCard.slice(2):tempCard)>-1){
+                        if(cardObj.get('oldCard')==PrefixInteger(num,10).toString()||cardObj.get('card').indexOf(tempCard.length>6?tempCard.slice(2):tempCard)>-1){
                             cardObj.set('cusId',cus);
                             cardObj.save();
                             emp.set('card',tempCard);
-                            emp.set('old',PrefixInteger(num,10));
+                            emp.set('old',PrefixInteger(num,10).toString());
                             emp.set('DT_RowId',emp.id);
                             cus.fetch().then(function(){
                                 emp.set('cus',cus.get('name'));
@@ -742,10 +742,14 @@ router.put('/employee/edit/:id',function(req,res){
                                     cardObj.set('cusId',cus);
                                     cardObj.set('card',tempCard);
                                     cardObj.set('emp',emp);
-                                    cardObj.set('oldCard',PrefixInteger(num,10));
-                                    cardObj.save();
+                                    cardObj.set('oldCard',PrefixInteger(num,10).toString());
+                                    cardObj.save().then(function(test){
+                                        //console.log('%j',test);
+                                    },function(err){
+                                        console.log(err);
+                                    });
                                     emp.set('card',tempCard);
-                                    emp.set('old',PrefixInteger(num,10));
+                                    emp.set('old',PrefixInteger(num,10).toString());
                                     emp.set('DT_RowId',emp.id);
                                     cus.fetch().then(function(){
                                         emp.set('cus',cus.get('name'));
