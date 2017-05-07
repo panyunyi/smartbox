@@ -26,9 +26,8 @@ function doWork(cus,box,res,ts){
       let query = new AV.Query('Passage');
       query.greaterThanOrEqualTo('updatedAt',ts);
       query.include('product');
-      query.equalTo('isDel',false);
       query.equalTo('boxId',box);
-      if(new Date(0)==ts){
+      if(ts-new Date(0)==0){
           query.equalTo('isDel',false);
       }
       query.limit(1000);
@@ -59,7 +58,7 @@ function doWork(cus,box,res,ts){
     function promise3(callback){
         let query = new AV.Query('EmployeeCard');
         query.greaterThanOrEqualTo('updatedAt',ts);
-        if(new Date(0)==ts){
+        if(ts-new Date(0)==0){
             query.equalTo('isDel',false);
         }
         query.equalTo('cusId',cus);
@@ -90,7 +89,7 @@ function doWork(cus,box,res,ts){
     function promise4(callback){
         let query=new AV.Query('EmployeePower');
         query.greaterThanOrEqualTo('updatedAt',ts);
-        if(new Date(0)==ts){
+        if(ts-new Date(0)==0){
             query.equalTo('isDel',false);
         }
         query.equalTo('cusId',cus);
@@ -124,7 +123,7 @@ function doWork(cus,box,res,ts){
     function promise5(callback){
         let query=new AV.Query('Passage');
         query.greaterThanOrEqualTo('updatedAt',ts);
-        if(new Date(0)==ts){
+        if(ts-new Date(0)==0){
             query.equalTo('isDel',false);
         }
         query.equalTo('boxId',box);
