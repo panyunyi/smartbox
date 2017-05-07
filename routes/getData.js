@@ -26,6 +26,7 @@ function doWork(cus,box,res,ts){
       let query = new AV.Query('Passage');
       query.greaterThanOrEqualTo('updatedAt',ts);
       query.include('product');
+      query.equalTo('isDel',false);
       query.equalTo('boxId',box);
       if(new Date(0)==ts){
           query.equalTo('isDel',false);
