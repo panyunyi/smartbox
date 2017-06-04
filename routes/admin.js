@@ -4,7 +4,7 @@ var AV = require('leanengine');
 
 router.get('/', function(req, res) {
     if(req.currentUser){
-        console.log(req.currentUser.username);
+        //console.log(req.currentUser.username);
     	res.render('index');
     }else{
     	res.redirect('../login');
