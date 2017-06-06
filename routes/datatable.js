@@ -205,6 +205,7 @@ router.get('/product', function (req, res) {
         let query = new AV.Query('Product');
         query.equalTo('isDel', false);
         query.include('type');
+        query.limit(1000);
         query.find().then(function (results) {
             async.map(results, function (result, callback) {
                 result.set('DT_RowId', result.id);
@@ -1196,6 +1197,7 @@ router.get('/passage/:id', function (req, res) {
         let query = new AV.Query('Product');
         query.equalTo('isDel', false);
         query.ascending('sku');
+        query.limit(1000);
         query.find().then(function (results) {
             async.map(results, function (result, callback) {
                 result.set('label', result.get('sku') + " " + result.get('name'));
