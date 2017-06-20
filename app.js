@@ -64,7 +64,7 @@ app.use('/api/error',error);
 app.use('/api/update',update);
 // 可以将一类的路由单独保存在一个文件中
 //app.use('/todos', todos);
-app.use('/tool',tool);
+//app.use('/tool',tool);
 app.use('/login', users);
 app.use('/admin',admin);
 

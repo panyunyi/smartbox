@@ -31,37 +31,48 @@ router.get('/:cusid', function (req, res) {
         async.times(num, function (n, callback1) {
             powerQuery.limit(1000);
             powerQuery.skip(n * 1000);
+            powerQuery.ascending('emp');
             powerQuery.find().then(function (powers) {
                 async.map(powers, function (power, callback2) {
-                    // let cardQuery = new AV.Query('EmployeeCard');
-                    // cardQuery.equalTo('isDel', false);
-                    // cardQuery.equalTo('emp', power.get('emp'));
-                    // cardQuery.first().then(function (card) {
-                    //     if (typeof (card) != "undefined") {
-                    //         let one = {
-                    //             unit: power.get('unit'), product: power.get('product').get('name'), count: power.get('count'), sku: power.get('product').get('sku'),
-                    //             name: power.get('emp').get('name'), empno: power.get('emp').get('empNo'), period: power.get('period'), cus: power.get('cusId').get('name'),
-                    //             card: card.get('card'), oldcard: card.get('oldCard')
-                    //         };
-                    //         jsondata.push(one);
-                    //         callback2(null, one);
-                    //     } else {
-                    //         let one = {
-                    //             unit: power.get('unit'), product: power.get('product').get('name'), count: power.get('count'), sku: power.get('product').get('sku'),
-                    //             name: power.get('emp').get('name'), empno: power.get('emp').get('empNo'), period: power.get('period'), cus: power.get('cusId').get('name'),
-                    //             card: "", oldcard: ""
-                    //         };
-                    //         jsondata.push(one);
-                    //         callback2(null, one);
-                    //     }
-                    // });
-                    let one = {
-                        unit: power.get('unit'), product: power.get('product').get('name')?power.get('product').get('name'):"", count: power.get('count'), sku: power.get('product').get('sku')?power.get('product').get('sku'):"",
-                        name: power.get('emp').get('name')?power.get('emp').get('name'):"", empno: power.get('emp').get('empNo')?power.get('emp').get('empNo'):"", period: power.get('period'), cus: power.get('cusId').get('name')?power.get('cusId').get('name'):"",
-                        card: "", oldcard: ""
-                    };
-                    jsondata.push(one);
-                    callback2(null, one);
+                    if (typeof (power.get('emp')) != "undefined") {
+                        // let cardQuery = new AV.Query('EmployeeCard');
+                        // cardQuery.equalTo('isDel', false);
+                        // cardQuery.equalTo('emp', power.get('emp'));
+                        // cardQuery.first().then(function (card) {
+                        //     if (typeof (card) != "undefined") {
+                        //         let one = {
+                        //             unit: power.get('unit'), product: power.get('product').get('name'), count: power.get('count'), sku: power.get('product').get('sku'),
+                        //             name: power.get('emp').get('name'), empno: power.get('emp').get('empNo'), period: power.get('period'), cus: power.get('cusId').get('name'),
+                        //             card: card.get('card'), oldcard: card.get('oldCard')
+                        //         };
+                        //         jsondata.push(one);
+                        //         callback2(null, one);
+                        //     } else {
+                        //         let one = {
+                        //             unit: power.get('unit'), product: power.get('product').get('name'), count: power.get('count'), sku: power.get('product').get('sku'),
+                        //             name: power.get('emp').get('name'), empno: power.get('emp').get('empNo'), period: power.get('period'), cus: power.get('cusId').get('name'),
+                        //             card: "", oldcard: ""
+                        //         };
+                        //         jsondata.push(one);
+                        //         callback2(null, one);
+                        //     }
+                        // });
+                        let one = {
+                                    unit: power.get('unit'), product: power.get('product').get('name'), count: power.get('count'), sku: power.get('product').get('sku'),
+                                    name: power.get('emp').get('name'), empno: power.get('emp').get('empNo'), period: power.get('period'), cus: power.get('cusId').get('name'),
+                                    card: "", oldcard: ""
+                                };
+                                jsondata.push(one);
+                                callback2(null, one);
+                    } else {
+                        let one = {
+                            unit: power.get('unit'), product: power.get('product').get('name'), count: power.get('count'), sku: power.get('product').get('sku'),
+                            name: "", empno: "", period: power.get('period'), cus: power.get('cusId').get('name'),
+                            card: "", oldcard: ""
+                        };
+                        jsondata.push(one);
+                        callback2(null, one);
+                    }
                 }, function (err, arr) {
                     console.log(arr.length);
                     callback1(null, n);
