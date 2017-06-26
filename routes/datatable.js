@@ -1553,9 +1553,9 @@ router.get('/pasrecord/:date', function (req, res) {
                     let empNo = "";
                     let dept = "";
                     if (typeof (takeout.get('emp')) != "undefined") {
-                        emp = takeout.get('emp').get('name') ? takeout.get('emp').get('name') : "";
-                        empNo = takeout.get('emp').get('empNo') ? takeout.get('emp').get('empNo') : "";
-                        dept = takeout.get('emp').get('dept') ? takeout.get('emp').get('dept') : "";
+                        emp = takeout.get('emp') ? takeout.get('emp').get('name') : "";
+                        empNo = takeout.get('emp') ? takeout.get('emp').get('empNo') : "";
+                        dept = takeout.get('emp') ? takeout.get('emp').get('dept') : "";
                     }
                     card = takeout.get('cardNo') ? takeout.get('cardNo') : "";
                     let sku = takeout.get('product').get('sku') ? takeout.get('product').get('sku') : "";
