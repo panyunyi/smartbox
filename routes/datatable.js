@@ -1331,6 +1331,7 @@ router.put('/passage/edit/:id', function (req, res) {
     let id = req.params.id;
     let passage = AV.Object.createWithoutData('Passage', id);
     passage.set('capacity', arr['data[' + id + '][capacity]'] * 1);
+    passage.set('stock', arr['data[' + id + '][capacity]'] * 1);
     let product = AV.Object.createWithoutData('Product', arr['data[' + id + '][productId]']);
     passage.set('product', product);
     passage.set('row', arr['data[' + id + '][seqNo]'].substr(0, 1) * 1);
@@ -1861,6 +1862,7 @@ router.post('/empUpload', function (req, res) {
         let cusObj = AV.Object.createWithoutData('Customer', cus);
         async.map(data, function (arr, callback1) {
             if (i != 0) {
+                console.log('%j',arr[1]);
                 let empQuery = new AV.Query('Employee');
                 empQuery.equalTo('isDel', false);
                 empQuery.equalTo('cusId', cusObj);
