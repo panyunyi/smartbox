@@ -892,6 +892,8 @@ router.get('/empPower/:id', function (req, res) {
     function promise2(callback1) {
         let query = new AV.Query('Product');
         query.equalTo('isDel', false);
+        query.ascending('sku');
+        query.limit(1000);
         query.find().then(function (results) {
             async.map(results, function (result, callback) {
                 result.set('label', result.get('sku') + " " + result.get('name'));
