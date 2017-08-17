@@ -14,6 +14,7 @@ function doWork(cus,box,res,ts){
       }
       query.select(['card','isDel']);
       query.limit(1000);
+      query.equalTo('box',box.id);
       query.find().then(function (results) {
           data["AdminCard"]=results;
           return callback(null,results);

@@ -21,7 +21,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
             return callback(error);
         }
         if(cus.get('flag')==1){//2017/08/13 艺康卡号5位直接匹配
-            cardQuery.equalTo('oldCard', PrefixInteger(card, 10));
+            cardQuery.equalTo('oldCard', PrefixInteger(card.slice(3), 10));
         }else
         {
             cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(2) : tempCard);
@@ -34,6 +34,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
                 let admincardQuery = new AV.Query('AdminCard');
                 admincardQuery.equalTo('isDel', false);
                 admincardQuery.equalTo('card', card);
+                admincardQuery.equalTo('box',box.id);
                 admincardQuery.count().then(function (count) {
                     if (count > 0) {
                         message = "管理卡取货成功";
@@ -107,9 +108,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
         powerQuery.equalTo('product', product);
         powerQuery.equalTo('emp', emp);
         powerQuery.first().then(function (power) {
-            if (typeof (power) != "undefined") {
-                verifyPower(emp, power, product, getCount, callback);
-            } else if (emp.get('super') > 0) {
+            if (emp.get('super') > 0) {
                 onetake.set('result', true);
                 onetake.save().then(function (one) {
                     flag = true;
@@ -122,6 +121,8 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
                         callback(null, true);
                     });
                 });
+            } else if (typeof (power) != "undefined") {
+                verifyPower(emp, power, product, getCount, callback);
             } else {
                 message = "无取货权限";
                 return callback(null, false);
