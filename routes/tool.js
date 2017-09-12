@@ -90,18 +90,18 @@ router.get('/:cusid', function (req, res) {
     });
 });
 router.get('/', function (req, res) {
-    let cus=AV.Object.createWithoutData('Customer','59afa618a0bb9f00645f6501');
-    let query=new AV.Query('EmployeeCard');
-    query.equalTo('cusId',cus);
-    query.limit(1000);
-    query.find().then(function(results){
-        AV.Object.destroyAll(results).then(function () {
-            // 成功
-            res.jsonp(results.length);
-          }, function (error) {
-            // 异常处理
-          });
-    });
+    // let cus=AV.Object.createWithoutData('Customer','59afa618a0bb9f00645f6501');
+    // let query=new AV.Query('EmployeeCard');
+    // query.equalTo('cusId',cus);
+    // query.limit(1000);
+    // query.find().then(function(results){
+    //     AV.Object.destroyAll(results).then(function () {
+    //         // 成功
+    //         res.jsonp(results.length);
+    //       }, function (error) {
+    //         // 异常处理
+    //       });
+    // });
 });
 // router.get('/', function(req, res) {
 //     let empQuery=new AV.Query('Employee');
