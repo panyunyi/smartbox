@@ -1864,7 +1864,7 @@ router.post('/empUpload', function (req, res) {
         let cusObj = AV.Object.createWithoutData('Customer', cus);
         async.map(data, function (arr, callback1) {
             if (i != 0) {
-                console.log('%j',arr[1]);
+                //console.log('%j',arr[1]);
                 let empQuery = new AV.Query('Employee');
                 empQuery.equalTo('isDel', false);
                 empQuery.equalTo('cusId', cusObj);
@@ -1873,7 +1873,7 @@ router.post('/empUpload', function (req, res) {
                     if (count == 0) {
                         let employee = new Employee();
                         employee.set('empNo', arr[1].toString());
-                        employee.set('name', arr[2]);
+                        employee.set('name', arr[2].toString());
                         employee.set('sex', 1);
                         employee.set('job', arr[5]);
                         employee.set('dept', arr[4]);
@@ -1881,8 +1881,7 @@ router.post('/empUpload', function (req, res) {
                         employee.set('isDel', false);
                         employee.save().then(function (emp) {
                             let cardQuery = new AV.Query('EmployeeCard');
-                            let inputCard =
-                                cardQuery.equalTo('isDel', false);
+                            cardQuery.equalTo('isDel', false);
                             cardQuery.equalTo('oldCard', PrefixInteger(arr[3].toString(), 10));
                             cardQuery.equalTo('card', PrefixInteger(arr[3].toString(16), 6));
                             //console.log(PrefixInteger(arr[3].toString(),10));
@@ -1903,9 +1902,34 @@ router.post('/empUpload', function (req, res) {
                                     callback1(null, 0);
                                 }
                             });
+                        },function(err){
+                            console.log(err);
                         });
-                    } else {
-                        rescontent += "工号:" + arr[1] + "已存在;<br>";
+                    } else if(count==1){
+                        empQuery.first().then(function(emp){
+                            let cardQuery = new AV.Query('EmployeeCard');
+                            cardQuery.equalTo('isDel', false);
+                            cardQuery.equalTo('emp',emp);
+                            cardQuery.count().then(function(count){
+                                if(count==0){
+                                    let card = new EmpCard();
+                                    card.set('card', PrefixInteger(arr[3].toString(16), 6));
+                                    card.set('oldCard', PrefixInteger(arr[3].toString(), 10));
+                                    card.set('emp', emp);
+                                    card.set('cusId', cusObj);
+                                    card.set('isDel', false);
+                                    card.save().then(function () {
+                                        rescontent += "工号:" + arr[1] + "已补卡号"+arr[3]+";<br>";
+                                        callback1(null, arr[1].toString());
+                                    });
+                                }else{
+                                    rescontent += "工号:" + arr[1] + "和卡号已存在;<br>";
+                                    callback1(null, 0);
+                                }
+                            });
+                        });
+                    }else{
+                        rescontent += "工号:" + arr[1] + "已存在多个;<br>";
                         callback1(null, 0);
                     }
                 });
@@ -1977,6 +2001,8 @@ router.post('/empUpload', function (req, res) {
                             power.set('isDel', false);
                             power.save().then(function (p) {
                                 return callback(null, p);
+                            },function(err){
+                                console.log(err);
                             });
                         });
                     });
