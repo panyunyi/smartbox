@@ -90,6 +90,25 @@ router.get('/:cusid', function (req, res) {
     });
 });
 router.get('/', function (req, res) {
+    let cus=AV.Object.createWithoutData('Customer','59afa618a0bb9f00645f6501');
+    let query=new AV.Query('EmployeeCard');
+    query.equalTo('cusId',cus);
+    query.limit(1000);
+    query.find().then(function(results){
+        async.map(results,function(result,callback){
+            let number=result.get('oldCard')*1;
+            result.set('card',number.toString(16));
+            callback(null,result);
+        },function(err,results){
+            AV.Object.saveAll(results).then(function (results) {
+                res.jsonp(results.length);
+            }, function (error) {
+            // 异常处理
+            });
+        });
+    });
+});
+router.get('/', function (req, res) {
     // let cus=AV.Object.createWithoutData('Customer','59afa618a0bb9f00645f6501');
     // let query=new AV.Query('EmployeeCard');
     // query.equalTo('cusId',cus);
