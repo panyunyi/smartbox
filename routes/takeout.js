@@ -85,6 +85,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
             passageQuery.equalTo('seqNo', passage.substr(1, 2));
         } else {
             passageQuery.equalTo('seqNo', passage);
+            passageQuery.equalTo('flag','');
         }
         passageQuery.equalTo('boxId', box);
         passageQuery.first().then(function (passageObj) {
