@@ -89,26 +89,35 @@ router.get('/:cusid', function (req, res) {
         });
     });
 });
+var EmployeePower = AV.Object.extend('EmployeePower');
 router.get('/', function (req, res) {
-    let cus=AV.Object.createWithoutData('Customer','59afa618a0bb9f00645f6501');
-    let query=new AV.Query('EmployeeCard');
-    query.equalTo('cusId',cus);
-    query.limit(1000);
-    query.find().then(function(results){
-        async.map(results,function(result,callback){
-            let number=result.get('oldCard')*1;
-            result.set('card',number.toString(16));
-            callback(null,result);
-        },function(err,results){
-            AV.Object.saveAll(results).then(function (results) {
-                res.jsonp(results.length);
-            }, function (error) {
-            // 异常处理
-            });
-        });
-    });
+    // let cus=AV.Object.createWithoutData('Customer','5981572961ff4b0057070694');
+    // let product=AV.Object.createWithoutData('Product','59816760a22b9d006d737047');
+    // let query=new AV.Query('Employee');
+    // query.equalTo('cusId',cus);
+    // query.limit(1000);
+    // query.find().then(function(results){
+    //     async.map(results,function(result,callback){
+    //         let emppower=new EmployeePower();
+    //         emppower.set('isDel',false);
+    //         emppower.set('unit','month');
+    //         emppower.set('product',product);
+    //         emppower.set('count',1);
+    //         emppower.set('emp',result);
+    //         emppower.set('period',1);
+    //         emppower.set('cusId',cus);
+    //         emppower.set('used',0);
+    //         callback(null,emppower);
+    //     },function(err,results){
+    //         AV.Object.saveAll(results).then(function (results) {
+    //             res.jsonp(results.length);
+    //         }, function (error) {
+    //         // 异常处理
+    //         });
+    //     });
+    // });
 });
-router.get('/', function (req, res) {
+//router.get('/', function (req, res) {
     // let cus=AV.Object.createWithoutData('Customer','59afa618a0bb9f00645f6501');
     // let query=new AV.Query('EmployeeCard');
     // query.equalTo('cusId',cus);
@@ -121,7 +130,7 @@ router.get('/', function (req, res) {
     //         // 异常处理
     //       });
     // });
-});
+//});
 // router.get('/', function(req, res) {
 //     let empQuery=new AV.Query('Employee');
 //     empQuery.equalTo('isDel',false);
