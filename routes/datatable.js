@@ -1865,6 +1865,7 @@ router.post('/empUpload', function (req, res) {
         async.map(data, function (arr, callback1) {
             if (i != 0) {
                 //console.log('%j',arr[1]);
+                let number=arr[3]*1;
                 let empQuery = new AV.Query('Employee');
                 empQuery.equalTo('isDel', false);
                 empQuery.equalTo('cusId', cusObj);
@@ -1882,15 +1883,15 @@ router.post('/empUpload', function (req, res) {
                         employee.save().then(function (emp) {
                             let cardQuery = new AV.Query('EmployeeCard');
                             cardQuery.equalTo('isDel', false);
-                            cardQuery.equalTo('oldCard', PrefixInteger(arr[3].toString(), 10));
-                            cardQuery.equalTo('card', PrefixInteger(arr[3].toString(16), 6));
-                            //console.log(PrefixInteger(arr[3].toString(),10));
+                            cardQuery.equalTo('oldCard', PrefixInteger(number.toString(), 10));
+                            cardQuery.equalTo('card', PrefixInteger(number.toString(16), 6));
+                            //console.log(PrefixInteger(number.toString(),10));
                             cardQuery.equalTo('cusId', cusObj);
                             cardQuery.count().then(function (cardcount) {
                                 if (cardcount == 0) {
                                     let card = new EmpCard();
-                                    card.set('card', PrefixInteger(arr[3].toString(16), 6));
-                                    card.set('oldCard', PrefixInteger(arr[3].toString(), 10));
+                                    card.set('card', PrefixInteger(number.toString(16), 6));
+                                    card.set('oldCard', PrefixInteger(number.toString(), 10));
                                     card.set('emp', emp);
                                     card.set('cusId', cusObj);
                                     card.set('isDel', false);
@@ -1898,7 +1899,7 @@ router.post('/empUpload', function (req, res) {
                                         callback1(null, arr[1].toString());
                                     });
                                 } else {
-                                    rescontent += "卡号:" + arr[3] + "已存在;<br>";
+                                    rescontent += "卡号:" + number + "已存在;<br>";
                                     callback1(null, 0);
                                 }
                             });
@@ -1913,13 +1914,13 @@ router.post('/empUpload', function (req, res) {
                             cardQuery.count().then(function(count){
                                 if(count==0){
                                     let card = new EmpCard();
-                                    card.set('card', PrefixInteger(arr[3].toString(16), 6));
-                                    card.set('oldCard', PrefixInteger(arr[3].toString(), 10));
+                                    card.set('card', PrefixInteger(number.toString(16), 6));
+                                    card.set('oldCard', PrefixInteger(number.toString(), 10));
                                     card.set('emp', emp);
                                     card.set('cusId', cusObj);
                                     card.set('isDel', false);
                                     card.save().then(function () {
-                                        rescontent += "工号:" + arr[1] + "已补卡号"+arr[3]+";<br>";
+                                        rescontent += "工号:" + arr[1] + "已补卡号"+number+";<br>";
                                         callback1(null, arr[1].toString());
                                     });
                                 }else{

@@ -16,25 +16,27 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
         let cardQuery = new AV.Query('EmployeeCard');
         let num = card * 1;
         let tempCard = PrefixInteger(num.toString(16), 6);
-        if(typeof(cus)=="undefined"){
+        //console.log(tempCard);
+        if (typeof (cus) == "undefined") {
             message = "此公司未找到";
             return callback(error);
         }
-        if(cus.get('flag')==1){//2017/08/13 艺康卡号5位直接匹配
+        if (cus.get('flag') == 1) {//2017/08/13 艺康卡号5位直接匹配
             cardQuery.equalTo('oldCard', PrefixInteger(card.slice(3), 10));
-        }else
-        {
-            cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(2) : tempCard);
+        } else {
+            cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(tempCard.length - 6) : tempCard);
         }
         cardQuery.equalTo('cusId', cus);
         cardQuery.equalTo('isDel', false);
         cardQuery.include('emp');
         cardQuery.first().then(function (cardObj) {
+            // console.log(tempCard.slice(tempCard.length-6));
+            // console.log(cardObj.id);
             if (typeof (cardObj) == "undefined") {
                 let admincardQuery = new AV.Query('AdminCard');
                 admincardQuery.equalTo('isDel', false);
                 admincardQuery.equalTo('card', card);
-                admincardQuery.equalTo('box',box.id);
+                admincardQuery.equalTo('box', box.id);
                 admincardQuery.count().then(function (count) {
                     if (count > 0) {
                         message = "管理卡取货成功";
@@ -44,10 +46,12 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
                             status: 200,
                             message: message,
                             data: resdata,
+
                             server_time: new Date()
                         }
                         return res.jsonp(result);
                     } else {
+                        message = card + "卡号未找到";
                         return callback(null, 0, null);
                     }
                 });
@@ -85,6 +89,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
             passageQuery.equalTo('seqNo', passage.substr(1, 2));
         } else {
             passageQuery.equalTo('seqNo', passage);
+            passageQuery.equalTo('flag', '');
         }
         passageQuery.equalTo('boxId', box);
         passageQuery.first().then(function (passageObj) {
