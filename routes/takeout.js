@@ -85,6 +85,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
         passageQuery.equalTo('isSend', true);
         passageQuery.include('product');
         if (passage.length == 3) {
+            console.log(passage);
             passageQuery.equalTo('flag', passage.substr(0, 1));
             passageQuery.equalTo('seqNo', passage.substr(1, 2));
         } else {
@@ -93,11 +94,16 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
         }
         passageQuery.equalTo('boxId', box);
         passageQuery.first().then(function (passageObj) {
+            if (passage.length == 3) {
+                getCount = passageObj.get('capacity');
+            }
             onetake.set('passage', passageObj);
             onetake.set('passageNo', passage);
             onetake.set('product', passageObj.get('product'));
-            onetake.save();
-            return callback(null, passageObj, emp);
+            onetake.save().then(function () {
+                console.log(passageObj.get('product').id);
+                return callback(null, passageObj, emp);
+            });
         }, function (error) {
             message = "货道异常";
             return callback(error);
@@ -187,7 +193,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
                         });
                     });
                 } else {
-                    message = "已取" + product.get('name') + "：" + (takecount - getCount * 1) + "次，超过领取次数";
+                    message = "已取" + product.get('name') + "：" + (takecount - getCount * 1) + "次，超过领取次数。此次领取数量为：" + getCount;
                     resdata["result"] = flag;
                     callback(null, false);
                 }
