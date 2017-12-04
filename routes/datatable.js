@@ -1602,6 +1602,8 @@ router.get('/supply', function (req, res) {
     query.include('passage');
     query.include('passage.product');
     query.include('box.cusId');
+    query.descending('createdAt');
+    query.limit(1000);
     query.find().then(function (results) {
         results.forEach(function (result) {
             result.set('number', new moment(result.get('createdAt')).unix());
