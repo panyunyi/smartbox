@@ -644,7 +644,8 @@ router.post('/employee/add', function (req, res) {
                     cardQuery.equalTo('isDel', false);
                     let num = card * 1;
                     let tempCard = PrefixInteger(num.toString(16), 6);
-                    cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(2) : tempCard);
+                    //console.log(tempCard);
+                    cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(tempCard.length - 6) : tempCard);
                     cardQuery.count().then(function (count) {
                         if (count == 0) {
                             let cardObj = new EmpCard();
@@ -663,6 +664,9 @@ router.post('/employee/add', function (req, res) {
                                 res.jsonp({ "data": data });
                             });
                         } else {
+                            // cardQuery.first().then(function(ccc){
+                            //     console.log('%j',ccc);
+                            // });
                             emp.destroy();
                             return res.jsonp({ "data": [], "fieldErrors": [{ "name": "old", "status": "卡号已存在" }] });
                         }
@@ -716,7 +720,7 @@ router.put('/employee/edit/:id', function (req, res) {
                         if (card == null || typeof (card) == "undefined" || card == '') {
                             return res.jsonp({ "data": [], "fieldErrors": [{ "name": "old", "status": "卡号填写不正确" }] });
                         }
-                        if (cardObj.get('oldCard') == PrefixInteger(num, 10).toString() || cardObj.get('card').indexOf(tempCard.length > 6 ? tempCard.slice(2) : tempCard) > -1) {
+                        if (cardObj.get('oldCard') == PrefixInteger(num, 10).toString() || cardObj.get('card').indexOf(tempCard.length > 6 ? tempCard.slice(tempCard.length - 6) : tempCard) > -1) {
                             cardObj.set('cusId', cus);
                             cardObj.save();
                             emp.set('card', tempCard);
@@ -739,7 +743,7 @@ router.put('/employee/edit/:id', function (req, res) {
                         } else {
                             let cardQuery = new AV.Query('EmployeeCard');
                             cardQuery.equalTo('isDel', false);
-                            cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(2) : tempCard);
+                            cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(tempCard.length - 6) : tempCard);
                             cardQuery.count().then(function (count) {
                                 if (count == 0) {
                                     cardObj.set('cusId', cus);
