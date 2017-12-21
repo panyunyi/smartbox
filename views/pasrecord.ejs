@@ -18,7 +18,7 @@
                                 <div id="top"></div>
                                 <div class="form-group">
                                     <label>选择客户</label>
-                                    <select class="form-control" style="width:59%" name="customer">
+                                    <select id="customer" class="form-control" style="width:59%" name="customer">
                                         <% for(var i=0; i<results.length; i++) {%>
                                         <option value=<%= results[i].id %>><%= results[i].get('name') %></option>
                                         <% } %>
@@ -86,7 +86,7 @@
             "serverSide": false,
             destroy:true,
             "dom": '<"top"Brf>t<"bottom"ilp>',
-           "ajax": {"url":'../api/json/pasrecord/'+moment().format('YYYY-MM-DD')},
+           "ajax": {"url":'../api/json/pasrecord/'+moment().format('YYYY-MM-DD')+'?id=58455ef50ce463005781af58'},
            "columns": [
                 {"data":null},
                 { "data": "time" },
@@ -220,7 +220,7 @@
                var date=$('#reportrange span').html();
                $('#table1_processing').css("z-index",100);
                $('#table1_processing').css('display','block');
-               t.ajax.url('../api/json/pasrecord/'+date).load();
+               t.ajax.url('../api/json/pasrecord/'+date+'?id='+$('#customer').val()).load();
                /*$.getJSON('../api/json/pasrecord/'+date,function(data){
                    console.log(data);
               });*/

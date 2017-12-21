@@ -1526,6 +1526,7 @@ router.get('/pasrecord1', function (req, res) {
 
 //交易记录
 router.get('/pasrecord/:date', function (req, res) {
+    let cus_id = req.query.id;
     let arr = req.params.date.split(' - ');
     let start, end;
     start = new moment(arr[0]).startOf('days').format('YYYY-MM-DD HH:mm:ss');
@@ -1535,6 +1536,10 @@ router.get('/pasrecord/:date', function (req, res) {
         end = new moment(arr[1]).endOf('days').format('YYYY-MM-DD HH:mm:ss');
     }
     let jsondata = [];
+    let cus = AV.Object.createWithoutData('Customer', cus_id);
+    let innerQuery = new AV.Query('BoxInfo');
+    innerQuery.equalTo('cusId', cus);
+    innerQuery.equalTo('isDel',false);
     let takeoutQuery = new AV.Query('TakeOut');
     takeoutQuery.equalTo('isDel', false);
     takeoutQuery.equalTo('result', true);
@@ -1546,7 +1551,9 @@ router.get('/pasrecord/:date', function (req, res) {
     takeoutQuery.include('emp');
     takeoutQuery.include('emp.cusId');
     takeoutQuery.descending('time');
+    takeoutQuery.matchesQuery('box', innerQuery);
     takeoutQuery.count().then(function (count) {
+        console.log(count);
         let num = Math.ceil(count / 1000);
         async.times(num, function (n, callback) {
             takeoutQuery.descending('time');
@@ -1665,12 +1672,12 @@ router.get('/supplyplan', function (req, res) {
                             }
                             let one = {
                                 "light": light, "cus": box.get('cusId').get('name'), "machine":
-                                box.get('machine'), "product":
-                                product.get('productId').get('name'), "sku":
-                                product.get('productId').get('sku'), "max": max, "stock":
-                                stock, "cue": product.get('cue'), "warning":
-                                product.get("warning"), "count": max - stock, "unit":
-                                product.get('productId').get('unit')
+                                    box.get('machine'), "product":
+                                    product.get('productId').get('name'), "sku":
+                                    product.get('productId').get('sku'), "max": max, "stock":
+                                    stock, "cue": product.get('cue'), "warning":
+                                    product.get("warning"), "count": max - stock, "unit":
+                                    product.get('productId').get('unit')
                             };
                             arr.push(one)
                             callback2(null, 1);
@@ -1786,7 +1793,7 @@ router.get('/summary/:date', function (req, res) {
                                     boxList.push({
                                         'sku': take.get('product').get('sku'),
                                         'name': take.get('product').get('name'), 'id':
-                                        take.get('product').id, 'price': price, 'count': take.get('count'), 'unitprice': product.get('price'), 'cus': take.get('box').get('cusId').id
+                                            take.get('product').id, 'price': price, 'count': take.get('count'), 'unitprice': product.get('price'), 'cus': take.get('box').get('cusId').id
                                     });
                                 }
                                 callback6(null, 1);
@@ -1822,7 +1829,7 @@ router.get('/summary/:date', function (req, res) {
                                 cusList.push({
                                     'sku': take.get('product').get('sku'),
                                     'name': take.get('product').get('name'), 'id':
-                                    take.get('product').id, 'price': price, 'count': take.get('count'), 'unitprice': take.get('product').get('price'), 'cus': take.get('box').get('cusId').id
+                                        take.get('product').id, 'price': price, 'count': take.get('count'), 'unitprice': take.get('product').get('price'), 'cus': take.get('box').get('cusId').id
                                 });
                                 callback4(null, 1);
                             } else {
@@ -1871,7 +1878,7 @@ router.post('/empUpload', function (req, res) {
         async.map(data, function (arr, callback1) {
             if (i != 0) {
                 //console.log('%j',arr[1]);
-                let number=arr[3]*1;
+                let number = arr[3] * 1;
                 let empQuery = new AV.Query('Employee');
                 empQuery.equalTo('isDel', false);
                 empQuery.equalTo('cusId', cusObj);
@@ -1909,16 +1916,16 @@ router.post('/empUpload', function (req, res) {
                                     callback1(null, 0);
                                 }
                             });
-                        },function(err){
+                        }, function (err) {
                             console.log(err);
                         });
-                    } else if(count==1){
-                        empQuery.first().then(function(emp){
+                    } else if (count == 1) {
+                        empQuery.first().then(function (emp) {
                             let cardQuery = new AV.Query('EmployeeCard');
                             cardQuery.equalTo('isDel', false);
-                            cardQuery.equalTo('emp',emp);
-                            cardQuery.count().then(function(count){
-                                if(count==0){
+                            cardQuery.equalTo('emp', emp);
+                            cardQuery.count().then(function (count) {
+                                if (count == 0) {
                                     let card = new EmpCard();
                                     card.set('card', PrefixInteger(number.toString(16), 6));
                                     card.set('oldCard', PrefixInteger(number.toString(), 10));
@@ -1926,16 +1933,16 @@ router.post('/empUpload', function (req, res) {
                                     card.set('cusId', cusObj);
                                     card.set('isDel', false);
                                     card.save().then(function () {
-                                        rescontent += "工号:" + arr[1] + "已补卡号"+number+";<br>";
+                                        rescontent += "工号:" + arr[1] + "已补卡号" + number + ";<br>";
                                         callback1(null, arr[1].toString());
                                     });
-                                }else{
+                                } else {
                                     rescontent += "工号:" + arr[1] + "和卡号已存在;<br>";
                                     callback1(null, 0);
                                 }
                             });
                         });
-                    }else{
+                    } else {
                         rescontent += "工号:" + arr[1] + "已存在多个;<br>";
                         callback1(null, 0);
                     }
@@ -2008,7 +2015,7 @@ router.post('/empUpload', function (req, res) {
                             power.set('isDel', false);
                             power.save().then(function (p) {
                                 return callback(null, p);
-                            },function(err){
+                            }, function (err) {
                                 console.log(err);
                             });
                         });
