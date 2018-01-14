@@ -1553,7 +1553,7 @@ router.get('/pasrecord/:date', function (req, res) {
     takeoutQuery.descending('time');
     takeoutQuery.matchesQuery('box', innerQuery);
     takeoutQuery.count().then(function (count) {
-        console.log(count);
+        //console.log(count);
         let num = Math.ceil(count / 1000);
         async.times(num, function (n, callback) {
             takeoutQuery.descending('time');

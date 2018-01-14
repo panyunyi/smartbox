@@ -16,6 +16,7 @@ function exportExcel(filename, data) {
         console.log(filename);
     });
 }
+//导出某公司员工权限
 router.get('/:cusid', function (req, res) {
     let customer = AV.Object.createWithoutData('Customer', req.params.cusid);
     let powerQuery = new AV.Query('EmployeePower');
