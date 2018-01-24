@@ -21,7 +21,8 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
             message = "此公司未找到";
             return callback(error);
         }
-        if (cus.get('flag') == 1) {//2017/08/13 艺康卡号5位直接匹配
+        if (cus.get('flag') == 1) {//2017/08/13 艺康卡号后5位直接匹配
+            console.log(PrefixInteger(card.slice(3), 10));
             cardQuery.equalTo('oldCard', PrefixInteger(card.slice(3), 10));
         } else {
             cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(tempCard.length - 6) : tempCard);
