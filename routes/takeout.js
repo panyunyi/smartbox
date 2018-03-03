@@ -22,7 +22,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
             return callback(error);
         }
         if (cus.get('flag') == 1) {//2017/08/13 艺康卡号后5位直接匹配
-            console.log(PrefixInteger(card.slice(3), 10));
+            //console.log(PrefixInteger(card.slice(3), 10));
             cardQuery.equalTo('oldCard', PrefixInteger(card.slice(3), 10));
         } else {
             cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(tempCard.length - 6) : tempCard);
@@ -57,20 +57,25 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
                     }
                 });
             } else {
-                onetake.set('isDel', false);
-                onetake.set('box', box);
-                onetake.set('time', new Date());
-                onetake.set('card', cardObj);
-                if (cardObj.get('oldCard') == null) {
-                    cardObj.set('oldCard', PrefixInteger(card, 10));
-                    cardObj.save();
+                if(cardObj.get('emp').get('dept')=="TDS"){
+                        message = "权限已停用";
+                        return callback(null, 0, null);
+                }else{
+                    onetake.set('isDel', false);
+                    onetake.set('box', box);
+                    onetake.set('time', new Date());
+                    onetake.set('card', cardObj);
+                    if (cardObj.get('oldCard') == null) {
+                        cardObj.set('oldCard', PrefixInteger(card, 10));
+                        cardObj.save();
+                    }
+                    onetake.set('cardNo', card);
+                    onetake.set('result', false);
+                    onetake.set('count', getCount * 1);
+                    onetake.set('emp', cardObj.get('emp'));
+                    onetake.save();
+                    return callback(null, 1, cardObj.get('emp'));
                 }
-                onetake.set('cardNo', card);
-                onetake.set('result', false);
-                onetake.set('count', getCount * 1);
-                onetake.set('emp', cardObj.get('emp'));
-                onetake.save();
-                return callback(null, 1, cardObj.get('emp'));
             }
         }, function (error) {
             message = "卡号异常";
