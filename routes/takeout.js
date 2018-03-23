@@ -24,7 +24,11 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
         if (cus.get('flag') == 1) {//2017/08/13 艺康卡号后5位直接匹配
             //console.log(PrefixInteger(card.slice(3), 10));
             cardQuery.equalTo('oldCard', PrefixInteger(card.slice(3), 10));
-        } else {
+        } else if(box.get('flag')==1){
+            card=card.toLowerCase();
+            //console.log(card);
+            cardQuery.equalTo('card', card.length > 6 ? card.slice(card.length - 6) : card);
+        }else {
             cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(tempCard.length - 6) : tempCard);
         }
         cardQuery.equalTo('cusId', cus);
