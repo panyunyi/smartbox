@@ -25,9 +25,9 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
             //console.log(PrefixInteger(card.slice(3), 10));
             cardQuery.equalTo('oldCard', PrefixInteger(card.slice(3), 10));
         } else if(box.get('flag')==1){
-            card=card.toLowerCase();
-            //console.log(card);
-            cardQuery.equalTo('card', card.length > 6 ? card.slice(card.length - 6) : card);
+            let tempcard=card.toLowerCase();
+            //console.log(tempcard);
+            cardQuery.contains('card', tempcard.length > 6 ? tempcard.slice(tempcard.length - 6) : tempcard);
         }else {
             cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(tempCard.length - 6) : tempCard);
         }
