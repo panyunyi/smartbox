@@ -1597,7 +1597,7 @@ router.get('/pasrecord/:date', function (req, res) {
             });
         }, function (err, takeoutsres) {
             exportExcel(start + " - " + end, jsondata);
-            res.jsonp({ "data": jsondata });
+            return res.jsonp({ "data": jsondata });
         });
     });
 });
@@ -2110,15 +2110,18 @@ function PrefixInteger(num, n) {
 }
 
 var ejsExcel = require("ejsexcel");
+
 function exportExcel(filename, data) {
     let exlBuf = fs.readFileSync("./public/upload/pasrecord.xlsx");
     //用数据源(对象)data渲染Excel模板
+
     ejsExcel.renderExcelCb(exlBuf, data, function (err, exlBuf2) {
         if (err) {
             console.error(err);
             return;
         }
         fs.writeFileSync("./public/upload/1.xlsx", exlBuf2);
+
         console.log(filename);
     });
 }
