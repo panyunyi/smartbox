@@ -55,7 +55,9 @@ router.get('/:cusid', function (req, res) {
                                         name: power.get('emp').get('name'), empno: power.get('emp').get('empNo'), period: power.get('period'), cus: power.get('cusId').get('name'),
                                         card: jsoncard, oldcard: jsonoldcard
                                 };
-                                jsondata.push(one);
+                                if(power.get('emp').get('dept')=='WH'){
+                                    jsondata.push(one);
+                                }
                                 callback2(null, one);
                             });
                             // let one = {

@@ -1550,7 +1550,7 @@ router.get('/pasrecord/:date', function (req, res) {
     takeoutQuery.include('box.cusId');
     takeoutQuery.include('emp');
     takeoutQuery.include('emp.cusId');
-    takeoutQuery.descending('time');
+    takeoutQuery.ascending('time');
     takeoutQuery.matchesQuery('box', innerQuery);
     takeoutQuery.count().then(function (count) {
         //console.log(count);
@@ -1596,8 +1596,9 @@ router.get('/pasrecord/:date', function (req, res) {
                 });
             });
         }, function (err, takeoutsres) {
-            exportExcel(start + " - " + end, jsondata);
-            return res.jsonp({ "data": jsondata });
+            console.log(jsondata.length);
+            //exportExcel(start + " - " + end, jsondata);
+            res.jsonp({ "data": jsondata });
         });
     });
 });
