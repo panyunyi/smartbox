@@ -15,6 +15,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
     function promise1(callback) {
         let cardQuery = new AV.Query('EmployeeCard');
         let num = card * 1;
+        //console.log(num);
         let tempCard = PrefixInteger(num.toString(16), 6);
         //console.log(tempCard);
         if (typeof (cus) == "undefined") {
@@ -28,9 +29,14 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
             let tempcard=card.toLowerCase();
             //console.log(tempcard);
             cardQuery.contains('card', tempcard.length > 6 ? tempcard.slice(tempcard.length - 6) : tempcard);
-        }else {
+        }else if(cus.get('flag')==3){
+            let tempcard=card.toLowerCase();
+            cardQuery.equalTo('card',tempcard.slice(2));
+        }
+        else {
             cardQuery.contains('card', tempCard.length > 6 ? tempCard.slice(tempCard.length - 6) : tempCard);
         }
+        //console.log(tempCard.length > 6 ? tempCard.slice(tempCard.length - 6) : tempCard);
         cardQuery.equalTo('cusId', cus);
         cardQuery.equalTo('isDel', false);
         cardQuery.include('emp');
