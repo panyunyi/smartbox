@@ -12,6 +12,7 @@
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 售货机交易记录数据表
+                                <a id="download">下载</a>
                             </div>
                             <!-- /.panel-heading -->
                             <div class="panel-body">
@@ -76,10 +77,12 @@
     <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
     <script src="//cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
+    <!-- 
     <script src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js"></script>
     <script src="//cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js" charset="utf-8"></script>
     <script src="//cdn.datatables.net/buttons/1.2.4/js/buttons.html5.min.js" charset="utf-8"></script>
     <script src="//cdn.datatables.net/buttons/1.2.4/js/buttons.print.min.js" charset="utf-8"></script>
+    -->
     <script>
         var t= $('#table').DataTable( {
             "processing": true,
@@ -221,6 +224,7 @@
                $('#table1_processing').css("z-index",100);
                $('#table1_processing').css('display','block');
                t.ajax.url('../api/json/pasrecord/'+date+'?id='+$('#customer').val()).load();
+               $('#download').attr('href','../upload/'+$('#customer').val()+'.xlsx');
                /*$.getJSON('../api/json/pasrecord/'+date,function(data){
                    console.log(data);
               });*/

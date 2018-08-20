@@ -4,8 +4,21 @@ var AV = require('leanengine');
 var async = require('async');
 var ejsExcel = require("ejsexcel");
 var fs = require('fs');
+var moment = require('moment');
 function exportExcel(filename, data) {
     let exlBuf = fs.readFileSync("./public/upload/powerlist.xlsx");
+    //用数据源(对象)data渲染Excel模板
+    ejsExcel.renderExcelCb(exlBuf, data, function (err, exlBuf2) {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        fs.writeFileSync("./public/upload/" + filename + ".xlsx", exlBuf2);
+        console.log(filename);
+    });
+}
+function exportExcel2(filename, data) {
+    let exlBuf = fs.readFileSync("./public/upload/pasrecord.xlsx");
     //用数据源(对象)data渲染Excel模板
     ejsExcel.renderExcelCb(exlBuf, data, function (err, exlBuf2) {
         if (err) {
@@ -89,6 +102,92 @@ router.get('/:cusid', function (req, res) {
                 });
 
             });
+        });
+    });
+});
+//导出中化格子柜领取数量大于1的交易记录
+router.get('/pasrecord/1', function (req, res) {
+    let cus_id = '598143f8a22b9d006d714d40';
+    /*let arr = req.params.date.split(' - ');
+    let start, end;
+    start = new moment(arr[0],moment.ISO_8601).startOf('days').format('YYYY-MM-DD HH:mm:ss');
+    if (arr.length == 1) {
+        end = new moment(arr[0],moment.ISO_8601).endOf('days').format('YYYY-MM-DD HH:mm:ss');
+    } else {
+        end = new moment(arr[1],moment.ISO_8601).endOf('days').format('YYYY-MM-DD HH:mm:ss');
+    }*/
+    let jsondata = [];
+    let cus = AV.Object.createWithoutData('Customer', cus_id);
+    let cusName;
+    let innerQuery = new AV.Query('BoxInfo');
+    innerQuery.equalTo('cusId', cus);
+    innerQuery.equalTo('isDel',false);
+    let takeoutQuery = new AV.Query('TakeOut');
+    takeoutQuery.equalTo('isDel', false);
+    takeoutQuery.equalTo('result', true);
+    //takeoutQuery.greaterThanOrEqualTo('time', new Date('2018-06-10'));
+    //takeoutQuery.lessThanOrEqualTo('time', new Date('2018-07-01'));
+    takeoutQuery.include('product');
+    takeoutQuery.include('box');
+    takeoutQuery.include('box.cusId');
+    takeoutQuery.include('emp');
+    takeoutQuery.include('emp.cusId');
+    takeoutQuery.ascending('time');
+    takeoutQuery.matchesQuery('box', innerQuery);
+    takeoutQuery.greaterThan('count',1);
+    takeoutQuery.startsWith('passageNo','1');
+    takeoutQuery.count().then(function (count) {
+        console.log(count);
+        let num = Math.ceil(count / 1000);
+        async.times(num, function (n, callback) {
+            takeoutQuery.descending('time');
+            takeoutQuery.limit(1000);
+            takeoutQuery.skip(1000 * n);
+            takeoutQuery.find().then(function (takeouts) {
+                async.map(takeouts, function (takeout, callback1) {
+                    if(takeout.get('passageNo').length==3){
+                        let machine = takeout.get('box').get('machine');
+                        let card = "";
+                        let emp = "";
+                        let empNo = "";
+                        let dept = "";
+                        if (typeof (takeout.get('emp')) != "undefined") {
+                            emp = takeout.get('emp') ? takeout.get('emp').get('name') : "";
+                            empNo = takeout.get('emp') ? takeout.get('emp').get('empNo') : "";
+                            dept = takeout.get('emp') ? takeout.get('emp').get('dept') : "";
+                        }
+                        card = takeout.get('cardNo') ? takeout.get('cardNo') : "";
+                        let sku = takeout.get('product').get('sku') ? takeout.get('product').get('sku') : "";
+                        let product = takeout.get('product').get('name');
+                        let unit = takeout.get('product').get('unit');
+                        let passage = takeout.get('passageNo') ? takeout.get('passageNo') : "";
+                        console.log(passage);
+                        let time = new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
+                        cusName = takeout.get('box').get('cusId').get('name');
+                        let count = takeout.get('count');
+                        let price = takeout.get('product').get('price') * count;
+                        let unitprice = takeout.get('product').get('price');
+                        let onetake = {
+                            "time": time, "type": "领料", "objectId": takeout.get('id'),
+                            "cus": cusName, "machine": machine, "passage": passage, "count": count,
+                            "product": product, "sku": sku, "unit": unit, "employee": emp,
+                            "empNo": empNo, "empCard": card, "price": price.toFixed(2),
+                            "unitprice": unitprice, "dept": dept ? dept : ""
+                        };
+                        jsondata.push(onetake);
+                        callback1(null, 1);
+                    }else{
+                        callback1(null, 0);
+                    }
+                    
+                }, function (err, takesres) {
+                    callback(null, n);
+                });
+            });
+        }, function (err, takeoutsres) {
+            console.log(jsondata.length);
+            exportExcel2(cus_id, jsondata);
+            res.jsonp({ "data": jsondata});
         });
     });
 });

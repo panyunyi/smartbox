@@ -81,7 +81,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
                     }
                     onetake.set('cardNo', card);
                     onetake.set('result', false);
-                    onetake.set('count', getCount * 1);
+                    //onetake.set('count', getCount * 1);
                     onetake.set('emp', cardObj.get('emp'));
                     onetake.save();
                     return callback(null, 1, cardObj.get('emp'));
@@ -113,6 +113,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
             if (passage.length == 3) {
                 getCount = passageObj.get('capacity');
             }
+            onetake.set('count', getCount * 1);//2018-7-26 格子柜领取记录问题：格子柜的领取数量按照格子柜容量
             onetake.set('passage', passageObj);
             onetake.set('passageNo', passage);
             onetake.set('product', passageObj.get('product'));

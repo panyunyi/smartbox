@@ -1529,14 +1529,15 @@ router.get('/pasrecord/:date', function (req, res) {
     let cus_id = req.query.id;
     let arr = req.params.date.split(' - ');
     let start, end;
-    start = new moment(arr[0]).startOf('days').format('YYYY-MM-DD HH:mm:ss');
+    start = new moment(arr[0],moment.ISO_8601).startOf('days').format('YYYY-MM-DD HH:mm:ss');
     if (arr.length == 1) {
-        end = new moment(arr[0]).endOf('days').format('YYYY-MM-DD HH:mm:ss');
+        end = new moment(arr[0],moment.ISO_8601).endOf('days').format('YYYY-MM-DD HH:mm:ss');
     } else {
-        end = new moment(arr[1]).endOf('days').format('YYYY-MM-DD HH:mm:ss');
+        end = new moment(arr[1],moment.ISO_8601).endOf('days').format('YYYY-MM-DD HH:mm:ss');
     }
     let jsondata = [];
     let cus = AV.Object.createWithoutData('Customer', cus_id);
+    let cusName;
     let innerQuery = new AV.Query('BoxInfo');
     innerQuery.equalTo('cusId', cus);
     innerQuery.equalTo('isDel',false);
@@ -1577,13 +1578,13 @@ router.get('/pasrecord/:date', function (req, res) {
                     let unit = takeout.get('product').get('unit');
                     let passage = takeout.get('passageNo') ? takeout.get('passageNo') : "";
                     let time = new moment(takeout.get('time')).format('YYYY-MM-DD HH:mm:ss');
-                    let cus = takeout.get('box').get('cusId').get('name');
+                    cusName = takeout.get('box').get('cusId').get('name');
                     let count = takeout.get('count');
                     let price = takeout.get('product').get('price') * count;
                     let unitprice = takeout.get('product').get('price');
                     let onetake = {
                         "time": time, "type": "领料", "objectId": takeout.get('id'),
-                        "cus": cus, "machine": machine, "passage": passage, "count": count,
+                        "cus": cusName, "machine": machine, "passage": passage, "count": count,
                         "product": product, "sku": sku, "unit": unit, "employee": emp,
                         "empNo": empNo, "empCard": card, "price": price.toFixed(2),
                         "unitprice": unitprice, "dept": dept ? dept : ""
@@ -1597,8 +1598,8 @@ router.get('/pasrecord/:date', function (req, res) {
             });
         }, function (err, takeoutsres) {
             console.log(jsondata.length);
-            //exportExcel(start + " - " + end, jsondata);
-            res.jsonp({ "data": jsondata });
+            exportExcel(cus_id, jsondata);
+            res.jsonp({ "data": jsondata});
         });
     });
 });
@@ -2121,7 +2122,7 @@ function exportExcel(filename, data) {
             console.error(err);
             return;
         }
-        fs.writeFileSync("./public/upload/1.xlsx", exlBuf2);
+        fs.writeFileSync("./public/upload/"+filename+".xlsx", exlBuf2);
 
         console.log(filename);
     });
