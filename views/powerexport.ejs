@@ -1,0 +1,87 @@
+<%include header%>
+<div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">先选择客户再导出该客户的员工权限</h1>
+                    </div>
+
+                    <div class="panel-body">
+                        <div class="upload_form_cont">
+                            <form id="upload_form" enctype="multipart/form-data" method="post" action="../api/json/empUpload">
+                                <div class="form-group">
+                                    <label>选择客户</label>
+                                    <select id="cus" class="form-control" style="width:59%" name="customer">
+                                        <% for(var i=0; i<results.length; i++) {%>
+                                        <option value=<%= results[i].id %>><%= results[i].get('name') %></option>
+                                        <% } %>
+                                    </select>
+                                </div>
+                                
+                                
+                                <div>
+                                    <input id="btn" type="button" value="导出" onclick="doExport()" />
+                                </div>
+                                
+                                <div>
+                                    <a id="download" style="display:none">下载</a>
+                                </div>
+                                <div id="progress_info">
+                                    <div id="progress"></div>
+                                    <div id="progress_percent">&nbsp;</div>
+                                    <div class="clear_both"></div>
+                                    <div>
+                                        <div id="speed">&nbsp;</div>
+                                        <div id="remaining">&nbsp;</div>
+                                        <div id="b_transfered">&nbsp;</div>
+                                        <div class="clear_both"></div>
+                                    </div>
+                                    <div id="upload_response"></div>
+                                </div>
+                            </form>
+
+                            <img id="preview" />
+                        </div>
+
+                    </div>
+                    <!-- /.col-lg-12 -->
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- jQuery -->
+    <script src="../vendor/jquery/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="../vendor/metisMenu/metisMenu.min.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="../dist/js/sb-admin-2.js"></script>
+    <link href="../dist/css/main.css" rel="stylesheet">
+    <script type="text/javascript">
+        $("#cus").change(function(){
+            $('#download').css('display','none');
+        });
+       function doExport(){
+            
+            $("#btn").attr("disabled",true);
+            htmlobj=$.ajax({url:"../tool/"+$("#cus").val(),async:false});
+            console.log(htmlobj.responseJSON);
+            $('#download').css('display','block');
+            $('#download').attr('href','../upload/'+htmlobj.responseJSON+'.xlsx');
+            $("#btn").attr("disabled",false);
+       }
+    </script>
+
+</body>
+
+</html>

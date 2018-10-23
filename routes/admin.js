@@ -84,6 +84,18 @@ router.get('/empCard', function (req, res) {
     }
 });
 
+router.get('/powerexport', function (req, res) {
+    if (req.currentUser) {
+        let cusQuery = new AV.Query('Customer');
+        cusQuery.equalTo('isDel', false);
+        cusQuery.find().then(function (results) {
+            res.render('powerexport', { "results": results });
+        });
+    } else {
+        res.redirect('../login');
+    }
+});
+
 router.get('/cusproduct', function (req, res) {
     if (req.currentUser) {
         res.render('cusproduct');

@@ -39,6 +39,7 @@ router.get('/:cusid', function (req, res) {
     powerQuery.include('product');
     powerQuery.include('emp');
     powerQuery.include('cusId');
+    console.log(customer.id)
     powerQuery.count().then(function (count) {
         let num = Math.ceil(count / 1000);
         console.log(count);
@@ -47,12 +48,16 @@ router.get('/:cusid', function (req, res) {
         cardQuery.equalTo('cusId', customer);
         cardQuery.limit(1000);
         cardQuery.find().then(function (cards) {
+
             async.times(num, function (n, callback1) {
                 powerQuery.limit(1000);
                 powerQuery.skip(n * 1000);
                 powerQuery.ascending('emp');
+
                 powerQuery.find().then(function (powers) {
+
                     async.map(powers, function (power, callback2) {
+                        //console.log(power);
                         if (typeof (power.get('emp')) != "undefined") {
                             let jsoncard="";
                             let jsonoldcard="";
@@ -68,9 +73,10 @@ router.get('/:cusid', function (req, res) {
                                         name: power.get('emp').get('name'), empno: power.get('emp').get('empNo'), period: power.get('period'), cus: power.get('cusId').get('name'),
                                         card: jsoncard, oldcard: jsonoldcard
                                 };
-                                if(power.get('emp').get('dept')=='WH'){
+                                /*if(power.get('emp').get('dept')=='WH'){
                                     jsondata.push(one);
-                                }
+                                }*/
+                                jsondata.push(one);
                                 callback2(null, one);
                             });
                             // let one = {
@@ -90,7 +96,7 @@ router.get('/:cusid', function (req, res) {
                             callback2(null, one);
                         }
                     }, function (err, arr) {
-                        console.log(arr.length);
+                        //console.log(arr.length);
                         callback1(null, n);
                     });
                 });

@@ -1573,6 +1573,9 @@ router.get('/pasrecord/:date', function (req, res) {
                         dept = takeout.get('emp') ? takeout.get('emp').get('dept') : "";
                     }
                     card = takeout.get('cardNo') ? takeout.get('cardNo') : "";
+                    if(card.length>=12){
+                        card=card.slice(-5);
+                    }
                     let sku = takeout.get('product').get('sku') ? takeout.get('product').get('sku') : "";
                     let product = takeout.get('product').get('name');
                     let unit = takeout.get('product').get('unit');
@@ -1592,7 +1595,6 @@ router.get('/pasrecord/:date', function (req, res) {
                     jsondata.push(onetake);
                     callback1(null, onetake);
                 }, function (err, takesres) {
-
                     callback(null, n);
                 });
             });
