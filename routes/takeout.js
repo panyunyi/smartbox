@@ -5,13 +5,31 @@ var AV = require('leanengine');
 var async = require('async');
 var moment = require('moment');
 var TakeOut = AV.Object.extend('TakeOut');
-
+function checkTakeoutToday(emp,product){//2018-11-13 判断当日领取次数
+    return new Promise((resolve,reject)=>{
+        let takeoutQuery = new AV.Query('TakeOut');
+        takeoutQuery.equalTo('isDel', false);
+        takeoutQuery.equalTo('result', true);
+        takeoutQuery.equalTo('emp', emp);
+        takeoutQuery.equalTo('product', product);
+        takeoutQuery.greaterThanOrEqualTo('time', moment().startOf('day').toDate());
+        takeoutQuery.lessThanOrEqualTo('time', new Date());
+        //console.log(moment().startOf('day').toDate());
+        //console.log(moment().endOf("day").toDate());
+        takeoutQuery.count().then(function (count) {
+            //console.log(count);
+            resolve({count});
+        });
+    })
+  }
 function doWork(cus, box, deviceId, card, passage, res, getCount) {
     let flag = false;
     let resdata = {};
     let message = "无权限";
     resdata["result"] = flag;
     let onetake = new TakeOut();
+    let dayLimit=cus.get('dayLimit');//2018-11-13加入每日限制领取次数
+    //console.log("daylimit:"+dayLimit);
     function promise1(callback) {
         let cardQuery = new AV.Query('EmployeeCard');
         let num = card * 1;
@@ -22,7 +40,7 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
             message = "此公司未找到";
             return callback(error);
         }
-        if (cus.get('flag') == 1) {//2017/08/13 艺康卡号后5位直接匹配
+        if (cus.get('flag') == 1) {//2017-08-13 艺康卡号后5位直接匹配
             //console.log(PrefixInteger(card.slice(3), 10));
             cardQuery.equalTo('oldCard', PrefixInteger(card.slice(3), 10));
         } else if(box.get('flag')==1){
@@ -157,7 +175,20 @@ function doWork(cus, box, deviceId, card, passage, res, getCount) {
             }
         });
     }
-    function verifyPower(emp, power, product, getCount, callback) {
+    async function verifyPower(emp, power, product, getCount, callback) {
+        if(dayLimit>0&&getCount>1){//2018-11-13 若有每日限领次数，那么禁止一天一次取货多个
+            message = product.get('name') +"每日只可领取1个。";
+            resdata["result"] = flag;
+            return callback(null, false);
+        }
+        let todayCheck=await checkTakeoutToday(emp,product);
+        //console.log("today:"+JSON.stringify(todayCheck["count"]));
+        let todayTakeout=todayCheck["count"];
+        if(todayTakeout>=dayLimit&&dayLimit>0){//2018-11-13 若有每日限领次数，那么禁止一天多次取货
+            message = "今日已取" + product.get('name') + "："+todayTakeout+"次，请明日再领。每日只可领取1次,每次1个。";
+            resdata["result"] = flag;
+            return callback(null, false);
+        }
         let unit = power.get('unit');
         let period = power.get('period');
         let count = power.get('count');

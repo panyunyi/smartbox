@@ -143,10 +143,10 @@ function doWork(cus,box,res,ts){
                 async.map(passages,function(result,callback1){
                     let one={"flag":result.get('flag'),"capacity":result.get('capacity'),
                     "isDel":result.get('isDel'),"seqNo":result.get('seqNo'),
-                    "used":result.get('used')?result.get('used').get('id'):"",
-                    "whorlSize":result.get('whorlSize'),"product":result.get('product').get('id'),
+                    "used":result.get('used')?result.get('used').id:"",
+                    "whorlSize":0,"product":result.get('product').id,
                     "borrowState":result.get('borrowState'),"stock":result.get('stock'),
-                    "isSend":result.get('isSend'),"objectId":result.get('id'),
+                    "isSend":result.get('isSend'),"objectId":result.id,
                     "createdAt":result.get('createdAt'),"updatedAt":result.get('updatedAt')};
                     callback1(null,one);
                 },function(err,ones){
